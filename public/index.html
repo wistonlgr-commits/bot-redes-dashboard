@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Médica - Dashboard Bot WhatsApp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7e4db8; 
+            --primary-light: #9b6cda;
+            --sidebar-bg: #f8f9fc;
+            --bg-color: #ffffff;
+            --text-main: #333333;
+            --text-muted: #777777;
+            --border-color: #e2e8f0;
+            
+            /* Temperaturas */
+            --temp-caliente: #ef4444;
+            --temp-tibio: #f59e0b;
+            --temp-frio: #3b82f6;
+            
+            /* Status / Citas */
+            --apt-green: #10b981;
+            --apt-blue: #0ea5e9;
+            --apt-red: #ef4444;
+            --apt-pink: #fbcfe8;
+            --apt-purple: #c084fc;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #f1f5f9; color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Top App Bar */
+        .app-bar {
+            position: fixed; top: 0; left: 0; right: 0; height: 50px;
+            background: linear-gradient(90deg, #6c2b99 0%, #8a4ca8 100%);
+            display: flex; align-items: center; padding: 0 20px; color: white; z-index: 100;
+        }
+        .app-bar-icons { margin-left: auto; display: flex; gap: 15px; }
+        .app-bar-icons i { font-size: 1.2rem; cursor: pointer; position: relative; }
+        .badge {
+            position: absolute; top: -5px; right: -8px; background: #ef4444;
+            color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 10px; font-weight: bold;
+        }
+
+        /* Main Layout */
+        .app-container {
+            display: flex; width: 100%; height: calc(100vh - 50px); margin-top: 50px;
+            background: var(--bg-color); border-radius: 12px 12px 0 0;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05); overflow: hidden;
+        }
+
+        /* Narrow Sidebar */
+        .icon-sidebar {
+            width: 60px; background: var(--bg-color); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 25px;
+        }
+        .icon-sidebar i { font-size: 1.4rem; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .icon-sidebar i:hover, .icon-sidebar i.active { color: var(--primary); }
+
+        /* Secondary Sidebar */
+        .sidebar {
+            width: 320px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; overflow-y: auto;
+        }
+        .sidebar-header { padding: 20px; font-size: 1.5rem; font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--border-color); }
+
+        .profile-section { padding: 20px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        .profile-img {
+            width: 80px; height: 80px; border-radius: 50%; background: #cbd5e1; margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white;
+        }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .stat-box { background: white; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .stat-value { font-size: 1.2rem; font-weight: 700; color: var(--text-main); }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* Waitlist */
+        .waiting-room { padding: 20px; }
+        .waiting-room-title {
+            font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; color: var(--text-main);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        .patient-card {
+            background: white; border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; cursor: pointer; transition: 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .patient-card:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-color: var(--primary-light); }
+        
+        .temp-indicator {
+            position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+        }
+
+        .patient-avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white;
+            display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .patient-info { flex: 1; min-width: 0; }
+        .patient-name { font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .patient-details { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bot-badge { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; margin-left: 5px; font-weight: 600; vertical-align: middle;}
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; background: white; }
+        .toolbar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        
+        .btn-sync {
+            padding: 8px 16px; background: #f0fdf4; border: 1px solid #10b981; color: #047857;
+            border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;
+        }
+        .btn-sync:hover { background: #dcfce7; }
+
+        /* Calendar Grid */
+        .calendar-container { flex: 1; overflow: auto; position: relative; padding: 20px; }
+        .calendar-grid {
+            display: grid; grid-template-columns: 60px repeat(5, 1fr); min-width: 800px;
+            border: 1px solid var(--border-color); border-radius: 8px; background: #fafafa;
+        }
+        .grid-header { text-align: center; padding: 15px; font-weight: 600; font-size: 0.85rem; color: var(--text-main); border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); background: white; }
+        .time-column { display: flex; flex-direction: column; border-right: 1px solid var(--border-color); background: white; }
+        .time-slot { height: 60px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+        
+        .day-column { display: flex; flex-direction: column; border-right: 1px solid var(--border-color); position: relative; }
+        .day-column:last-child { border-right: none; }
+        .grid-cell { height: 60px; border-bottom: 1px solid #f0f0f0; position: relative; }
+
+        /* Appointments */
+        .appointment {
+            position: absolute; left: 2px; right: 2px; border-radius: 6px; padding: 6px 8px;
+            font-size: 0.75rem; color: white; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer; transition: transform 0.1s; z-index: 10; border-left: 3px solid rgba(0,0,0,0.2);
+        }
+        .appointment:hover { transform: scale(1.02); z-index: 20; }
+        .apt-title { font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .apt-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal {
+            background: white; width: 450px; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { padding: 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; }
+        .detail-row { margin-bottom: 15px; display: flex; align-items: flex-start; }
+        .detail-icon { width: 30px; color: var(--primary); font-size: 1.1rem; margin-top: 3px; text-align: center;}
+        .detail-content { flex: 1; }
+        .detail-content h4 { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+        .detail-content p { font-size: 0.95rem; color: var(--text-main); font-weight: 500; }
+        .modal-footer { padding: 15px 20px; background: #f8f9fc; text-align: right; border-top: 1px solid var(--border-color); }
+        .modal-footer button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-primary { background: var(--primary); color: white; }
+        
+        .badge-temp { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; color: white; }
+        .bg-caliente { background-color: var(--temp-caliente); }
+        .bg-tibio { background-color: var(--temp-tibio); }
+        .bg-frio { background-color: var(--temp-frio); }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-bar">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <i class="fa-solid fa-bars"></i>
+            <h2>Dr. Ángel Trejo Alvarado - Dashboard</h2>
+        </div>
+        <div class="app-bar-icons">
+            <button class="btn-sync" onclick="fetchDataFromN8N()" id="btn-sync">
+                <i class="fa-solid fa-rotate"></i> Sincronizar con n8n/Sheets
+            </button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        
+        <div class="icon-sidebar">
+            <i class="fa-solid fa-user-doctor active"></i>
+            <i class="fa-solid fa-calendar-days"></i>
+            <i class="fa-solid fa-comments"></i>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-header">Agenda Inteligente</div>
+            
+            <div class="profile-section">
+                <div class="profile-img"><i class="fa-solid fa-user-md"></i></div>
+                <h3>Dr. Ángel Trejo</h3>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 5px;">Flebología y Várices (Maracay)</p>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-agendados">0</div>
+                        <div class="stat-label">Citas Agendadas</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-prospectos">0</div>
+                        <div class="stat-label">Prospectos (Bot)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="waiting-room">
+                <div class="waiting-room-title">
+                    <span>Pacientes Recientes / Pendientes</span>
+                </div>
+                <div id="waitlist-container">
+                    <!-- Cards will be generated here by JS -->
+                    <p style="text-align: center; color: #999; font-size: 0.8rem; margin-top: 20px;">Cargando datos...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="toolbar">
+                <div style="font-weight: 600; color: var(--primary);"><i class="fa-regular fa-calendar"></i> Vista Semanal</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">Horario Clínico: Mar 2pm | Mie 8am-10am | Jue 1pm</div>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Header -->
+                    <div class="grid-header" style="border-bottom: none;"></div>
+                    <div class="grid-header">LUNES</div>
+                    <div class="grid-header">MARTES</div>
+                    <div class="grid-header">MIÉRCOLES</div>
+                    <div class="grid-header">JUEVES</div>
+                    <div class="grid-header">VIERNES</div>
+
+                    <!-- Time Column -->
+                    <div class="time-column" id="time-labels">
+                        <!-- Generado por JS -->
+                    </div>
+
+                    <!-- Days -->
+                    <div class="day-column" id="col-lunes"></div>
+                    <div class="day-column" id="col-martes"></div>
+                    <div class="day-column" id="col-miercoles"></div>
+                    <div class="day-column" id="col-jueves"></div>
+                    <div class="day-column" id="col-viernes"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="patientModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 style="font-size: 1.1rem; font-weight: 600;">Detalles Extraídos por Bot (n8n)</h3>
+                <i class="fa-solid fa-xmark" style="cursor: pointer;" onclick="closeModal()"></i>
+            </div>
+            <div class="modal-body">
+                
+                <div class="detail-row">
+                    <div class="detail-icon"><i class="fa-solid fa-user"></i></div>
+                    <div class="detail-content">
+                        <h4>Nombre</h4>
+                        <p id="m-nombre">-</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr;">
+                    <div class="detail-row">
+                        <div class="detail-icon"><i class="fa-brands fa-whatsapp"></i></div>
+                        <div class="detail-content">
+                            <h4>Teléfono</h4>
+                            <p id="m-telefono">-</p>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-icon"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="detail-content">
+                            <h4>Ciudad</h4>
+                            <p id="m-ciudad">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr;">
+                    <div class="detail-row">
+                        <div class="detail-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div class="detail-content">
+                            <h4>Cita Agendada</h4>
+                            <p id="m-fecha-hora" style="font-weight: 600; color: var(--primary);">-</p>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-icon"><i class="fa-solid fa-temperature-half"></i></div>
+                        <div class="detail-content">
+                            <h4>Interés (Temp)</h4>
+                            <p><span id="m-temp" class="badge-temp"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-icon"><i class="fa-solid fa-stethoscope"></i></div>
+                    <div class="detail-content">
+                        <h4>Motivo de Consulta</h4>
+                        <p id="m-motivo">-</p>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="detail-content">
+                        <h4>Resumen del Asistente</h4>
+                        <p id="m-resumen" style="background: #f8f9fc; padding: 10px; border-radius: 6px; font-size: 0.85rem; border: 1px solid var(--border-color); margin-top: 5px;">
+                            -
+                        </p>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 5px;">Última interacción: <span id="m-interaccion"></span></span>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button style="background: #e2e8f0; color: var(--text-main);" onclick="closeModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // CONEXIÓN EN TIEMPO REAL CON EL SERVIDOR NODE.JS
+        const socket = io(); // Conecta automáticamente al host que sirve la página
+        const btnSync = document.getElementById('btn-sync');
+
+        // Datos de respaldo en caso de que el servidor esté vacío (solo para visualizar)
+        const fallbackData = [
+            {
+                Telefono: "+58 412 1234567", Nombre: "Carmen Lopez", Ciudad: "Maracay",
+                Motivo_Consulta: "Arañitas en las piernas", Temperatura: "caliente",
+                Ultima_Interaccion: "Hace 10 min", Resumen: "Paciente interesada en sesión de esclerosis. Agendó cita.",
+                Dia_Cita: "jueves", Hora_Cita: "1:00 pm"
+            }
+        ];
+
+        // Escuchar actualización completa desde el servidor (vía Webhooks de n8n)
+        socket.on('actualizacion_completa', (data) => {
+            console.log("Datos recibidos en tiempo real:", data);
+            btnSync.innerHTML = '<i class="fa-solid fa-bolt"></i> Actualizado';
+            btnSync.style.color = '#047857';
+            setTimeout(() => {
+                btnSync.innerHTML = '<i class="fa-solid fa-rotate"></i> Conectado en Vivo';
+                btnSync.style.color = '#3b82f6';
+            }, 2000);
+            
+            if (data && data.length > 0) {
+                renderDashboard(data);
+            }
+        });
+
+        socket.on('connect', () => {
+            console.log("Conectado al servidor en tiempo real");
+            btnSync.innerHTML = '<i class="fa-solid fa-rotate"></i> Conectado en Vivo';
+            btnSync.style.color = '#3b82f6';
+            fetchInitialData();
+        });
+
+        socket.on('disconnect', () => {
+            console.log("Desconectado del servidor");
+            btnSync.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Desconectado';
+            btnSync.style.color = '#ef4444';
+        });
+
+        async function fetchInitialData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    renderDashboard(data);
+                } else {
+                    console.log("Servidor no tiene datos aún. Mostrando fallback.");
+                    renderDashboard(fallbackData);
+                }
+            } catch (error) {
+                console.error("Error fetching initial data", error);
+                renderDashboard(fallbackData);
+            }
+        }
+        const times = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+        const timeLabels = document.getElementById('time-labels');
+        times.forEach(t => {
+            timeLabels.innerHTML += `<div class="time-slot">${t}</div>`;
+        });
+        
+        // Render grid cells for each day
+        ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes'].forEach(day => {
+            const col = document.getElementById(day);
+            times.forEach(() => col.innerHTML += `<div class="grid-cell"></div>`);
+        });
+
+        // FUNCIONES DE RENDERIZADO
+        function getInitials(name) {
+            if (!name || name === "Sin Nombre") return "?";
+            return name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+        }
+
+        function getTempColor(temp) {
+            temp = (temp || "").toLowerCase();
+            if (temp === "caliente") return "var(--temp-caliente)";
+            if (temp === "tibio") return "var(--temp-tibio)";
+            return "var(--temp-frio)";
+        }
+
+        function renderDashboard(data) {
+            const waitlist = document.getElementById('waitlist-container');
+            waitlist.innerHTML = ''; // Clear
+
+            let agendados = 0;
+            let prospectos = 0;
+
+            // Limpiar citas previas
+            document.querySelectorAll('.appointment').forEach(e => e.remove());
+
+            data.forEach(row => {
+                const nombre = row.Nombre || "Sin Nombre";
+                const telefono = row.Telefono || "";
+                const ciudad = row.Ciudad || "No especificada";
+                const temp = (row.Temperatura || "frio").toLowerCase();
+                const dia = (row.Dia_Cita || "").toLowerCase().trim();
+                const hora = (row.Hora_Cita || "").toLowerCase().trim();
+                
+                // Escape JSON para el modal
+                const rowJson = JSON.stringify(row).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+                if (dia && hora) {
+                    agendados++;
+                    // Es una cita agendada, va al calendario
+                    placeInCalendar(row, rowJson);
+                } else {
+                    prospectos++;
+                    // Es prospecto o conversación en curso, va a la sala de espera
+                    const tempColor = getTempColor(temp);
+                    
+                    waitlist.innerHTML += `
+                        <div class="patient-card" onclick='openModal(${rowJson})'>
+                            <div class="temp-indicator" style="background-color: ${tempColor}"></div>
+                            <div class="patient-avatar" style="background: ${tempColor}">${getInitials(nombre)}</div>
+                            <div class="patient-info">
+                                <div class="patient-name">${nombre} <span class="bot-badge">Bot</span></div>
+                                <div class="patient-details"><i class="fa-solid fa-clock"></i> ${row.Ultima_Interaccion || ""} • ${temp.toUpperCase()}</div>
+                                <div class="patient-details" style="margin-top: 3px; font-style: italic;">"${row.Resumen || ""}"</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById('stat-agendados').innerText = agendados;
+            document.getElementById('stat-prospectos').innerText = prospectos;
+        }
+
+        function placeInCalendar(row, rowJson) {
+            const dia = row.Dia_Cita.toLowerCase().replace('é', 'e');
+            const hora = row.Hora_Cita.toLowerCase();
+            
+            let colId = '';
+            if (dia.includes('lun')) colId = 'col-lunes';
+            else if (dia.includes('mar')) colId = 'col-martes';
+            else if (dia.includes('mie')) colId = 'col-miercoles';
+            else if (dia.includes('jue')) colId = 'col-jueves';
+            else if (dia.includes('vie')) colId = 'col-viernes';
+            
+            if (!colId) return; // Día no válido
+
+            // Convertir hora tipo "1:00 pm" o "13:00" a px (8:00 = 0px, cada hora = 60px)
+            let hourNum = 8;
+            let minNum = 0;
+            
+            // Lógica simple de parseo
+            if (hora.includes(':')) {
+                let parts = hora.split(':');
+                hourNum = parseInt(parts[0]);
+                minNum = parseInt(parts[1]);
+                if (hora.includes('pm') && hourNum !== 12) hourNum += 12;
+            }
+
+            const topPx = ((hourNum - 8) * 60) + (minNum); // 1 px por minuto aprox en diseño
+            
+            const col = document.getElementById(colId);
+            if (col) {
+                const tempColor = getTempColor(row.Temperatura);
+                col.innerHTML += `
+                    <div class="appointment" style="top: ${topPx}px; height: 60px; background-color: ${tempColor}" onclick='openModal(${rowJson})'>
+                        <div class="apt-title">${hora.toUpperCase()} - ${row.Nombre || "Sin Nombre"}</div>
+                        <div class="apt-desc"><i class="fa-solid fa-stethoscope"></i> ${row.Motivo_Consulta || "Consulta"}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // INITIAL LOAD (Ya manejado por el evento connect de socket.io)
+        // fetchInitialData(); // Opcional si se quiere forzar
+        function openModal(row) {
+            document.getElementById('m-nombre').textContent = row.Nombre || "Sin Nombre";
+            document.getElementById('m-telefono').textContent = row.Telefono || "No registrado";
+            document.getElementById('m-ciudad').textContent = row.Ciudad || "No especificada";
+            document.getElementById('m-motivo').textContent = row.Motivo_Consulta || "No definido";
+            document.getElementById('m-interaccion').textContent = row.Ultima_Interaccion || "-";
+            document.getElementById('m-resumen').textContent = row.Resumen || "Sin resumen";
+            
+            const temp = (row.Temperatura || "frio").toLowerCase();
+            const tempBadge = document.getElementById('m-temp');
+            tempBadge.textContent = temp.toUpperCase();
+            tempBadge.className = 'badge-temp bg-' + temp;
+
+            if (row.Dia_Cita && row.Hora_Cita) {
+                document.getElementById('m-fecha-hora').textContent = `${row.Dia_Cita.toUpperCase()} a las ${row.Hora_Cita}`;
+            } else {
+                document.getElementById('m-fecha-hora').textContent = "No agendada";
+            }
+            
+            document.getElementById('patientModal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('patientModal').style.display = 'none'; }
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('patientModal')) closeModal();
+        }
+
+        // INITIAL LOAD
+        fetchDataFromN8N();
+
+    </script>
+</body>
+</html>
