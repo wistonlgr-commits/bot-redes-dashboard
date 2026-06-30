@@ -429,11 +429,11 @@
                 // Llenar vista de Calendario / Waitlist
                 if (dia && hora && dia !== "no") {
                     agendados++;
-                    placeInCalendar(row, rowJson, isAtendido);
+                    placeInCalendar(row, isAtendido);
                 } else {
                     prospectos++;
                     waitlist.innerHTML += `
-                        <div class="patient-card" onclick='openModal(${rowJson})' style="opacity: ${isAtendido ? '0.6' : '1'}">
+                        <div class="patient-card" onclick='openModal("${row.id}")' style="opacity: ${isAtendido ? '0.6' : '1'}">
                             <div class="temp-indicator" style="background-color: ${tempColor}"></div>
                             <div class="patient-avatar" style="background: ${tempColor}">${init}</div>
                             <div class="patient-info">
@@ -464,7 +464,7 @@
                         <td>${aptText}</td>
                         <td><span class="status-badge" style="${badgeClass}">${temp.toUpperCase()}</span></td>
                         <td>${isAtendido ? '<span style="color:var(--success); font-weight:600;"><i class="fa-solid fa-check"></i> Atendido</span>' : 'Pendiente'}</td>
-                        <td><button class="btn-action" onclick='openModal(${rowJson})'>Administrar</button></td>
+                        <td><button class="btn-action" onclick='openModal("${row.id}")'>Administrar</button></td>
                     </tr>
                 `;
             });
@@ -472,7 +472,7 @@
             document.getElementById('stat-prospectos').innerText = prospectos;
         }
 
-        function placeInCalendar(row, rowJson, isAtendido) {
+        function placeInCalendar(row, isAtendido) {
             const dia = row.Dia_Cita.toLowerCase().replace('é', 'e');
             const hora = row.Hora_Cita.toLowerCase();
             let colId = '';
@@ -495,7 +495,7 @@
             if (col) {
                 const tempColor = getTempColor(row.Temperatura);
                 col.innerHTML += `
-                    <div class="appointment" style="top: ${topPx}px; height: 60px; background-color: ${tempColor}; opacity: ${isAtendido ? '0.6' : '1'}" onclick='openModal(${rowJson})'>
+                    <div class="appointment" style="top: ${topPx}px; height: 60px; background-color: ${tempColor}; opacity: ${isAtendido ? '0.6' : '1'}" onclick='openModal("${row.id}")'>
                         <div class="apt-title"><span>${hora.toUpperCase()}</span> ${isAtendido ? '<i class="fa-solid fa-check"></i>' : ''}</div>
                         <div class="apt-desc" style="font-weight:600">${row.Nombre}</div>
                         <div class="apt-desc">${row.Motivo_Consulta || ""}</div>
@@ -513,11 +513,23 @@
             });
         }
 
+        // Formatear Teléfono
+        function formatPhone(phone) {
+            if (!phone) return "";
+            let nums = phone.replace(/[^0-9]/g, '');
+            if (nums.startsWith('58')) nums = '0' + nums.substring(2);
+            if (nums.length === 11) return nums.substring(0,4) + '-' + nums.substring(4);
+            return nums;
+        }
+
         // Modal Logic
-        function openModal(row) {
+        function openModal(id) {
+            const row = localData.find(p => p.id === id);
+            if (!row) return;
+            
             document.getElementById('f-id').value = row.id || "";
             document.getElementById('f-nombre').value = row.Nombre || "";
-            document.getElementById('f-telefono').value = row.Telefono || "";
+            document.getElementById('f-telefono').value = formatPhone(row.Telefono);
             document.getElementById('f-temp').value = (row.Temperatura || "frio").toLowerCase();
             
             let d = (row.Dia_Cita || "").toLowerCase().replace('é', 'e');
