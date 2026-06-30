@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const crypto = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
@@ -37,6 +38,10 @@ app.post('/webhook/n8n', (req, res) => {
         
         // Asumimos que n8n envía un Array completo (todas las filas del sheet)
         if (Array.isArray(data)) {
+            // Asignar ID único a cada registro basado en el teléfono o random
+            data.forEach((row, i) => {
+                row.id = row.Telefono ? row.Telefono.replace(/[^0-9]/g, '') + "_" + i : crypto.randomUUID();
+            });
             cacheDatos = data;
             // Emitimos evento a todos los clientes conectados (navegadores)
             io.emit('actualizacion_completa', cacheDatos);
@@ -51,6 +56,25 @@ app.post('/webhook/n8n', (req, res) => {
     } catch (error) {
         console.error('Error procesando webhook:', error);
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Endpoint para guardar cambios desde el Dashboard
+app.post('/api/update', (req, res) => {
+    try {
+        const updatedRow = req.body;
+        if (!updatedRow || !updatedRow.id) return res.status(400).json({ error: "Falta ID" });
+        
+        const index = cacheDatos.findIndex(r => r.id === updatedRow.id);
+        if (index !== -1) {
+            cacheDatos[index] = { ...cacheDatos[index], ...updatedRow };
+            io.emit('actualizacion_completa', cacheDatos); // Refresca en todos lados
+            res.json({ success: true, data: cacheDatos[index] });
+        } else {
+            res.status(404).json({ error: "No encontrado" });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
