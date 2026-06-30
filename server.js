@@ -66,7 +66,11 @@ app.post('/webhook/n8n', (req, res) => {
             console.log(`[Webhook] Recibidas ${data.length} filas. Broadcast enviado.`);
         } else {
             // Si n8n envía solo un objeto (un paciente nuevo o actualizado)
-            if (!data.id) data.id = data.Telefono ? data.Telefono.replace(/[^0-9]/g, '') : crypto.randomUUID();
+            if (!data.Telefono || data.Telefono.trim() === "") {
+                console.log('[Webhook] Ignorado: Datos vacíos sin teléfono');
+                return res.status(200).json({ success: true, message: 'Ignorado por falta de teléfono' });
+            }
+            if (!data.id) data.id = data.Telefono.replace(/[^0-9]/g, '');
             const idx = cacheDatos.findIndex(r => r.id === data.id);
             if (idx !== -1) {
                 // Actualizar solo los campos que no estén vacíos para no borrar datos existentes
