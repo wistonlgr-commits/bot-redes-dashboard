@@ -484,11 +484,12 @@
             if (!colId) return; 
 
             let hourNum = 8; let minNum = 0;
-            if (hora.includes(':')) {
-                let parts = hora.split(':');
-                hourNum = parseInt(parts[0]);
-                minNum = parseInt(parts[1].replace(/[^0-9]/g, ''));
-                if (hora.includes('pm') && hourNum !== 12) hourNum += 12;
+            let timeMatch = hora.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+            if (timeMatch) {
+                hourNum = parseInt(timeMatch[1], 10);
+                minNum = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+                if (hora.includes('pm') && hourNum < 12) hourNum += 12;
+                if (hora.includes('am') && hourNum === 12) hourNum = 0;
             }
             const topPx = ((hourNum - 8) * 65) + (minNum * (65/60)); 
             const col = document.getElementById(colId);
