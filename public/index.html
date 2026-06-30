@@ -3,146 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda Médica - Dr. Ángel Trejo</title>
+    <title>Dr. Ángel Trejo Alvarado</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #7e4db8; 
-            --primary-light: #9b6cda;
-            --sidebar-bg: #f8f9fc;
+            /* Medical Professional Palette */
+            --primary: #1e3a8a; /* Navy Blue */
+            --primary-light: #3b82f6; /* Bright Blue */
+            --sidebar-bg: #f8fafc;
             --bg-color: #ffffff;
-            --text-main: #333333;
-            --text-muted: #777777;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
             --border-color: #e2e8f0;
             --temp-caliente: #ef4444;
             --temp-tibio: #f59e0b;
-            --temp-frio: #3b82f6;
+            --temp-frio: #0ea5e9;
+            --success: #10b981;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background-color: #f1f5f9; color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
         /* Top App Bar */
-        .app-bar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: linear-gradient(90deg, #6c2b99 0%, #8a4ca8 100%); display: flex; align-items: center; padding: 0 20px; color: white; z-index: 100; }
-        .app-bar-icons { margin-left: auto; display: flex; gap: 15px; }
+        .app-bar { position: fixed; top: 0; left: 0; right: 0; height: 55px; background: #ffffff; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 20px; color: var(--primary); z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+        .app-bar h2 { font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-left: 15px;}
+        .menu-btn { font-size: 1.2rem; cursor: pointer; color: var(--text-muted); padding: 5px; border-radius: 4px; transition: 0.2s; }
+        .menu-btn:hover { background: #f1f5f9; color: var(--primary); }
+        .app-bar-icons { margin-left: auto; display: flex; gap: 15px; align-items: center;}
         
+        .sync-indicator { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+        .sync-indicator.active { color: var(--success); }
+
         /* Main Layout */
-        .app-container { display: flex; width: 100%; height: calc(100vh - 50px); margin-top: 50px; background: var(--bg-color); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); overflow: hidden; }
+        .app-container { display: flex; width: 100%; height: calc(100vh - 55px); margin-top: 55px; background: var(--bg-color); }
 
         /* Narrow Sidebar */
-        .icon-sidebar { width: 60px; background: var(--bg-color); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 25px; }
-        .icon-sidebar i { font-size: 1.4rem; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
-        .icon-sidebar i:hover, .icon-sidebar i.active { color: var(--primary); }
+        .icon-sidebar { width: 70px; background: #ffffff; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 15px; z-index: 10; }
+        .nav-icon { width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; border-radius: 10px; font-size: 1.3rem; color: var(--text-muted); cursor: pointer; transition: 0.2s; position: relative;}
+        .nav-icon:hover { background: #f1f5f9; color: var(--primary-light); }
+        .nav-icon.active { background: #eff6ff; color: var(--primary-light); }
+        
+        /* Secondary Sidebar (Expandable) */
+        .sidebar { width: 320px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; overflow-y: auto; transition: margin-left 0.3s ease; }
+        .sidebar.collapsed { margin-left: -320px; }
 
-        /* Secondary Sidebar */
-        .sidebar { width: 320px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; overflow-y: auto; }
-        .sidebar-header { padding: 20px; font-size: 1.5rem; font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--border-color); }
+        .sidebar-header { padding: 20px; font-size: 1.1rem; font-weight: 700; color: var(--primary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;}
         .profile-section { padding: 20px; text-align: center; border-bottom: 1px solid var(--border-color); }
-        .profile-img { width: 80px; height: 80px; border-radius: 50%; background: #cbd5e1; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white; }
+        .profile-img { width: 70px; height: 70px; border-radius: 50%; background: #e2e8f0; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: var(--primary); border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .stat-box { background: white; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .stat-value { font-size: 1.2rem; font-weight: 700; color: var(--text-main); }
-        .stat-label { font-size: 0.75rem; color: var(--text-muted); }
+        .stat-box { background: white; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02);}
+        .stat-value { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-top: 4px; }
 
         /* Waitlist */
         .waiting-room { padding: 20px; }
-        .waiting-room-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; color: var(--text-main); }
-        .patient-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
-        .patient-card:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-color: var(--primary-light); }
+        .waiting-room-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 15px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+        .patient-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .patient-card:hover { border-color: var(--primary-light); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
         .temp-indicator { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
-        .patient-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; flex-shrink: 0; }
+        .patient-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; flex-shrink: 0; }
         .patient-info { flex: 1; min-width: 0; }
-        .patient-name { font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .patient-name { font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .patient-details { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .bot-badge { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; margin-left: 5px; font-weight: 600; vertical-align: middle;}
-
-        /* Main Content */
-        .main-content { flex: 1; display: flex; flex-direction: column; background: white; }
-        .toolbar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
-        .btn-sync { padding: 8px 16px; background: #f0fdf4; border: 1px solid #10b981; color: #047857; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        
+        /* Main Content Area */
+        .main-content { flex: 1; display: flex; flex-direction: column; background: #f8fafc; position: relative;}
+        .view-section { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+        .view-section.active { display: flex; }
+        
+        .toolbar { padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); background: white;}
+        .toolbar-title { font-size: 1.1rem; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 8px; }
 
         /* Calendar Grid */
         .calendar-container { flex: 1; overflow: auto; position: relative; padding: 20px; }
-        .calendar-grid { display: grid; grid-template-columns: 60px repeat(5, 1fr); min-width: 800px; border: 1px solid var(--border-color); border-radius: 8px; background: #fafafa; }
-        .grid-header { text-align: center; padding: 15px; font-weight: 600; font-size: 0.85rem; color: var(--text-main); border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); background: white; }
-        .time-column { display: flex; flex-direction: column; border-right: 1px solid var(--border-color); background: white; }
-        .time-slot { height: 60px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+        .calendar-grid { display: grid; grid-template-columns: 60px repeat(5, 1fr); min-width: 800px; border: 1px solid var(--border-color); border-radius: 12px; background: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.02); overflow: hidden;}
+        .grid-header { text-align: center; padding: 15px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); background: #f8fafc; }
+        .time-column { display: flex; flex-direction: column; border-right: 1px solid var(--border-color); background: #f8fafc; }
+        .time-slot { height: 65px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
         .day-column { display: flex; flex-direction: column; border-right: 1px solid var(--border-color); position: relative; }
         .day-column:last-child { border-right: none; }
-        .grid-cell { height: 60px; border-bottom: 1px solid #f0f0f0; position: relative; }
+        .grid-cell { height: 65px; border-bottom: 1px solid #f1f5f9; position: relative; }
 
         /* Appointments */
-        .appointment { position: absolute; left: 2px; right: 2px; border-radius: 6px; padding: 6px 8px; font-size: 0.75rem; color: white; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s; z-index: 10; border-left: 3px solid rgba(0,0,0,0.2); }
-        .appointment:hover { transform: scale(1.02); z-index: 20; }
-        .apt-title { font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .apt-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9; }
+        .appointment { position: absolute; left: 4px; right: 4px; border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; color: white; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s; z-index: 10; border-left: 4px solid rgba(0,0,0,0.2); }
+        .appointment:hover { transform: scale(1.02); z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.15);}
+        .apt-title { font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; justify-content: space-between;}
+        .apt-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9; font-size: 0.75rem;}
+
+        /* Patients List View */
+        .patients-container { flex: 1; overflow: auto; padding: 25px; }
+        .patients-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid var(--border-color); }
+        .patients-table th { background: #f8fafc; padding: 15px; text-align: left; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
+        .patients-table td { padding: 15px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-main); vertical-align: middle; }
+        .patients-table tr:hover { background: #f8fafc; }
+        .patients-table tr:last-child td { border-bottom: none; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .btn-action { padding: 6px 12px; background: #eff6ff; color: var(--primary-light); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; transition: 0.2s;}
+        .btn-action:hover { background: var(--primary-light); color: white; }
 
         /* Modal Editable */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal { background: white; width: 450px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px);}
+        .modal { background: white; width: 600px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: slideUp 0.3s ease-out; display: flex; flex-direction: column; max-height: 90vh;}
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header { padding: 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto;}
+        .modal-header { padding: 20px 25px; background: white; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .modal-header h3 { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+        .modal-header i { color: var(--text-muted); font-size: 1.2rem; transition: 0.2s;}
+        .modal-header i:hover { color: #ef4444; }
         
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;}
-        .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; font-family: inherit; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .modal-body { padding: 25px; overflow-y: auto; flex: 1; }
+        .form-section-title { font-size: 0.85rem; font-weight: 700; color: var(--primary-light); text-transform: uppercase; margin-bottom: 15px; margin-top: 10px; border-bottom: 2px solid #eff6ff; padding-bottom: 5px;}
         
-        .modal-footer { padding: 15px 20px; background: #f8f9fc; display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); }
-        .modal-footer button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
+        .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.2s; background: #ffffff;}
+        .form-control:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .form-control:read-only { background: #f8fafc; color: var(--text-muted); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         
+        .modal-footer { padding: 20px 25px; background: #f8fafc; display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); }
+        .modal-footer button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: 0.2s; display: flex; align-items: center; gap: 8px;}
+        .btn-primary { background: var(--primary-light); color: white; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-outline { background: white; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { background: #f1f5f9; }
+
     </style>
 </head>
 <body>
 
     <div class="app-bar">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <i class="fa-solid fa-bars"></i>
-            <h2>Dr. Ángel Trejo Alvarado</h2>
-        </div>
+        <i class="fa-solid fa-bars menu-btn" onclick="toggleSidebar()"></i>
+        <h2>Dr. Ángel Trejo Alvarado</h2>
         <div class="app-bar-icons">
-            <button class="btn-sync" id="btn-sync">
-                <i class="fa-solid fa-rotate"></i> Conectando...
-            </button>
+            <span class="sync-indicator" id="sync-indicator">
+                <i class="fa-solid fa-cloud"></i> Esperando conexión...
+            </span>
         </div>
     </div>
 
     <div class="app-container">
         
+        <!-- Primary Narrow Sidebar -->
         <div class="icon-sidebar">
-            <i class="fa-solid fa-user-doctor active"></i>
-            <i class="fa-solid fa-calendar-days"></i>
-            <i class="fa-solid fa-comments"></i>
+            <div class="nav-icon active" onclick="switchView('view-calendar', this)" title="Agenda"><i class="fa-solid fa-calendar-day"></i></div>
+            <div class="nav-icon" onclick="switchView('view-patients', this)" title="Pacientes"><i class="fa-solid fa-users"></i></div>
+            <div style="flex:1"></div>
+            <div class="nav-icon" onclick="alert('Configuración en desarrollo')" title="Ajustes"><i class="fa-solid fa-gear"></i></div>
         </div>
 
-        <div class="sidebar">
-            <div class="sidebar-header">Agenda Inteligente</div>
+        <!-- Secondary Information Sidebar -->
+        <div class="sidebar" id="main-sidebar">
+            <div class="sidebar-header">
+                Resumen Clínico
+            </div>
             <div class="profile-section">
                 <div class="profile-img"><i class="fa-solid fa-user-md"></i></div>
-                <h3>Dr. Ángel Trejo</h3>
-                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 5px;">Flebología y Várices</p>
+                <h3 style="color: var(--primary);">Dr. Ángel Trejo</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">Especialista en Flebología</p>
                 <div class="stats-grid">
-                    <div class="stat-box"><div class="stat-value" id="stat-agendados">0</div><div class="stat-label">Agendados</div></div>
-                    <div class="stat-box"><div class="stat-value" id="stat-prospectos">0</div><div class="stat-label">Prospectos</div></div>
+                    <div class="stat-box"><div class="stat-value" id="stat-agendados">0</div><div class="stat-label">Citas</div></div>
+                    <div class="stat-box"><div class="stat-value" id="stat-prospectos">0</div><div class="stat-label">Pendientes</div></div>
                 </div>
             </div>
 
             <div class="waiting-room">
-                <div class="waiting-room-title">Pacientes Pendientes / Sin Fecha</div>
+                <div class="waiting-room-title">Seguimiento / Sin Agendar</div>
                 <div id="waitlist-container">
-                    <p style="text-align: center; color: #999; font-size: 0.8rem; margin-top: 20px;">Esperando datos de WhatsApp...</p>
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 20px;"><i class="fa-solid fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display:block; opacity:0.5"></i>Bandeja vacía</p>
                 </div>
             </div>
         </div>
 
-        <div class="main-content">
+        <!-- VIEW 1: CALENDAR -->
+        <div class="main-content view-section active" id="view-calendar">
             <div class="toolbar">
-                <div style="font-weight: 600; color: var(--primary);"><i class="fa-regular fa-calendar"></i> Vista Semanal</div>
+                <div class="toolbar-title"><i class="fa-regular fa-calendar-check"></i> Agenda Semanal</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                    <i class="fa-regular fa-clock"></i> Mar 14:00 | Mié 08:00 | Jue 13:00
+                </div>
             </div>
 
             <div class="calendar-container">
@@ -160,43 +201,63 @@
                 </div>
             </div>
         </div>
+
+        <!-- VIEW 2: PATIENTS LIST -->
+        <div class="main-content view-section" id="view-patients">
+            <div class="toolbar">
+                <div class="toolbar-title"><i class="fa-solid fa-users-viewfinder"></i> Base de Datos de Pacientes</div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="search-patient" placeholder="Buscar por nombre..." class="form-control" style="width: 250px; padding: 6px 12px;" onkeyup="filterTable()">
+                </div>
+            </div>
+            <div class="patients-container">
+                <table class="patients-table">
+                    <thead>
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Contacto</th>
+                            <th>Cita Asignada</th>
+                            <th>Interés</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patients-table-body">
+                        <!-- Llenado por JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <!-- Modal Formulario -->
+    <!-- Modal Administrativo -->
     <div class="modal-overlay" id="patientModal">
         <div class="modal">
             <div class="modal-header">
-                <h3 style="font-size: 1.1rem; font-weight: 600;">Administrar Paciente</h3>
+                <h3><i class="fa-solid fa-file-medical"></i> Expediente del Paciente</h3>
                 <i class="fa-solid fa-xmark" style="cursor: pointer;" onclick="closeModal()"></i>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="f-id">
                 
-                <div class="form-group">
-                    <label>Nombre del Paciente</label>
-                    <input type="text" id="f-nombre" class="form-control">
-                </div>
-                
+                <div class="form-section-title">Datos Personales</div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Teléfono <i class="fa-brands fa-whatsapp" style="color:#25D366"></i></label>
-                        <input type="text" id="f-telefono" class="form-control" readonly style="background: #f1f5f9;">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="f-nombre" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>Temperatura</label>
-                        <select id="f-temp" class="form-control">
-                            <option value="caliente">🔥 Caliente (Listo)</option>
-                            <option value="tibio">⚡ Tibio (Dudas)</option>
-                            <option value="frio">❄️ Frío (Informativo)</option>
-                        </select>
+                        <label>Teléfono <i class="fa-brands fa-whatsapp" style="color:#25D366"></i></label>
+                        <input type="text" id="f-telefono" class="form-control" readonly>
                     </div>
                 </div>
 
+                <div class="form-section-title">Gestión de Cita</div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Día de la Cita</label>
+                        <label>Día Programado</label>
                         <select id="f-dia" class="form-control">
-                            <option value="">-- Sin asignar --</option>
+                            <option value="">-- Sin Fecha --</option>
                             <option value="lunes">Lunes</option>
                             <option value="martes">Martes</option>
                             <option value="miercoles">Miércoles</option>
@@ -205,41 +266,57 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Hora (Ej: 2:00 pm)</label>
-                        <input type="text" id="f-hora" class="form-control" placeholder="10:00 am">
+                        <label>Hora Exacta</label>
+                        <input type="text" id="f-hora" class="form-control" placeholder="Ej: 14:30">
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Motivo de Consulta / Status</label>
-                    <input type="text" id="f-motivo" class="form-control">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Clasificación (CRM)</label>
+                        <select id="f-temp" class="form-control">
+                            <option value="caliente">Alta Prioridad / Confirmado (Caliente)</option>
+                            <option value="tibio">En Evaluación (Tibio)</option>
+                            <option value="frio">Solo Información (Frío)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estado Clínico</label>
+                        <input type="text" id="f-motivo" class="form-control" placeholder="Motivo de consulta">
+                    </div>
                 </div>
 
+                <div class="form-section-title">Historial Bot IA</div>
                 <div class="form-group">
-                    <label>Resumen del Asistente IA</label>
-                    <textarea id="f-resumen" class="form-control" rows="3" readonly style="background: #f1f5f9; resize: none;"></textarea>
+                    <label>Resumen Automático</label>
+                    <textarea id="f-resumen" class="form-control" rows="2" readonly></textarea>
+                </div>
+                
+                <div class="form-section-title">Notas Médicas Privadas</div>
+                <div class="form-group">
+                    <label>Observaciones (Solo visibles aquí)</label>
+                    <textarea id="f-notas" class="form-control" rows="2" placeholder="Escribe notas sobre el diagnóstico o seguimiento..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
                 <div>
-                    <button class="btn-success" onclick="marcarAtendido()"><i class="fa-solid fa-check"></i> Atendido</button>
+                    <button class="btn-success" onclick="marcarAtendido()"><i class="fa-solid fa-check-double"></i> Marcar Atendido</button>
                 </div>
-                <div>
+                <div style="display: flex; gap: 10px;">
                     <button class="btn-outline" onclick="closeModal()">Cancelar</button>
-                    <button class="btn-primary" onclick="saveChanges()">Guardar Cambios</button>
+                    <button class="btn-primary" onclick="saveChanges()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Socket.io Client -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io(); 
-        const btnSync = document.getElementById('btn-sync');
+        const syncInd = document.getElementById('sync-indicator');
         let localData = [];
 
-        // Tiempo
+        // Generar Calendario
         const times = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
         const timeLabels = document.getElementById('time-labels');
         times.forEach(t => timeLabels.innerHTML += `<div class="time-slot">${t}</div>`);
@@ -248,23 +325,39 @@
             times.forEach(() => col.innerHTML += `<div class="grid-cell"></div>`);
         });
 
-        // Eventos
+        // Navegación
+        function toggleSidebar() {
+            document.getElementById('main-sidebar').classList.toggle('collapsed');
+        }
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-icon').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // WebSockets
         socket.on('actualizacion_completa', (data) => {
             localData = data || [];
-            btnSync.innerHTML = '<i class="fa-solid fa-bolt"></i> Actualizado';
-            btnSync.style.color = '#047857';
-            setTimeout(() => {
-                btnSync.innerHTML = '<i class="fa-solid fa-rotate"></i> En Vivo';
-                btnSync.style.color = '#3b82f6';
-            }, 2000);
+            updateSyncStatus('Sincronizado', true);
             renderDashboard(localData);
         });
 
         socket.on('connect', () => {
-            btnSync.innerHTML = '<i class="fa-solid fa-rotate"></i> En Vivo';
-            btnSync.style.color = '#3b82f6';
+            updateSyncStatus('Conectado', true);
             fetchInitialData();
         });
+
+        socket.on('disconnect', () => {
+            updateSyncStatus('Sin Conexión', false);
+        });
+
+        function updateSyncStatus(text, isGood) {
+            syncInd.innerHTML = isGood ? `<i class="fa-solid fa-check-circle"></i> ${text}` : `<i class="fa-solid fa-triangle-exclamation"></i> ${text}`;
+            if(isGood) syncInd.classList.add('active');
+            else syncInd.classList.remove('active');
+        }
 
         async function fetchInitialData() {
             try {
@@ -283,13 +376,15 @@
 
         function renderDashboard(data) {
             const waitlist = document.getElementById('waitlist-container');
+            const tableBody = document.getElementById('patients-table-body');
             waitlist.innerHTML = ''; 
+            tableBody.innerHTML = '';
             document.querySelectorAll('.appointment').forEach(e => e.remove());
 
             let agendados = 0; let prospectos = 0;
 
             if(data.length === 0) {
-                waitlist.innerHTML = '<p style="text-align: center; color: #999; font-size: 0.8rem; margin-top: 20px;">No hay pacientes aún.</p>';
+                waitlist.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 20px;"><i class="fa-solid fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display:block; opacity:0.5"></i>Bandeja vacía</p>';
             }
 
             data.forEach(row => {
@@ -298,28 +393,51 @@
                 const dia = (row.Dia_Cita || "").toLowerCase().trim();
                 const hora = (row.Hora_Cita || "").toLowerCase().trim();
                 const rowJson = JSON.stringify(row).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-
-                // Si está marcado como atendido, no lo renderizamos en pendientes (opcional) o le ponemos un estilo
                 const isAtendido = (row.Motivo_Consulta || "").includes("[ATENDIDO]");
+                const tempColor = getTempColor(temp);
+                const init = nombre.substring(0,2).toUpperCase();
 
+                // Llenar vista de Calendario / Waitlist
                 if (dia && hora && dia !== "no") {
                     agendados++;
                     placeInCalendar(row, rowJson, isAtendido);
                 } else {
                     prospectos++;
-                    const tempColor = getTempColor(temp);
-                    const init = nombre.substring(0,2).toUpperCase();
                     waitlist.innerHTML += `
-                        <div class="patient-card" onclick='openModal(${rowJson})' style="opacity: ${isAtendido ? '0.5' : '1'}">
+                        <div class="patient-card" onclick='openModal(${rowJson})' style="opacity: ${isAtendido ? '0.6' : '1'}">
                             <div class="temp-indicator" style="background-color: ${tempColor}"></div>
                             <div class="patient-avatar" style="background: ${tempColor}">${init}</div>
                             <div class="patient-info">
-                                <div class="patient-name">${nombre} ${isAtendido ? '✅' : ''}</div>
-                                <div class="patient-details"><i class="fa-solid fa-clock"></i> ${row.Ultima_Interaccion || ""}</div>
+                                <div class="patient-name">${nombre} ${isAtendido ? '<i class="fa-solid fa-check-double" style="color:var(--success)"></i>' : ''}</div>
+                                <div class="patient-details"><i class="fa-regular fa-clock"></i> ${row.Ultima_Interaccion || "Reciente"}</div>
                             </div>
                         </div>
                     `;
                 }
+
+                // Llenar Tabla General de Pacientes
+                let badgeClass = 'bg-gray-200 text-gray-700';
+                if(temp==='caliente') badgeClass = 'background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;';
+                if(temp==='tibio') badgeClass = 'background: #fef3c7; color: #b45309; border: 1px solid #fcd34d;';
+                if(temp==='frio') badgeClass = 'background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;';
+
+                let aptText = (dia && hora && dia !== "no") ? `${dia.toUpperCase()} ${hora}` : '<span style="color:#94a3b8">Sin agendar</span>';
+                
+                tableBody.innerHTML += `
+                    <tr class="patient-tr">
+                        <td>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div class="patient-avatar" style="background: ${tempColor}; width:30px; height:30px; font-size:0.75rem;">${init}</div>
+                                <div style="font-weight:600">${nombre}</div>
+                            </div>
+                        </td>
+                        <td style="color: var(--text-muted);"><i class="fa-brands fa-whatsapp"></i> ${row.Telefono || "-"}</td>
+                        <td>${aptText}</td>
+                        <td><span class="status-badge" style="${badgeClass}">${temp.toUpperCase()}</span></td>
+                        <td>${isAtendido ? '<span style="color:var(--success); font-weight:600;"><i class="fa-solid fa-check"></i> Atendido</span>' : 'Pendiente'}</td>
+                        <td><button class="btn-action" onclick='openModal(${rowJson})'>Administrar</button></td>
+                    </tr>
+                `;
             });
             document.getElementById('stat-agendados').innerText = agendados;
             document.getElementById('stat-prospectos').innerText = prospectos;
@@ -340,20 +458,30 @@
             if (hora.includes(':')) {
                 let parts = hora.split(':');
                 hourNum = parseInt(parts[0]);
-                minNum = parseInt(parts[1]);
+                minNum = parseInt(parts[1].replace(/[^0-9]/g, ''));
                 if (hora.includes('pm') && hourNum !== 12) hourNum += 12;
             }
-            const topPx = ((hourNum - 8) * 60) + (minNum); 
+            const topPx = ((hourNum - 8) * 65) + (minNum * (65/60)); 
             const col = document.getElementById(colId);
             if (col) {
                 const tempColor = getTempColor(row.Temperatura);
                 col.innerHTML += `
                     <div class="appointment" style="top: ${topPx}px; height: 60px; background-color: ${tempColor}; opacity: ${isAtendido ? '0.6' : '1'}" onclick='openModal(${rowJson})'>
-                        <div class="apt-title">${isAtendido ? '✅' : ''} ${hora.toUpperCase()} - ${row.Nombre}</div>
+                        <div class="apt-title"><span>${hora.toUpperCase()}</span> ${isAtendido ? '<i class="fa-solid fa-check"></i>' : ''}</div>
+                        <div class="apt-desc" style="font-weight:600">${row.Nombre}</div>
                         <div class="apt-desc">${row.Motivo_Consulta || ""}</div>
                     </div>
                 `;
             }
+        }
+
+        function filterTable() {
+            let input = document.getElementById("search-patient").value.toLowerCase();
+            let trs = document.querySelectorAll(".patient-tr");
+            trs.forEach(tr => {
+                let text = tr.innerText.toLowerCase();
+                tr.style.display = text.includes(input) ? "" : "none";
+            });
         }
 
         // Modal Logic
@@ -368,6 +496,7 @@
             document.getElementById('f-hora').value = row.Hora_Cita || "";
             document.getElementById('f-motivo').value = row.Motivo_Consulta || "";
             document.getElementById('f-resumen').value = row.Resumen || "";
+            document.getElementById('f-notas').value = row.Notas || "";
             
             document.getElementById('patientModal').style.display = 'flex';
         }
@@ -381,19 +510,22 @@
                 Temperatura: document.getElementById('f-temp').value,
                 Dia_Cita: document.getElementById('f-dia').value,
                 Hora_Cita: document.getElementById('f-hora').value,
-                Motivo_Consulta: document.getElementById('f-motivo').value
+                Motivo_Consulta: document.getElementById('f-motivo').value,
+                Notas: document.getElementById('f-notas').value
             };
 
             try {
-                btnSync.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+                updateSyncStatus('Guardando...', true);
                 await fetch('/api/update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
                 closeModal();
+                updateSyncStatus('Sincronizado', true);
             } catch(e) {
                 alert("Error al guardar");
+                updateSyncStatus('Error', false);
             }
         }
 
