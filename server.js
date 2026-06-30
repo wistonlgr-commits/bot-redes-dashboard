@@ -94,6 +94,42 @@ app.post('/api/update', (req, res) => {
     }
 });
 
+// Endpoint para agregar paciente manualmente
+app.post('/api/add', (req, res) => {
+    try {
+        const newRow = req.body;
+        // Generar un id (usando telefono o random)
+        newRow.id = newRow.Telefono ? newRow.Telefono.replace(/[^0-9]/g, '') : crypto.randomUUID();
+        
+        // Evitar duplicados si existe el mismo id
+        const index = cacheDatos.findIndex(r => r.id === newRow.id);
+        if (index !== -1) {
+            cacheDatos[index] = { ...cacheDatos[index], ...newRow };
+        } else {
+            cacheDatos.push(newRow);
+        }
+        
+        io.emit('actualizacion_completa', cacheDatos);
+        res.json({ success: true, data: newRow });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Endpoint para eliminar paciente
+app.post('/api/delete', (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ error: "Falta ID" });
+        
+        cacheDatos = cacheDatos.filter(r => r.id !== id);
+        io.emit('actualizacion_completa', cacheDatos);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Configuración de WebSockets
 io.on('connection', (socket) => {
     console.log(`[Socket] Nuevo cliente conectado: ${socket.id}`);

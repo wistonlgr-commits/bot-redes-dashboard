@@ -167,6 +167,7 @@
         <i class="fa-solid fa-bars menu-btn" onclick="toggleSidebar()"></i>
         <h2>Dr. Ángel Trejo Alvarado</h2>
         <div class="app-bar-icons">
+            <button class="btn-primary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="openModal('new')"><i class="fa-solid fa-plus"></i> Nuevo Paciente</button>
             <span class="sync-indicator" id="sync-indicator">
                 <i class="fa-solid fa-cloud"></i> Esperando conexión...
             </span>
@@ -328,8 +329,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <div>
+                <div style="display: flex; gap: 10px;">
                     <button class="btn-success" onclick="marcarAtendido()"><i class="fa-solid fa-check-double"></i> Marcar Atendido</button>
+                    <button class="btn-outline" style="color: #ef4444; border-color: #ef4444;" onclick="deletePatient()"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn-outline" onclick="closeModal()">Cancelar</button>
@@ -525,12 +527,29 @@
 
         // Modal Logic
         function openModal(id) {
+            document.getElementById('patientModal').style.display = 'flex';
+            
+            if (id === 'new') {
+                document.getElementById('f-id').value = "";
+                document.getElementById('f-nombre').value = "";
+                document.getElementById('f-telefono').value = "";
+                document.getElementById('f-telefono').removeAttribute('readonly');
+                document.getElementById('f-temp').value = "frio";
+                document.getElementById('f-dia').value = "";
+                document.getElementById('f-hora').value = "";
+                document.getElementById('f-motivo').value = "";
+                document.getElementById('f-resumen').value = "";
+                document.getElementById('f-notas').value = "";
+                return;
+            }
+
             const row = localData.find(p => p.id === id);
             if (!row) return;
             
             document.getElementById('f-id').value = row.id || "";
             document.getElementById('f-nombre').value = row.Nombre || "";
             document.getElementById('f-telefono').value = formatPhone(row.Telefono);
+            document.getElementById('f-telefono').setAttribute('readonly', true);
             document.getElementById('f-temp').value = (row.Temperatura || "frio").toLowerCase();
             
             let d = (row.Dia_Cita || "").toLowerCase().replace('é', 'e');
@@ -539,8 +558,6 @@
             document.getElementById('f-motivo').value = row.Motivo_Consulta || "";
             document.getElementById('f-resumen').value = row.Resumen || "";
             document.getElementById('f-notas').value = row.Notas || "";
-            
-            document.getElementById('patientModal').style.display = 'flex';
         }
 
         function closeModal() { document.getElementById('patientModal').style.display = 'none'; }
@@ -549,6 +566,7 @@
             const data = {
                 id: document.getElementById('f-id').value,
                 Nombre: document.getElementById('f-nombre').value,
+                Telefono: document.getElementById('f-telefono').value,
                 Temperatura: document.getElementById('f-temp').value,
                 Dia_Cita: document.getElementById('f-dia').value,
                 Hora_Cita: document.getElementById('f-hora').value,
@@ -556,9 +574,11 @@
                 Notas: document.getElementById('f-notas').value
             };
 
+            const endpoint = data.id ? '/api/update' : '/api/add';
+
             try {
                 updateSyncStatus('Guardando...', true);
-                await fetch('/api/update', {
+                await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -568,6 +588,26 @@
             } catch(e) {
                 alert("Error al guardar");
                 updateSyncStatus('Error', false);
+            }
+        }
+
+        async function deletePatient() {
+            const id = document.getElementById('f-id').value;
+            if (!id) { closeModal(); return; }
+            if (confirm("¿Estás seguro de que deseas eliminar permanentemente esta ficha?")) {
+                try {
+                    updateSyncStatus('Eliminando...', true);
+                    await fetch('/api/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id })
+                    });
+                    closeModal();
+                    updateSyncStatus('Sincronizado', true);
+                } catch(e) {
+                    alert("Error al eliminar");
+                    updateSyncStatus('Error', false);
+                }
             }
         }
 
