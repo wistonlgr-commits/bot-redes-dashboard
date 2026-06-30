@@ -19,10 +19,28 @@ app.use(express.static('public')); // Sirve el dashboard.html y recursos
 
 // Caché en memoria para cuando alguien abre el dashboard
 let cacheDatos = [];
+// Estado global del Bot
+let botActivo = true;
 
 // Ruta de prueba
 app.get('/api/status', (req, res) => {
-    res.json({ status: 'online', clients: io.engine.clientsCount });
+    res.json({ status: 'online', clients: io.engine.clientsCount, botActivo });
+});
+
+// Endpoint para que n8n consulte si el bot debe responder o no
+app.get('/api/bot-status', (req, res) => {
+    res.json({ active: botActivo });
+});
+
+// Endpoint para encender/apagar el bot desde el Dashboard
+app.post('/api/toggle-bot', (req, res) => {
+    try {
+        botActivo = req.body.active;
+        io.emit('bot_status_changed', botActivo);
+        res.json({ success: true, active: botActivo });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Endpoint para que el Frontend obtenga los datos al cargar por primera vez

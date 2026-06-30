@@ -167,6 +167,9 @@
         <i class="fa-solid fa-bars menu-btn" onclick="toggleSidebar()"></i>
         <h2>Dr. Ángel Trejo Alvarado</h2>
         <div class="app-bar-icons">
+            <button id="btn-killswitch" onclick="toggleBot()" style="padding: 6px 12px; font-size: 0.85rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; background: #def7ec; color: #03543f; transition: 0.2s;">
+                <i class="fa-solid fa-toggle-on"></i> Bot Activo
+            </button>
             <button class="btn-primary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="openModal('new')"><i class="fa-solid fa-plus"></i> Nuevo Paciente</button>
             <span class="sync-indicator" id="sync-indicator">
                 <i class="fa-solid fa-cloud"></i> Esperando conexión...
@@ -346,6 +349,7 @@
         const socket = io(); 
         const syncInd = document.getElementById('sync-indicator');
         let localData = [];
+        let isBotActive = true;
 
         // Generar Calendario
         const times = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
@@ -384,6 +388,11 @@
             updateSyncStatus('Sin Conexión', false);
         });
 
+        socket.on('bot_status_changed', (status) => {
+            isBotActive = status;
+            renderBotStatus();
+        });
+
         function updateSyncStatus(text, isGood) {
             syncInd.innerHTML = isGood ? `<i class="fa-solid fa-check-circle"></i> ${text}` : `<i class="fa-solid fa-triangle-exclamation"></i> ${text}`;
             if(isGood) syncInd.classList.add('active');
@@ -395,7 +404,38 @@
                 const response = await fetch('/api/data');
                 localData = await response.json();
                 renderDashboard(localData);
+
+                const statusRes = await fetch('/api/bot-status');
+                const statusData = await statusRes.json();
+                isBotActive = statusData.active;
+                renderBotStatus();
             } catch (error) { console.error(error); }
+        }
+
+        function renderBotStatus() {
+            const btn = document.getElementById('btn-killswitch');
+            if (isBotActive) {
+                btn.style.background = '#def7ec';
+                btn.style.color = '#03543f';
+                btn.innerHTML = '<i class="fa-solid fa-toggle-on"></i> Bot Activo';
+            } else {
+                btn.style.background = '#fde8e8';
+                btn.style.color = '#9b1c1c';
+                btn.innerHTML = '<i class="fa-solid fa-toggle-off"></i> Bot Apagado';
+            }
+        }
+
+        async function toggleBot() {
+            try {
+                const newState = !isBotActive;
+                await fetch('/api/toggle-bot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ active: newState })
+                });
+            } catch(e) {
+                alert("Error al cambiar estado del bot");
+            }
         }
 
         function getTempColor(temp) {
