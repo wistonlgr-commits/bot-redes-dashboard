@@ -50,8 +50,19 @@ app.post('/webhook/n8n', (req, res) => {
             // Si n8n envía solo un objeto (un paciente nuevo o actualizado)
             if (!data.id) data.id = data.Telefono ? data.Telefono.replace(/[^0-9]/g, '') : crypto.randomUUID();
             const idx = cacheDatos.findIndex(r => r.id === data.id);
-            if (idx !== -1) cacheDatos[idx] = { ...cacheDatos[idx], ...data };
-            else cacheDatos.push(data);
+            if (idx !== -1) {
+                // Actualizar solo los campos que no estén vacíos para no borrar datos existentes
+                const oldData = cacheDatos[idx];
+                const newData = { ...oldData };
+                for (let key in data) {
+                    if (data[key] !== "" && data[key] !== null && data[key] !== undefined) {
+                        newData[key] = data[key];
+                    }
+                }
+                cacheDatos[idx] = newData;
+            } else {
+                cacheDatos.push(data);
+            }
             
             io.emit('actualizacion_completa', cacheDatos);
             console.log('[Webhook] Recibido y procesado dato individual');
