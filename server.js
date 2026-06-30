@@ -47,9 +47,14 @@ app.post('/webhook/n8n', (req, res) => {
             io.emit('actualizacion_completa', cacheDatos);
             console.log(`[Webhook] Recibidas ${data.length} filas. Broadcast enviado.`);
         } else {
-            // Si n8n envía solo una actualización individual (opcional)
-            console.log('[Webhook] Recibido dato individual:', data);
-            io.emit('actualizacion_individual', data);
+            // Si n8n envía solo un objeto (un paciente nuevo o actualizado)
+            if (!data.id) data.id = data.Telefono ? data.Telefono.replace(/[^0-9]/g, '') : crypto.randomUUID();
+            const idx = cacheDatos.findIndex(r => r.id === data.id);
+            if (idx !== -1) cacheDatos[idx] = { ...cacheDatos[idx], ...data };
+            else cacheDatos.push(data);
+            
+            io.emit('actualizacion_completa', cacheDatos);
+            console.log('[Webhook] Recibido y procesado dato individual');
         }
 
         res.status(200).json({ success: true, message: 'Datos recibidos y emitidos' });
