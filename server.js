@@ -294,8 +294,8 @@ if (supabaseUrl) {
 
 // Arrancar el servidor
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`=== Servidor Dashboard V2 Activo ===`);
-    console.log(`Puerto: ${PORT}`);
+    console.log(`Puerto: ${PORT} (0.0.0.0)`);
     if (!supabaseUrl) console.log("⚠️ ADVERTENCIA: No se han configurado credenciales de Supabase en .env");
 });
