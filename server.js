@@ -4,6 +4,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const WebSocket = require('ws');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,7 +22,12 @@ app.use(express.static('public')); // Sirve el dashboard.html y recursos
 // Conexión a Supabase
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_KEY || ''; // Debe ser la Service Role Key para el backend
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false },
+    realtime: {
+        transport: WebSocket
+    }
+});
 
 // Helper para emitir a todos los clientes actualizando sus datos
 async function broadcastData() {
