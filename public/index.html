@@ -530,7 +530,39 @@
         let supabase = null;
         let localData = [];
         let globalBotActive = true;
-        const socket = io();
+        let socket = null;
+
+        // ASEGURAR QUE EL FORMULARIO NO RECARGUE LA PÁGINA NUNCA
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Detiene la recarga
+            if (!supabase) {
+                alert("Error: El sistema aún se está conectando al servidor. Espera unos segundos y vuelve a intentar.");
+                return;
+            }
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errDiv = document.getElementById('auth-error');
+            
+            errDiv.style.display = 'none';
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    errDiv.innerText = error.message;
+                    errDiv.style.display = 'block';
+                } else {
+                    checkSession();
+                }
+            } catch(err) {
+                errDiv.innerText = "Error de conexión. Revisa tu internet.";
+                errDiv.style.display = 'block';
+            }
+        });
+
+        try {
+            socket = io();
+        } catch(e) {
+            console.warn("Socket.io no cargó aún");
+        }
 
         // Obtener config del servidor e inicializar
         async function initApp() {
@@ -562,22 +594,7 @@
             }
         }
 
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const errDiv = document.getElementById('auth-error');
-            
-            errDiv.style.display = 'none';
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            
-            if (error) {
-                errDiv.innerText = error.message;
-                errDiv.style.display = 'block';
-            } else {
-                checkSession();
-            }
-        });
+
 
         async function logout() {
             await supabase.auth.signOut();
