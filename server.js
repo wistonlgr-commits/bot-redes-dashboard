@@ -1,10 +1,17 @@
 require('dotenv').config();
+
+// CRITICAL: Polyfill WebSocket ANTES de importar Supabase
+// Supabase Realtime requiere WebSocket nativo (Node 22+) o un polyfill global
+const WebSocket = require('ws');
+if (!globalThis.WebSocket) {
+    globalThis.WebSocket = WebSocket;
+}
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
-const WebSocket = require('ws');
 
 const app = express();
 const server = http.createServer(app);
