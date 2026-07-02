@@ -238,6 +238,12 @@
         textarea.input-control { resize: vertical; min-height: 80px; }
         
         /* Toggle Switch */
+        
+        #export-start::-webkit-calendar-picker-indicator,
+        #export-end::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+        }
         .toggle-container { display: flex; align-items: center; justify-content: space-between; background: #F1F5F9; padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
         .toggle-label { font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; }
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
@@ -578,7 +584,7 @@
                         <label>Ciudad</label>
                         <input type="text" id="f-ciudad" class="input-control">
                     </div>
-                    <div class="form-grid">
+                    <div class="form-grid" style="grid-template-columns: 1fr; gap: 16px;">
                         <div class="input-group">
                             <label>Clasificación del Paciente</label>
                             <select id="f-temperatura" class="input-control">
