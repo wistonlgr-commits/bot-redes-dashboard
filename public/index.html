@@ -260,7 +260,8 @@
             .app-bar { padding: 0 12px; }
             .app-title { font-size: 0.95rem; margin-left: 10px; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .app-title span { display: none; } /* Ocultar el ' | Dashboard' */
-            .app-actions { gap: 8px; }
+            .app-actions { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+            .export-wrapper { display: none !important; } /* Ocultar export en móvil para ahorrar espacio */
             .app-actions .btn span { display: none; } /* Botones solo con iconos */
             .app-actions .btn { padding: 8px 12px; }
             .sync-badge { display: none; } /* Ocultar texto de sinc. en móvil */
@@ -324,7 +325,7 @@
             <button id="btn-global-bot" class="btn btn-bot" onclick="toggleGlobalBot()">
                 <i class="fa-solid fa-user-tie"></i> <span>Asistente Activa</span>
             </button>
-            <div style="display: flex; align-items: center; background: white; border-radius: 8px; padding: 4px; margin-right: 12px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <div class="export-wrapper" style="display: flex; align-items: center; background: white; border-radius: 8px; padding: 4px; margin-right: 12px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                 <div style="display: flex; align-items: center; padding: 0 8px; border-right: 1px solid var(--border-color);">
                     <span style="color: var(--text-muted); font-size: 0.75rem; margin-right: 4px; font-weight: 500;">Desde:</span>
                     <input type="date" id="export-start" style="border: none; outline: none; background: transparent; font-family: inherit; font-size: 0.8rem; color: var(--text-color); width: 100px; cursor: pointer;" title="Fecha Inicial">
@@ -336,6 +337,7 @@
                     <i class="fa-solid fa-file-excel"></i> Exportar
                 </button>
             </div>
+            <button class="btn btn-outline" style="background: #475569; color: white; border: none;" onclick="openBlockModal()"><i class="fa-solid fa-ban"></i> <span>Bloquear</span></button>
             <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Nuevo Paciente</button>
             <div class="sync-badge" id="sync-status"><i class="fa-solid fa-cloud"></i> Conectando...</div>
             <button class="btn btn-outline" style="padding: 8px; border-radius: 50%;" onclick="logout()" title="Cerrar Sesión"><i class="fa-solid fa-power-off"></i></button>
@@ -445,6 +447,7 @@
                             <option value="frio">Fríos</option>
                             <option value="tibio">Tibios</option>
                             <option value="caliente">Calientes</option>
+                            <option value="bloqueo">Bloqueos de Agenda</option>
                         </select>
                         <div class="search-box">
                             <i class="fa-solid fa-magnifying-glass"></i>
@@ -571,6 +574,56 @@
                 </div>
                 <div id="recovery-msg" style="font-size: 0.85rem; margin-bottom: 15px; display: none; padding: 10px; border-radius: 8px; font-weight: 500;"></div>
                 <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem;" onclick="saveRecoveredPassword()">Actualizar Contraseña</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BLOQUEO DE AGENDA -->
+    <div class="modal-overlay" id="block-modal">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-ban" style="color: #475569;"></i> Bloquear Agenda</div>
+                <button class="close-btn" onclick="closeBlockModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid" style="grid-template-columns: 1fr; gap: 16px;">
+                    <div class="input-group">
+                        <label>Tipo de Bloqueo</label>
+                        <select id="b-tipo" class="input-control" onchange="toggleBlockFields()">
+                            <option value="hora">Por Hora Específica</option>
+                            <option value="dia">Día Completo</option>
+                            <option value="semana">Semana Completa</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group" id="b-fecha-container">
+                        <label id="b-fecha-label">Fecha del Bloqueo</label>
+                        <input type="date" id="b-fecha" class="input-control">
+                    </div>
+
+                    <div class="input-group" id="b-semana-container" style="display: none;">
+                        <label>Semana del Bloqueo (Lunes a Viernes)</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="date" id="b-semana-inicio" class="input-control">
+                            <span>a</span>
+                            <input type="date" id="b-semana-fin" class="input-control">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group" id="b-hora-container">
+                        <label>Hora Específica</label>
+                        <input type="time" id="b-hora" class="input-control">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Motivo del Bloqueo</label>
+                        <input type="text" id="b-motivo" class="input-control" placeholder="Ej: Viaje a Caracas, Almuerzo, etc.">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 20px;">
+                <button class="btn btn-outline" onclick="closeBlockModal()">Cancelar</button>
+                <button class="btn btn-primary" style="background: #475569;" onclick="saveBlock()"><i class="fa-solid fa-lock"></i> Guardar Bloqueo</button>
             </div>
         </div>
     </div>
@@ -1091,10 +1144,10 @@
 
                 // Si tiene cita agendada
                 if (dia && hora && dia !== 'no') {
-                    citasCount++;
+                    if (temp !== 'bloqueo') citasCount++;
                     renderCalendarEvent(row, tColor);
                 } else {
-                    pendCount++;
+                    if (temp !== 'bloqueo') pendCount++;
                     
                     let extraBadge = '';
                     if (estadoAlerta === 'PROGRAMADA_BOT') {
@@ -1116,12 +1169,14 @@
                         </div>
                     `;
                     
-                    if (isAlertHoy) {
-                        alertlist.innerHTML += pillHtml;
-                    } else if (isAlertProxima) {
-                        document.getElementById('upcoming-alert-list').innerHTML += pillHtml;
-                    } else {
-                        waitlist.innerHTML += pillHtml;
+                    if (temp !== 'bloqueo') {
+                        if (isAlertHoy) {
+                            alertlist.innerHTML += pillHtml;
+                        } else if (isAlertProxima) {
+                            document.getElementById('upcoming-alert-list').innerHTML += pillHtml;
+                        } else {
+                            waitlist.innerHTML += pillHtml;
+                        }
                     }
                 }
 
@@ -1174,7 +1229,8 @@
         function renderCalendarEvent(row, color) {
             const diaStr = (row.Dia_Cita || "").toLowerCase().replace('é', 'e');
             const hora = (row.Hora_Cita || "").toLowerCase();
-            let colId = '';
+            const temp = (row.Temperatura || "").toLowerCase();
+            let colIds = [];
             
             // Lógica de Paginación y Fecha Real
             let eventDate = null;
@@ -1192,49 +1248,84 @@
                 endOfWeek.setDate(endOfWeek.getDate() + 5); // Lunes a Sabado
                 endOfWeek.setHours(23,59,59,999);
                 
-                if (eventDate < startOfWeek || eventDate > endOfWeek) return; // No es de esta semana visible
-                
-                const dayIndex = eventDate.getDay(); // 1=Lunes, 6=Sabado
-                if (dayIndex === 1) colId = 'col-lunes';
-                else if (dayIndex === 2) colId = 'col-martes';
-                else if (dayIndex === 3) colId = 'col-miercoles';
-                else if (dayIndex === 4) colId = 'col-jueves';
-                else if (dayIndex === 5) colId = 'col-viernes';
-                else if (dayIndex === 6) colId = 'col-sabado';
+                if (eventDate >= startOfWeek && eventDate <= endOfWeek) {
+                    if (hora === 'toda la semana') {
+                        colIds = ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes', 'col-sabado'];
+                    } else {
+                        const dayIndex = eventDate.getDay(); // 1=Lunes, 6=Sabado
+                        if (dayIndex === 1) colIds.push('col-lunes');
+                        else if (dayIndex === 2) colIds.push('col-martes');
+                        else if (dayIndex === 3) colIds.push('col-miercoles');
+                        else if (dayIndex === 4) colIds.push('col-jueves');
+                        else if (dayIndex === 5) colIds.push('col-viernes');
+                        else if (dayIndex === 6) colIds.push('col-sabado');
+                    }
+                }
             } else {
                 // Fallback para días texto "jueves" (legacy). Solo renderizar si estamos en la semana actual (offset 0)
-                if (currentWeekOffset !== 0) return; 
-
-                if (diaStr.includes('lun')) colId = 'col-lunes';
-                else if (diaStr.includes('mar')) colId = 'col-martes';
-                else if (diaStr.includes('mie')) colId = 'col-miercoles';
-                else if (diaStr.includes('jue')) colId = 'col-jueves';
-                else if (diaStr.includes('vie')) colId = 'col-viernes';
-                else if (diaStr.includes('sab') || diaStr.includes('sáb')) colId = 'col-sabado';
+                if (currentWeekOffset === 0) {
+                    if (hora === 'toda la semana') {
+                        colIds = ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes', 'col-sabado'];
+                    } else {
+                        if (diaStr.includes('lun')) colIds.push('col-lunes');
+                        else if (diaStr.includes('mar')) colIds.push('col-martes');
+                        else if (diaStr.includes('mie')) colIds.push('col-miercoles');
+                        else if (diaStr.includes('jue')) colIds.push('col-jueves');
+                        else if (diaStr.includes('vie')) colIds.push('col-viernes');
+                        else if (diaStr.includes('sab') || diaStr.includes('sáb')) colIds.push('col-sabado');
+                    }
+                }
             }
 
-            if (!colId) return; 
+            if (colIds.length === 0) return; 
 
-            let hourNum = 8; let minNum = 0;
-            let timeMatch = hora.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
-            if (timeMatch) {
-                hourNum = parseInt(timeMatch[1], 10);
-                minNum = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
-                if ((hora.includes('pm') || hora.includes('tarde')) && hourNum < 12) hourNum += 12;
-                if ((hora.includes('am') || hora.includes('mañana')) && hourNum === 12) hourNum = 0;
+            let isBlock = temp === 'bloqueo';
+            let blockStyle = '';
+            let topPx = 0;
+            let heightPx = 74;
+
+            if (hora === 'todo el dia' || hora === 'toda la semana') {
+                topPx = 0;
+                heightPx = 820; // Ocupa toda la columna
+                blockStyle = 'background: repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 10px, #e2e8f0 10px, #e2e8f0 20px); border: 1px solid #cbd5e1; color: #64748b; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; opacity: 0.9; pointer-events: auto; cursor: pointer;';
+            } else {
+                let hourNum = 8; let minNum = 0;
+                let timeMatch = hora.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+                if (timeMatch) {
+                    hourNum = parseInt(timeMatch[1], 10);
+                    minNum = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+                    if ((hora.includes('pm') || hora.includes('tarde')) && hourNum < 12) hourNum += 12;
+                    if ((hora.includes('am') || hora.includes('mañana')) && hourNum === 12) hourNum = 0;
+                }
+                topPx = ((hourNum - 8) * 80) + (minNum * (80/60)); 
+                
+                if (isBlock) {
+                    blockStyle = 'background: repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 5px, #e2e8f0 5px, #e2e8f0 10px); border: 1px solid #cbd5e1; color: #64748b; font-weight: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; opacity: 0.9; cursor: pointer;';
+                }
             }
-            const topPx = ((hourNum - 8) * 80) + (minNum * (80/60)); 
-            const col = document.getElementById(colId);
-            
-            if (col) {
-                // Pequeña corrección visual si hay choques de horario, los superponemos un poco
-                col.innerHTML += `
-                    <div class="cal-event" style="top: ${topPx}px; height: 74px; background-color: ${color};" onclick="openModal('${row.id}')">
-                        <div class="cal-event-time">${hora.toUpperCase()}</div>
-                        <div class="cal-event-title">${row.Nombre}</div>
-                    </div>
-                `;
-            }
+
+            colIds.forEach(colId => {
+                const col = document.getElementById(colId);
+                if (col) {
+                    if (isBlock) {
+                        col.innerHTML += `
+                            <div class="cal-event" style="top: ${topPx}px; height: ${heightPx}px; ${blockStyle}" onclick="openModal('${row.id}')">
+                                <i class="fa-solid fa-ban" style="font-size: ${hora.includes('todo') ? '2rem' : '1.2rem'}; margin-bottom: 8px;"></i>
+                                <div style="text-align: center; padding: 0 10px; font-size: ${hora.includes('todo') ? '1rem' : '0.8rem'}; line-height: 1.2;">
+                                    ${row.Nombre.replace('[BLOQUEO]', '').trim()}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        col.innerHTML += `
+                            <div class="cal-event" style="top: ${topPx}px; height: 74px; background-color: ${color};" onclick="openModal('${row.id}')">
+                                <div class="cal-event-time">${hora.toUpperCase()}</div>
+                                <div class="cal-event-title">${row.Nombre}</div>
+                            </div>
+                        `;
+                    }
+                }
+            });
         }
 
         let currentWeekOffset = 0;
@@ -1293,7 +1384,7 @@
                 if (filterType === 'cita') {
                     const dateCol = tr.children[5].innerText.toLowerCase();
                     matchesFilter = !dateCol.includes('pendiente');
-                } else if (filterType === 'frio' || filterType === 'tibio' || filterType === 'caliente') {
+                } else if (filterType === 'frio' || filterType === 'tibio' || filterType === 'caliente' || filterType === 'bloqueo') {
                     const tempCol = tr.children[4].innerText.toLowerCase();
                     matchesFilter = tempCol.includes(filterType);
                 }
@@ -1367,6 +1458,101 @@
         }
 
         function closeModal() { document.getElementById('patient-modal').style.display = 'none'; }
+        
+        function openBlockModal() {
+            document.getElementById('block-modal').style.display = 'flex';
+            document.getElementById('b-tipo').value = 'hora';
+            document.getElementById('b-fecha').value = '';
+            document.getElementById('b-hora').value = '';
+            document.getElementById('b-semana-inicio').value = '';
+            document.getElementById('b-semana-fin').value = '';
+            document.getElementById('b-motivo').value = '';
+            toggleBlockFields();
+        }
+
+        function closeBlockModal() {
+            document.getElementById('block-modal').style.display = 'none';
+        }
+
+        function toggleBlockFields() {
+            const tipo = document.getElementById('b-tipo').value;
+            const fechaCont = document.getElementById('b-fecha-container');
+            const horaCont = document.getElementById('b-hora-container');
+            const semCont = document.getElementById('b-semana-container');
+            
+            if (tipo === 'hora') {
+                fechaCont.style.display = 'block';
+                horaCont.style.display = 'block';
+                semCont.style.display = 'none';
+            } else if (tipo === 'dia') {
+                fechaCont.style.display = 'block';
+                horaCont.style.display = 'none';
+                semCont.style.display = 'none';
+            } else if (tipo === 'semana') {
+                fechaCont.style.display = 'none';
+                horaCont.style.display = 'none';
+                semCont.style.display = 'block';
+            }
+        }
+
+        async function saveBlock() {
+            const tipo = document.getElementById('b-tipo').value;
+            const motivo = document.getElementById('b-motivo').value;
+            if (!motivo) return alert("Por favor ingresa el motivo del bloqueo");
+
+            let fecha = "", hora = "";
+            if (tipo === 'hora') {
+                fecha = document.getElementById('b-fecha').value;
+                hora = document.getElementById('b-hora').value;
+                if (!fecha || !hora) return alert("Selecciona la fecha y la hora");
+            } else if (tipo === 'dia') {
+                fecha = document.getElementById('b-fecha').value;
+                hora = "TODO EL DIA";
+                if (!fecha) return alert("Selecciona la fecha");
+            } else if (tipo === 'semana') {
+                const sInit = document.getElementById('b-semana-inicio').value;
+                const sEnd = document.getElementById('b-semana-fin').value;
+                if (!sInit || !sEnd) return alert("Selecciona el inicio y fin de la semana");
+                fecha = sInit + " a " + sEnd;
+                hora = "TODA LA SEMANA";
+            }
+
+            // Crear el objeto que simula un paciente
+            const blockData = {
+                Nombre: `[BLOQUEO] ${motivo}`,
+                Telefono: "0000000000",
+                Temperatura: "bloqueo",
+                Fuente: "sistema",
+                Dia_Cita: fecha,
+                Hora_Cita: hora,
+                Motivo_Consulta: motivo,
+                Conversacion_Abierta: false,
+                Ciudad: "",
+                Notas: ""
+            };
+
+            const btn = document.querySelector('#block-modal .btn-primary');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/patients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(blockData)
+                });
+                if (!res.ok) throw new Error("Fallo al guardar bloqueo");
+                closeBlockModal();
+                updateSyncStatus("online");
+            } catch (err) {
+                console.error(err);
+                alert("Error al guardar el bloqueo");
+                updateSyncStatus("error");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-lock"></i> Guardar Bloqueo';
+                btn.disabled = false;
+            }
+        }
 
         async function exportToExcel() {
             try {
