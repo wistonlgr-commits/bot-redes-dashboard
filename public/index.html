@@ -545,6 +545,24 @@
         </div>
     </div>
 
+    <!-- MODAL RECUPERACIÓN DE CLAVE -->
+    <div class="modal-overlay" id="recovery-modal" style="display: none; z-index: 10000; justify-content: center; align-items: center; background: rgba(15,23,42,0.8); backdrop-filter: blur(4px);">
+        <div class="modal-content" style="max-width: 400px; width: 90%; animation: slideUp 0.3s ease;">
+            <div class="modal-header">
+                <div class="modal-title" style="font-size: 1.1rem;"><i class="fa-solid fa-key" style="color: var(--primary-light);"></i> Restablecer Contraseña</div>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">Ingresa tu nueva contraseña segura para acceder al panel de administración.</p>
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label>Nueva Contraseña</label>
+                    <input type="password" id="recovery-new-password" class="input-control" placeholder="••••••••" style="font-size: 1rem;" required>
+                </div>
+                <div id="recovery-msg" style="font-size: 0.85rem; margin-bottom: 15px; display: none; padding: 10px; border-radius: 8px; font-weight: 500;"></div>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem;" onclick="saveRecoveredPassword()">Actualizar Contraseña</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL EXPEDIENTE -->
     <div class="modal-overlay" id="patient-modal">
         <div class="modal-content">
@@ -754,6 +772,15 @@
                 
                 if(config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
                     supabaseClient = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+                    
+                    // Escuchar cuando el usuario entra usando el link de recuperar clave
+                    supabaseClient.auth.onAuthStateChange((event, session) => {
+                        if (event === 'PASSWORD_RECOVERY') {
+                            document.getElementById('auth-screen').style.display = 'none';
+                            document.getElementById('recovery-modal').style.display = 'flex';
+                        }
+                    });
+
                     checkSession();
                 } else {
                     alert("Falta configuración de Supabase en el servidor (.env)");
@@ -798,6 +825,42 @@
                 document.getElementById('new-password').value = '';
             }
         });
+
+        async function saveRecoveredPassword() {
+            const newPwd = document.getElementById('recovery-new-password').value;
+            const msg = document.getElementById('recovery-msg');
+            const btn = document.querySelector('#recovery-modal button');
+            const originalText = btn.innerHTML;
+            
+            if(!newPwd || newPwd.length < 6) {
+                msg.style.color = '#FCA5A5';
+                msg.innerText = "La contraseña debe tener al menos 6 caracteres.";
+                msg.style.display = 'block';
+                return;
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
+            
+            try {
+                const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
+                if (error) throw error;
+                
+                msg.style.color = '#10B981';
+                msg.innerText = "¡Contraseña actualizada exitosamente! Redirigiendo al inicio...";
+                msg.style.display = 'block';
+                
+                setTimeout(() => {
+                    window.location.href = window.location.origin;
+                }, 2000);
+            } catch(e) {
+                msg.style.color = '#FCA5A5';
+                msg.innerText = "Hubo un error al actualizar la contraseña: " + e.message;
+                msg.style.display = 'block';
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
 
         // --- UI & NAVEGACIÓN ---
         function toggleSidebar() {
