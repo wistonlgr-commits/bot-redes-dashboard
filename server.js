@@ -49,7 +49,7 @@ async function broadcastData() {
     }
 }
 
-// Helper para calcular fecha de alerta de quincena (2 días después de quincena, ej: días 2 y 17)
+// Helper para calcular fecha de seguimiento de quincena (días 15 y 30)
 function calcularAlertaQuincena() {
     const ahora = new Date();
     const dia = ahora.getDate();
@@ -58,12 +58,15 @@ function calcularAlertaQuincena() {
     let fechaAlerta = new Date();
 
     if (dia < 15) {
-        // Próxima quincena es el 15, la alerta es el 17
-        fechaAlerta = new Date(anio, mes, 17, 9, 0, 0); // 9:00 AM
+        // Antes del 15 -> Alerta el 15
+        fechaAlerta = new Date(anio, mes, 15, 9, 0, 0);
+    } else if (dia >= 15 && dia < 30) {
+        // Entre el 15 y el 29 -> Alerta el 30
+        fechaAlerta = new Date(anio, mes, 30, 9, 0, 0);
     } else {
-        // Próxima quincena es el 30/31 (fin de mes), la alerta es el día 2 del mes siguiente
+        // Día 30 o 31 -> Alerta el 15 del mes siguiente
         if (mes === 11) { mes = 0; anio++; } else { mes++; }
-        fechaAlerta = new Date(anio, mes, 2, 9, 0, 0);
+        fechaAlerta = new Date(anio, mes, 15, 9, 0, 0);
     }
     return fechaAlerta;
 }
@@ -181,8 +184,9 @@ app.post('/webhook/n8n', async (req, res) => {
                 }
             }
 
-            // Alerta Quincena (calcular solo si acaba de agendar o si no tiene)
+            // Alerta Quincena
             const alerta = calcularAlertaQuincena();
+            const tipoAlerta = (data.Dia_Cita && data.Dia_Cita.trim() !== '') ? 'SEGUIMIENTO_MEDICO' : 'VENTA';
 
             const upsertData = {
                 phone_number: phoneStr,
@@ -195,7 +199,9 @@ app.post('/webhook/n8n', async (req, res) => {
                 Hora_Cita: data.Hora_Cita,
                 Ultima_Interaccion: new Date().toISOString(),
                 Fuente: fuente,
-                Alerta_Quincena: alerta.toISOString()
+                Fecha_Seguimiento: alerta.toISOString().split('T')[0],
+                Tipo_Alerta: tipoAlerta,
+                Estado_Alerta: 'PENDIENTE'
             };
 
             // Solo actualizar campos que tengan valor
@@ -252,6 +258,48 @@ app.post('/api/update', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Endpoint para Acciones Masivas
+app.post('/api/bulk-action', async (req, res) => {
+    try {
+        const { ids, action } = req.body;
+        if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: "Faltan IDs" });
+
+        let updatePayload = {};
+        let isDelete = false;
+
+        switch (action) {
+            case 'asignar_bot':
+                updatePayload = { Estado_Alerta: 'PROGRAMADA_BOT' };
+                break;
+            case 'marcar_perdido':
+                updatePayload = { Temperatura: 'FRIO' }; 
+                break;
+            case 'descartar_alerta':
+                updatePayload = { Estado_Alerta: 'DESCARTADA' };
+                break;
+            case 'eliminar':
+                isDelete = true;
+                break;
+            default:
+                return res.status(400).json({ error: "Acción inválida" });
+        }
+
+        if (isDelete) {
+            const { error } = await supabase.from('leads').delete().in('id', ids);
+            if (error) throw error;
+        } else {
+            const { error } = await supabase.from('leads').update(updatePayload).in('id', ids);
+            if (error) throw error;
+        }
+
+        broadcastData();
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Error bulk action:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

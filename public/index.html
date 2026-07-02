@@ -350,13 +350,19 @@
 
             <div class="waitlist-section">
                 <div class="section-title">
-                    <span><i class="fa-solid fa-bell"></i> Alertas & Seguimiento</span>
+                    <span style="color: var(--danger);"><i class="fa-solid fa-bell"></i> Alertas para Hoy</span>
                 </div>
                 <div id="alert-list">
                     <!-- Llenado por JS -->
-                    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 20px;">Todo al día</p>
                 </div>
                 
+                <div class="section-title" style="margin-top: 30px;">
+                    <span><i class="fa-regular fa-calendar-days"></i> Próximas Alertas</span>
+                </div>
+                <div id="upcoming-alert-list">
+                    <!-- Llenado por JS -->
+                </div>
+
                 <div class="section-title" style="margin-top: 30px;">
                     <span><i class="fa-solid fa-inbox"></i> Sin Agendar</span>
                 </div>
@@ -405,10 +411,21 @@
                     </div>
                 </div>
                 
+                <div id="bulk-actions-bar" style="display:none; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 12px 20px; border-radius: 12px; margin-bottom: 16px; align-items: center; justify-content: space-between;">
+                    <div style="font-weight: 600; color: #1D4ED8;"><span id="bulk-count">0</span> pacientes seleccionados</div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="executeBulkAction('asignar_bot')"><i class="fa-solid fa-robot"></i> Activar Bot</button>
+                        <button class="btn btn-outline" onclick="executeBulkAction('marcar_perdido')"><i class="fa-solid fa-snowflake"></i> Marcar Frío</button>
+                        <button class="btn btn-outline" onclick="executeBulkAction('descartar_alerta')"><i class="fa-solid fa-check"></i> Descartar Alertas</button>
+                        <button class="btn btn-outline" style="color: var(--danger); border-color: var(--danger);" onclick="executeBulkAction('eliminar')"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                    </div>
+                </div>
+
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
+                                <th style="width: 50px; text-align: center;"><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)" style="transform: scale(1.2); cursor: pointer;"></th>
                                 <th>Paciente</th>
                                 <th>Contacto</th>
                                 <th>Fuente</th>
@@ -783,12 +800,18 @@
                 const fPhone = formatPhone(row.phone_number);
 
                 // Logica Alerta Quincena
-                let hasAlert = false;
-                if (row.Alerta_Quincena) {
-                    const alertDate = new Date(row.Alerta_Quincena);
-                    // Si la alerta es hoy o ya pasó y no tiene cita
-                    if (alertDate <= hoy && (!dia || dia === 'no')) {
-                        hasAlert = true;
+                let isAlertHoy = false;
+                let isAlertProxima = false;
+                const estadoAlerta = row.Estado_Alerta || 'PENDIENTE';
+                
+                if (row.Fecha_Seguimiento && estadoAlerta !== 'DESCARTADA' && estadoAlerta !== 'ENVIADA') {
+                    const alertDate = new Date(row.Fecha_Seguimiento);
+                    alertDate.setHours(23,59,59,999);
+                    
+                    if (alertDate < hoy || alertDate.toDateString() === hoy.toDateString()) {
+                        isAlertHoy = true;
+                    } else {
+                        isAlertProxima = true;
                     }
                 }
 
@@ -803,6 +826,12 @@
                     renderCalendarEvent(row, tColor);
                 } else {
                     pendCount++;
+                    
+                    let extraBadge = '';
+                    if (estadoAlerta === 'PROGRAMADA_BOT') {
+                        extraBadge = '<div style="font-size: 0.7rem; color: var(--primary-light); font-weight: bold; margin-top:4px;"><i class="fa-solid fa-robot"></i> Bot Programado</div>';
+                    }
+                    
                     const pillHtml = `
                         <div class="patient-pill" onclick="openModal('${id}')">
                             <div class="color-bar" style="background-color: ${tColor}"></div>
@@ -811,13 +840,17 @@
                                 <div class="pill-info">
                                     <div class="pill-name">${nombre} ${row.Conversacion_Abierta ? '<i class="fa-solid fa-headset" style="color:var(--primary-light); font-size:0.8rem" title="Bot Pausado"></i>' : ''}</div>
                                     <div class="pill-desc">${sourceIcon} ${fPhone}</div>
+                                    ${extraBadge}
                                 </div>
-                                ${hasAlert ? '<i class="fa-solid fa-bell alert-indicator"></i>' : ''}
+                                ${(isAlertHoy || isAlertProxima) ? '<i class="fa-solid fa-bell alert-indicator" ' + (isAlertProxima ? 'style="color: var(--warning);"' : '') + '></i>' : ''}
                             </div>
                         </div>
                     `;
-                    if (hasAlert) {
+                    
+                    if (isAlertHoy) {
                         alertlist.innerHTML += pillHtml;
+                    } else if (isAlertProxima) {
+                        document.getElementById('upcoming-alert-list').innerHTML += pillHtml;
                     } else {
                         waitlist.innerHTML += pillHtml;
                     }
@@ -829,11 +862,14 @@
                 
                 tbody.innerHTML += `
                     <tr class="t-row">
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="row-checkbox" value="${id}" onclick="updateBulkBar()" style="transform: scale(1.2); cursor: pointer;">
+                        </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="openModal('${id}')">
                                 <div class="pill-avatar" style="background:${tColor}; width:32px; height:32px; font-size:0.75rem;">${init}</div>
                                 <div>
-                                    <div style="font-weight:600;">${nombre} ${hasAlert ? '<i class="fa-solid fa-bell alert-indicator" style="font-size:0.8rem"></i>' : ''}</div>
+                                    <div style="font-weight:600;">${nombre} ${(isAlertHoy || isAlertProxima) ? '<i class="fa-solid fa-bell alert-indicator" style="font-size:0.8rem; margin-left:4px;"></i>' : ''}</div>
                                 </div>
                             </div>
                         </td>
@@ -1013,6 +1049,54 @@
                     });
                     closeModal();
                 } catch(e) { alert("Error"); }
+            }
+        }
+
+        // --- BULK ACTIONS ---
+        function toggleSelectAll(checkbox) {
+            const boxes = document.querySelectorAll('.row-checkbox');
+            boxes.forEach(box => box.checked = checkbox.checked);
+            updateBulkBar();
+        }
+
+        function updateBulkBar() {
+            const selected = document.querySelectorAll('.row-checkbox:checked');
+            const bar = document.getElementById('bulk-actions-bar');
+            const count = document.getElementById('bulk-count');
+            
+            if (selected.length > 0) {
+                count.innerText = selected.length;
+                bar.style.display = 'flex';
+            } else {
+                bar.style.display = 'none';
+                document.getElementById('select-all').checked = false;
+            }
+        }
+
+        async function executeBulkAction(action) {
+            const selected = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+            if (selected.length === 0) return;
+            
+            let msg = "¿Confirmar acción masiva para " + selected.length + " pacientes?";
+            if(action === 'eliminar') msg = "⚠️ ATENCIÓN: ¿Seguro que deseas eliminar permanentemente " + selected.length + " pacientes?";
+            if(action === 'asignar_bot') msg = "¿Autorizar al Bot a que le escriba a " + selected.length + " pacientes en su fecha de seguimiento?";
+            
+            if (!confirm(msg)) return;
+
+            try {
+                updateSync('Procesando...', true);
+                const res = await fetch('/api/bulk-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: selected, action: action })
+                });
+                if(!res.ok) throw new Error("API Error");
+                
+                document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+                updateBulkBar();
+            } catch(e) {
+                alert("Error al ejecutar acción masiva.");
+                updateSync('Error', false);
             }
         }
 
