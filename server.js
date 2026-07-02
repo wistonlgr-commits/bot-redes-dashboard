@@ -158,6 +158,11 @@ app.post('/webhook/n8n', async (req, res) => {
         
         // Si n8n envía un objeto individual (flujo normal según tu JSON actualizado)
         if (data.Telefono) {
+            // Ignorar por completo si es un grupo de WhatsApp
+            if (data.Telefono.includes('@g.us')) {
+                return res.status(200).json({ message: 'Mensajes de grupos (@g.us) ignorados por el sistema' });
+            }
+
             const phoneStr = data.Telefono.replace(/[^0-9]/g, '');
             if (!phoneStr) return res.status(400).json({ error: 'No phone' });
 
