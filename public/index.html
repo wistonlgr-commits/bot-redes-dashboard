@@ -527,7 +527,7 @@
 
     <script>
         // --- INICIALIZACIÓN Y CONFIGURACIÓN ---
-        let supabase = null;
+        let supabaseClient = null;
         let localData = [];
         let globalBotActive = true;
         let socket = null;
@@ -538,7 +538,7 @@
             const btn = document.querySelector('#login-form button');
             const originalText = btn.innerHTML;
             
-            if (!supabase) {
+            if (!supabaseClient) {
                 errDiv.innerText = "Conectando al servidor... Espera unos segundos y vuelve a intentar.";
                 errDiv.style.display = 'block';
                 return;
@@ -558,7 +558,7 @@
             btn.disabled = true;
 
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) {
                     errDiv.innerText = error.message;
                     errDiv.style.display = 'block';
@@ -588,7 +588,7 @@
                 const config = await res.json();
                 
                 if(config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
-                    supabase = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+                    supabaseClient = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
                     checkSession();
                 } else {
                     alert("Falta configuración de Supabase en el servidor (.env)");
@@ -600,7 +600,7 @@
 
         // --- AUTENTICACIÓN ---
         async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 document.getElementById('auth-screen').style.opacity = '0';
                 setTimeout(() => document.getElementById('auth-screen').style.display = 'none', 500);
@@ -614,7 +614,7 @@
 
 
         async function logout() {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             window.location.reload();
         }
 
@@ -623,7 +623,7 @@
             e.preventDefault();
             const newPwd = document.getElementById('new-password').value;
             const msg = document.getElementById('pwd-msg');
-            const { error } = await supabase.auth.updateUser({ password: newPwd });
+            const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
             if (error) {
                 msg.style.color = 'var(--danger)';
                 msg.innerText = error.message;
@@ -650,7 +650,7 @@
         async function loadDashboardData() {
             // Cargar datos por API (pasando token)
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session } } = await supabaseClient.auth.getSession();
                 // Obtener estado global del bot
                 const botRes = await fetch('/api/bot-status-global');
                 const botData = await botRes.json();
@@ -677,7 +677,7 @@
         // Sockets para tiempo real
         if (socket) {
             socket.on('actualizacion_completa', (data) => {
-                if (supabase) { // solo si está auth
+                if (supabaseClient) { // solo si está auth
                     localData = data;
                     renderUI();
                     updateSync('Sincronizado', true);
