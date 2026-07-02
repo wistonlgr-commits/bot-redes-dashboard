@@ -1208,7 +1208,7 @@
                             <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="openModal('${id}')">
                                 <div class="pill-avatar" style="background:${tColor}; width:32px; height:32px; font-size:0.75rem;">${init}</div>
                                 <div>
-                                    <div style="font-weight:600;">${nombre} ${(isAlertHoy || isAlertProxima) ? '<i class="fa-solid fa-bell alert-indicator" style="font-size:0.8rem; margin-left:4px;"></i>' : ''}</div>
+                                    <div style="font-weight:600;">${nombre} ${row.Conversacion_Abierta ? '<i class="fa-solid fa-headset" style="color:var(--primary-light); font-size:0.8rem; margin-left:4px;" title="Bot Pausado"></i>' : ''} ${(isAlertHoy || isAlertProxima) ? '<i class="fa-solid fa-bell alert-indicator" style="font-size:0.8rem; margin-left:4px;"></i>' : ''}</div>
                                 </div>
                             </div>
                         </td>
