@@ -659,11 +659,19 @@
 
                 // Obtener pacientes
                 const res = await fetch('/api/data', { headers: { 'Authorization': `Bearer ${session.access_token}` } });
-                localData = await res.json();
+                const jsonRes = await res.json();
+                
+                if (jsonRes.error) {
+                    console.error("ERROR DE SUPABASE:", jsonRes.error);
+                    alert("Error en la Base de Datos: " + jsonRes.error);
+                    throw new Error(jsonRes.error);
+                }
+                
+                localData = jsonRes;
                 renderUI();
                 updateSync('Sincronizado', true);
             } catch (error) {
-                console.error(error);
+                console.error("Detalle del error:", error);
                 updateSync('Error de conexión', false);
             }
         }
