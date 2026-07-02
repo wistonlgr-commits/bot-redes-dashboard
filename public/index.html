@@ -271,7 +271,7 @@
     <div id="auth-screen">
         <div class="login-box">
             <h2><i class="fa-solid fa-staff-snake" style="color: var(--secondary);"></i> Portal Médico</h2>
-            <form id="login-form">
+            <form id="login-form" onsubmit="return false;">
                 <div class="form-group">
                     <label>Correo Electrónico</label>
                     <input type="email" id="email" required placeholder="admin@clinica.com">
@@ -280,7 +280,7 @@
                     <label>Contraseña</label>
                     <input type="password" id="password" required placeholder="••••••••">
                 </div>
-                <button type="submit"><i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión</button>
+                <button type="button" onclick="intentarLogin()"><i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión</button>
                 <div id="auth-error" class="auth-error">Credenciales incorrectas</div>
             </form>
         </div>
@@ -533,8 +533,7 @@
         let socket = null;
 
         // ASEGURAR QUE EL FORMULARIO NO RECARGUE LA PÁGINA NUNCA
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Detiene la recarga
+        async function intentarLogin() {
             if (!supabase) {
                 alert("Error: El sistema aún se está conectando al servidor. Espera unos segundos y vuelve a intentar.");
                 return;
@@ -543,6 +542,12 @@
             const password = document.getElementById('password').value;
             const errDiv = document.getElementById('auth-error');
             
+            if(!email || !password) {
+                errDiv.innerText = "Por favor ingresa correo y contraseña.";
+                errDiv.style.display = 'block';
+                return;
+            }
+
             errDiv.style.display = 'none';
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -556,7 +561,7 @@
                 errDiv.innerText = "Error de conexión. Revisa tu internet.";
                 errDiv.style.display = 'block';
             }
-        });
+        }
 
         try {
             socket = io();
