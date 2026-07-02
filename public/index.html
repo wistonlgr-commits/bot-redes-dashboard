@@ -1581,7 +1581,7 @@
 
             try {
                 for (let data of blocksData) {
-                    const res = await fetch('/api/patients', {
+                    const res = await fetch('/api/add', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
