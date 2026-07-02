@@ -15,6 +15,7 @@
     <!-- ExcelJS and FileSaver -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/libphonenumber-js/1.10.49/libphonenumber-js.min.js"></script>
 
     <style>
         :root {
@@ -889,30 +890,32 @@
 
         function formatPhone(phone) {
             if (!phone) return '-';
-            // Si es un grupo de WhatsApp, se muestra diferente
             if (phone.includes('@g.us')) return "Grupo: " + phone.split('@')[0];
             
             let num = phone.replace(/[^0-9]/g, '');
             if (!num) return phone;
+
+            // Si empieza con 0 y tiene 11 dígitos, es formato local VE (0412... -> 58412...)
+            if (num.startsWith('0') && num.length === 11) {
+                num = '58' + num.substring(1);
+            }
             
-            // Añadir + al inicio para que la librería lo detecte como internacional
-            if (!num.startsWith('+')) num = '+' + num;
+            let withPlus = num.startsWith('+') ? num : '+' + num;
             
             try {
                 if (window.libphonenumber) {
-                    const parsed = window.libphonenumber.parsePhoneNumber(num);
+                    const parsed = window.libphonenumber.parsePhoneNumber(withPlus);
                     if (parsed && parsed.isValid()) {
-                        // Devuelve algo como +58 412 123 4567 o +52 55 1234 5678
                         return parsed.formatInternational(); 
                     }
                 }
             } catch(e) {}
 
-            // Fallback por si la librería falla a cargar
+            // Fallback por si la librería falla
             num = num.replace('+', '');
             if (num.length >= 11) {
-                // Separar el código de país
                 let ccLen = num.length > 11 ? 2 : 1; 
+                if (num.startsWith('58') || num.startsWith('52') || num.startsWith('57')) ccLen = 2;
                 if (num.startsWith('59') || num.startsWith('50')) ccLen = 3; 
                 let cc = num.substring(0, ccLen);
                 let rest = num.substring(ccLen);
