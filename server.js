@@ -327,12 +327,17 @@ app.post('/api/add', async (req, res) => {
         newRow.Ultima_Interaccion = hoy.toISOString();
         
         const { error } = await supabase.from('leads').insert(newRow);
-        if (error) throw error;
+        if (error) {
+            if (error.code === '23505') {
+                throw new Error("El paciente ya existe (este número de teléfono ya está registrado).");
+            }
+            throw error;
+        }
         
         broadcastData();
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

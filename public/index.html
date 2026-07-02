@@ -781,8 +781,13 @@
             const tbody = document.getElementById('table-body');
             const waitlist = document.getElementById('waitlist-list');
             const alertlist = document.getElementById('alert-list');
+            const upcominglist = document.getElementById('upcoming-alert-list');
             
-            tbody.innerHTML = ''; waitlist.innerHTML = ''; alertlist.innerHTML = '';
+            tbody.innerHTML = ''; 
+            waitlist.innerHTML = ''; 
+            alertlist.innerHTML = '';
+            if (upcominglist) upcominglist.innerHTML = '';
+            
             document.querySelectorAll('.cal-event').forEach(e => e.remove());
 
             let citasCount = 0; let pendCount = 0;
@@ -1029,10 +1034,16 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                if(!res.ok) throw new Error("Error API");
+                
+                const resData = await res.json();
+                
+                if(!res.ok || !resData.success) {
+                    throw new Error(resData.error || "Error al comunicarse con la base de datos");
+                }
+                
                 closeModal();
             } catch(e) {
-                alert("Error al guardar");
+                alert("Error al guardar: " + e.message);
                 updateSync('Error', false);
             }
         }
