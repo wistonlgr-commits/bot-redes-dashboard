@@ -913,6 +913,11 @@
                 num = '58' + num.substring(1);
             }
             
+            // Si tiene el código de país pero dejaron el 0 (ej. 580412...)
+            if (num.startsWith('580') && num.length === 13) {
+                num = '58' + num.substring(3);
+            }
+            
             let withPlus = num.startsWith('+') ? num : '+' + num;
             
             try {

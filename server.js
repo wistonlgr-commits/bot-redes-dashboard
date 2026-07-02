@@ -166,8 +166,10 @@ app.post('/webhook/n8n', async (req, res) => {
                 return res.status(200).json({ message: 'Mensajes de grupos (@g.us) ignorados por el sistema' });
             }
 
-            const phoneStr = data.Telefono.replace(/[^0-9]/g, '');
+            let phoneStr = data.Telefono.replace(/[^0-9]/g, '');
             if (!phoneStr) return res.status(400).json({ error: 'No phone' });
+            if (phoneStr.startsWith('0') && phoneStr.length === 11) phoneStr = '58' + phoneStr.substring(1);
+            if (phoneStr.startsWith('580') && phoneStr.length === 13) phoneStr = '58' + phoneStr.substring(3);
 
             // Detectar fuente: Usar lo que envíe n8n explícitamente en "Fuente".
             // Si n8n nos manda todo el payload de WhatsApp anidado, buscamos el referral.
@@ -311,7 +313,10 @@ app.post('/api/add', async (req, res) => {
     try {
         const newRow = req.body;
         if (newRow.Telefono) {
-            newRow.phone_number = newRow.Telefono.replace(/[^0-9]/g, '');
+            let num = newRow.Telefono.replace(/[^0-9]/g, '');
+            if (num.startsWith('0') && num.length === 11) num = '58' + num.substring(1);
+            if (num.startsWith('580') && num.length === 13) num = '58' + num.substring(3);
+            newRow.phone_number = num;
         } else {
             return res.status(400).json({ error: "Teléfono es requerido" });
         }
