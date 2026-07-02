@@ -191,7 +191,7 @@
 
         /* Calendar */
         .calendar-wrapper { display: flex; flex-direction: column; flex: 1; background: white; border: 1px solid var(--border); border-radius: 16px; overflow: auto; }
-        .cal-grid { display: grid; grid-template-columns: 80px repeat(5, 1fr); min-width: 900px; }
+        .cal-grid { display: grid; grid-template-columns: 80px repeat(6, 1fr); min-width: 1000px; }
         .cal-header { padding: 16px; text-align: center; font-weight: 600; font-size: 0.9rem; color: var(--text-muted); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); background: #F8FAFC; position: sticky; top: 0; z-index: 10;}
         .cal-time-col { border-right: 1px solid var(--border); background: #F8FAFC; }
         .cal-time-slot { height: 80px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); border-bottom: 1px solid var(--border); }
@@ -420,6 +420,7 @@
                         <div class="cal-header">MIÉRCOLES <div id="date-miercoles" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
                         <div class="cal-header">JUEVES <div id="date-jueves" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
                         <div class="cal-header">VIERNES <div id="date-viernes" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                        <div class="cal-header" style="background-color: #f8fafc;">SÁBADO <div id="date-sabado" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
 
                         <div class="cal-time-col" id="time-labels"></div>
                         <div class="cal-day-col" id="col-lunes"></div>
@@ -427,6 +428,7 @@
                         <div class="cal-day-col" id="col-miercoles"></div>
                         <div class="cal-day-col" id="col-jueves"></div>
                         <div class="cal-day-col" id="col-viernes"></div>
+                        <div class="cal-day-col" id="col-sabado" style="background-color: #fcfcfc;"></div>
                     </div>
                 </div>
             </div>
@@ -435,9 +437,18 @@
             <div id="view-database" class="view-pane">
                 <div class="view-header">
                     <div class="view-title">Directorio de Pacientes</div>
-                    <div class="search-box">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-input" placeholder="Buscar por nombre o teléfono..." onkeyup="filterTable()">
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <select id="filter-select" class="input-control" style="width: auto; padding: 10px; border-radius: 20px; font-size: 0.9rem;" onchange="filterTable()">
+                            <option value="all">Todos</option>
+                            <option value="cita">Agendados</option>
+                            <option value="frio">Fríos</option>
+                            <option value="tibio">Tibios</option>
+                            <option value="caliente">Calientes</option>
+                        </select>
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="search-input" placeholder="Buscar por nombre o teléfono..." onkeyup="filterTable()">
+                        </div>
                     </div>
                 </div>
                 
@@ -1154,7 +1165,7 @@
         const times = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
         const timeLabels = document.getElementById('time-labels');
         times.forEach(t => timeLabels.innerHTML += `<div class="cal-time-slot">${t}</div>`);
-        ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes'].forEach(day => {
+        ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes', 'col-sabado'].forEach(day => {
             const col = document.getElementById(day);
             times.forEach(() => col.innerHTML += `<div class="cal-cell"></div>`);
         });
@@ -1177,17 +1188,18 @@
                 const startOfWeek = new Date(currentWeekMonday);
                 startOfWeek.setHours(0,0,0,0);
                 const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(endOfWeek.getDate() + 4); // Lunes a Viernes
+                endOfWeek.setDate(endOfWeek.getDate() + 5); // Lunes a Sabado
                 endOfWeek.setHours(23,59,59,999);
                 
                 if (eventDate < startOfWeek || eventDate > endOfWeek) return; // No es de esta semana visible
                 
-                const dayIndex = eventDate.getDay(); // 1=Lunes, 5=Viernes
+                const dayIndex = eventDate.getDay(); // 1=Lunes, 6=Sabado
                 if (dayIndex === 1) colId = 'col-lunes';
                 else if (dayIndex === 2) colId = 'col-martes';
                 else if (dayIndex === 3) colId = 'col-miercoles';
                 else if (dayIndex === 4) colId = 'col-jueves';
                 else if (dayIndex === 5) colId = 'col-viernes';
+                else if (dayIndex === 6) colId = 'col-sabado';
             } else {
                 // Fallback para días texto "jueves" (legacy). Solo renderizar si estamos en la semana actual (offset 0)
                 if (currentWeekOffset !== 0) return; 
@@ -1197,6 +1209,7 @@
                 else if (diaStr.includes('mie')) colId = 'col-miercoles';
                 else if (diaStr.includes('jue')) colId = 'col-jueves';
                 else if (diaStr.includes('vie')) colId = 'col-viernes';
+                else if (diaStr.includes('sab') || diaStr.includes('sáb')) colId = 'col-sabado';
             }
 
             if (!colId) return; 
@@ -1235,7 +1248,7 @@
             updateCalendarHeaders();
             
             // Limpiar eventos antes de volver a renderizar
-            ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes'].forEach(day => {
+            ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes', 'col-sabado'].forEach(day => {
                 const col = document.getElementById(day);
                 if (col) {
                     // Mantener solo los cal-cell vacíos y eliminar los cal-event
@@ -1255,7 +1268,7 @@
             monday.setDate(monday.getDate() + (currentWeekOffset * 7));
             currentWeekMonday = new Date(monday);
             
-            const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+            const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
             days.forEach((day, index) => {
                 const dateHeader = new Date(monday);
                 dateHeader.setDate(monday.getDate() + index);
@@ -1269,8 +1282,22 @@
 
         function filterTable() {
             let input = document.getElementById("search-input").value.toLowerCase();
+            let filterType = document.getElementById("filter-select") ? document.getElementById("filter-select").value : "all";
+            
             document.querySelectorAll(".t-row").forEach(tr => {
-                tr.style.display = tr.innerText.toLowerCase().includes(input) ? "" : "none";
+                const text = tr.innerText.toLowerCase();
+                let matchesSearch = text.includes(input);
+                let matchesFilter = true;
+                
+                if (filterType === 'cita') {
+                    const dateCol = tr.children[5].innerText.toLowerCase();
+                    matchesFilter = !dateCol.includes('pendiente');
+                } else if (filterType === 'frio' || filterType === 'tibio' || filterType === 'caliente') {
+                    const tempCol = tr.children[4].innerText.toLowerCase();
+                    matchesFilter = tempCol.includes(filterType);
+                }
+                
+                tr.style.display = (matchesSearch && matchesFilter) ? "" : "none";
             });
         }
 
