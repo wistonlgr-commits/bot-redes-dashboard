@@ -161,11 +161,20 @@ app.post('/webhook/n8n', async (req, res) => {
             const phoneStr = data.Telefono.replace(/[^0-9]/g, '');
             if (!phoneStr) return res.status(400).json({ error: 'No phone' });
 
-            // Detectar fuente basándose en el JSON de n8n si es posible (Ej: si viene de ads)
-            let fuente = data.Fuente || 'organico';
-            const rawBody = JSON.stringify(data).toLowerCase();
-            if (rawBody.includes('fb') || rawBody.includes('facebook')) fuente = 'facebook';
-            if (rawBody.includes('ig') || rawBody.includes('instagram')) fuente = 'instagram';
+            // Detectar fuente: Usar lo que envíe n8n explícitamente en "Fuente".
+            // Si n8n nos manda todo el payload de WhatsApp anidado, buscamos el referral.
+            let fuente = 'organico';
+            if (data.Fuente) {
+                fuente = data.Fuente.toLowerCase();
+            } else if (data.referral || (data.message && data.message.referral)) {
+                // Si encontramos la etiqueta de Ads (referral) de WhatsApp directamente
+                const ref = data.referral || data.message.referral;
+                if (ref.source_url && ref.source_url.includes('instagram')) {
+                    fuente = 'instagram';
+                } else {
+                    fuente = 'facebook'; // por defecto si es ad pero no ig
+                }
+            }
 
             // Alerta Quincena (calcular solo si acaba de agendar o si no tiene)
             const alerta = calcularAlertaQuincena();
