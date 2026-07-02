@@ -255,6 +255,10 @@
 
         .modal-footer { padding: 24px 32px; border-top: 1px solid var(--border); background: #F8FAFC; border-radius: 0 0 24px 24px; display: flex; justify-content: space-between; }
         
+        .hour-pill { padding: 8px 0; text-align: center; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.9rem; color: var(--text-muted); background: white; transition: all 0.2s; user-select: none; }
+        .hour-pill:hover { border-color: #94a3b8; color: #475569; }
+        .hour-pill.selected { background: #475569; color: white; border-color: #475569; font-weight: bold; }
+        
         /* Mobile Adjustments */
         @media (max-width: 768px) {
             .app-bar { padding: 0 12px; }
@@ -611,8 +615,19 @@
                     </div>
                     
                     <div class="input-group" id="b-hora-container">
-                        <label>Hora Específica</label>
-                        <input type="time" id="b-hora" class="input-control">
+                        <label>Selecciona las Horas a Bloquear</label>
+                        <div id="hour-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 5px;">
+                            <div class="hour-pill" onclick="toggleHourPill(this)">08:00</div>
+                            <div class="hour-pill" onclick="toggleHourPill(this)">09:00</div>
+                            <div class="hour-pill" onclick="toggleHourPill(this)">10:00</div>
+                            <div class="hour-pill" onclick="toggleHourPill(this)">11:00</div>
+                            <div class="hour-pill" onclick="toggleHourPill(this)">12:00</div>
+                            <div class="hour-pill" onclick="toggleHourPill(this)">13:00</div>
+                            <div class="hour-pill" onclick="toggleHourPill(this)">14:00</div>
+                            <div class="hour-pill" onclick="toggleHourPill(this)">15:00</div>
+                            <div class="hour-pill" onclick="toggleHourPill(this)">16:00</div>
+                            <div class="hour-pill" onclick="toggleHourPill(this)">17:00</div>
+                        </div>
                     </div>
                     
                     <div class="input-group">
@@ -1463,7 +1478,7 @@
             document.getElementById('block-modal').style.display = 'flex';
             document.getElementById('b-tipo').value = 'hora';
             document.getElementById('b-fecha').value = '';
-            document.getElementById('b-hora').value = '';
+            document.querySelectorAll('.hour-pill').forEach(p => p.classList.remove('selected'));
             document.getElementById('b-semana-inicio').value = '';
             document.getElementById('b-semana-fin').value = '';
             document.getElementById('b-motivo').value = '';
@@ -1472,6 +1487,10 @@
 
         function closeBlockModal() {
             document.getElementById('block-modal').style.display = 'none';
+        }
+
+        function toggleHourPill(el) {
+            el.classList.toggle('selected');
         }
 
         function toggleBlockFields() {
@@ -1500,50 +1519,78 @@
             const motivo = document.getElementById('b-motivo').value;
             if (!motivo) return alert("Por favor ingresa el motivo del bloqueo");
 
-            let fecha = "", hora = "";
+            let blocksData = [];
+
             if (tipo === 'hora') {
-                fecha = document.getElementById('b-fecha').value;
-                hora = document.getElementById('b-hora').value;
-                if (!fecha || !hora) return alert("Selecciona la fecha y la hora");
-            } else if (tipo === 'dia') {
-                fecha = document.getElementById('b-fecha').value;
-                hora = "TODO EL DIA";
+                const fecha = document.getElementById('b-fecha').value;
                 if (!fecha) return alert("Selecciona la fecha");
+                
+                const selectedPills = document.querySelectorAll('#hour-grid .hour-pill.selected');
+                if (selectedPills.length === 0) return alert("Selecciona al menos una hora");
+                
+                selectedPills.forEach(pill => {
+                    blocksData.push({
+                        Nombre: `[BLOQUEO] ${motivo}`,
+                        Telefono: "0000000000",
+                        Temperatura: "bloqueo",
+                        Fuente: "sistema",
+                        Dia_Cita: fecha,
+                        Hora_Cita: pill.innerText,
+                        Motivo_Consulta: motivo,
+                        Conversacion_Abierta: false,
+                        Ciudad: "",
+                        Notas: ""
+                    });
+                });
+            } else if (tipo === 'dia') {
+                const fecha = document.getElementById('b-fecha').value;
+                if (!fecha) return alert("Selecciona la fecha");
+                blocksData.push({
+                    Nombre: `[BLOQUEO] ${motivo}`,
+                    Telefono: "0000000000",
+                    Temperatura: "bloqueo",
+                    Fuente: "sistema",
+                    Dia_Cita: fecha,
+                    Hora_Cita: "TODO EL DIA",
+                    Motivo_Consulta: motivo,
+                    Conversacion_Abierta: false,
+                    Ciudad: "",
+                    Notas: ""
+                });
             } else if (tipo === 'semana') {
                 const sInit = document.getElementById('b-semana-inicio').value;
                 const sEnd = document.getElementById('b-semana-fin').value;
                 if (!sInit || !sEnd) return alert("Selecciona el inicio y fin de la semana");
-                fecha = sInit + " a " + sEnd;
-                hora = "TODA LA SEMANA";
+                blocksData.push({
+                    Nombre: `[BLOQUEO] ${motivo}`,
+                    Telefono: "0000000000",
+                    Temperatura: "bloqueo",
+                    Fuente: "sistema",
+                    Dia_Cita: sInit + " a " + sEnd,
+                    Hora_Cita: "TODA LA SEMANA",
+                    Motivo_Consulta: motivo,
+                    Conversacion_Abierta: false,
+                    Ciudad: "",
+                    Notas: ""
+                });
             }
-
-            // Crear el objeto que simula un paciente
-            const blockData = {
-                Nombre: `[BLOQUEO] ${motivo}`,
-                Telefono: "0000000000",
-                Temperatura: "bloqueo",
-                Fuente: "sistema",
-                Dia_Cita: fecha,
-                Hora_Cita: hora,
-                Motivo_Consulta: motivo,
-                Conversacion_Abierta: false,
-                Ciudad: "",
-                Notas: ""
-            };
 
             const btn = document.querySelector('#block-modal .btn-primary');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
             btn.disabled = true;
 
             try {
-                const res = await fetch('/api/patients', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(blockData)
-                });
-                if (!res.ok) throw new Error("Fallo al guardar bloqueo");
+                for (let data of blocksData) {
+                    const res = await fetch('/api/patients', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    if (!res.ok) throw new Error("Fallo al guardar bloqueo");
+                }
                 closeBlockModal();
                 updateSyncStatus("online");
+                fetchData();
             } catch (err) {
                 console.error(err);
                 alert("Error al guardar el bloqueo");
