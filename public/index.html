@@ -318,7 +318,12 @@
             <button id="btn-global-bot" class="btn btn-bot" onclick="toggleGlobalBot()">
                 <i class="fa-solid fa-user-tie"></i> <span>Asistente Activa</span>
             </button>
-            <button class="btn btn-outline" style="margin-right: 12px; background: rgba(255,255,255,0.8);" onclick="exportToExcel()"><i class="fa-solid fa-file-excel" style="color: #10B981;"></i> Exportar Excel</button>
+            <div style="display: flex; align-items: center; background: rgba(255,255,255,0.8); border-radius: 8px; padding: 2px 6px; margin-right: 12px; border: 1px solid var(--border-color);">
+                <input type="date" id="export-start" class="input-control" style="border: none; background: transparent; padding: 4px; font-size: 0.8rem; width: 110px;" title="Fecha Inicial">
+                <span style="color: var(--text-muted); font-size: 0.8rem;">a</span>
+                <input type="date" id="export-end" class="input-control" style="border: none; background: transparent; padding: 4px; font-size: 0.8rem; width: 110px;" title="Fecha Final">
+                <button class="btn btn-outline" style="border: none; background: transparent; padding: 4px 8px;" onclick="exportToExcel()" title="Exportar rango"><i class="fa-solid fa-file-excel" style="color: #10B981;"></i></button>
+            </div>
             <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Nuevo Paciente</button>
             <div class="sync-badge" id="sync-status"><i class="fa-solid fa-cloud"></i> Conectando...</div>
             <button class="btn btn-outline" style="padding: 8px; border-radius: 50%;" onclick="logout()" title="Cerrar Sesión"><i class="fa-solid fa-power-off"></i></button>
@@ -1081,14 +1086,45 @@
         });
 
         function renderCalendarEvent(row, color) {
-            const dia = row.Dia_Cita.toLowerCase().replace('é', 'e');
-            const hora = row.Hora_Cita.toLowerCase();
+            const diaStr = (row.Dia_Cita || "").toLowerCase().replace('é', 'e');
+            const hora = (row.Hora_Cita || "").toLowerCase();
             let colId = '';
-            if (dia.includes('lun')) colId = 'col-lunes';
-            else if (dia.includes('mar')) colId = 'col-martes';
-            else if (dia.includes('mie')) colId = 'col-miercoles';
-            else if (dia.includes('jue')) colId = 'col-jueves';
-            else if (dia.includes('vie')) colId = 'col-viernes';
+            
+            // Lógica de Paginación y Fecha Real
+            let eventDate = null;
+            if (/^\d{4}-\d{2}-\d{2}/.test(diaStr)) {
+                // Formato YYYY-MM-DD
+                const match = diaStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                eventDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+            }
+
+            if (eventDate && currentWeekMonday) {
+                // Si tiene fecha exacta, verificar que esté en la semana actual
+                const startOfWeek = new Date(currentWeekMonday);
+                startOfWeek.setHours(0,0,0,0);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 4); // Lunes a Viernes
+                endOfWeek.setHours(23,59,59,999);
+                
+                if (eventDate < startOfWeek || eventDate > endOfWeek) return; // No es de esta semana visible
+                
+                const dayIndex = eventDate.getDay(); // 1=Lunes, 5=Viernes
+                if (dayIndex === 1) colId = 'col-lunes';
+                else if (dayIndex === 2) colId = 'col-martes';
+                else if (dayIndex === 3) colId = 'col-miercoles';
+                else if (dayIndex === 4) colId = 'col-jueves';
+                else if (dayIndex === 5) colId = 'col-viernes';
+            } else {
+                // Fallback para días texto "jueves" (legacy). Solo renderizar si estamos en la semana actual (offset 0)
+                if (currentWeekOffset !== 0) return; 
+
+                if (diaStr.includes('lun')) colId = 'col-lunes';
+                else if (diaStr.includes('mar')) colId = 'col-martes';
+                else if (diaStr.includes('mie')) colId = 'col-miercoles';
+                else if (diaStr.includes('jue')) colId = 'col-jueves';
+                else if (diaStr.includes('vie')) colId = 'col-viernes';
+            }
+
             if (!colId) return; 
 
             let hourNum = 8; let minNum = 0;
@@ -1114,6 +1150,7 @@
         }
 
         let currentWeekOffset = 0;
+        let currentWeekMonday = null;
 
         function changeWeek(offset) {
             if (offset === 0) {
@@ -1142,6 +1179,7 @@
             
             const monday = new Date(tempDate.setDate(diffToMonday));
             monday.setDate(monday.getDate() + (currentWeekOffset * 7));
+            currentWeekMonday = new Date(monday);
             
             const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
             days.forEach((day, index) => {
@@ -1255,7 +1293,32 @@
                 worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
                 
                 // Add rows
-                leadsData.forEach(lead => {
+                const startDateStr = document.getElementById('export-start').value;
+                const endDateStr = document.getElementById('export-end').value;
+                
+                let filteredData = leadsData;
+                if (startDateStr || endDateStr) {
+                    const start = startDateStr ? new Date(startDateStr) : new Date(0);
+                    const end = endDateStr ? new Date(endDateStr) : new Date(8640000000000000);
+                    // Fix timezone offset for start
+                    start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
+                    // Fix timezone offset and set to end of day for end
+                    end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+                    end.setHours(23, 59, 59, 999);
+                    
+                    filteredData = leadsData.filter(lead => {
+                        if (!lead.created_at) return false;
+                        const leadDate = new Date(lead.created_at);
+                        return leadDate >= start && leadDate <= end;
+                    });
+                }
+                
+                if(filteredData.length === 0) {
+                    alert("No hay datos en ese rango de fechas.");
+                    return;
+                }
+
+                filteredData.forEach(lead => {
                     worksheet.addRow({
                         created_at: new Date(lead.created_at).toLocaleDateString(),
                         Nombre: lead.Nombre || 'Sin nombre',
