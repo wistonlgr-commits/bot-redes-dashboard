@@ -534,13 +534,15 @@
 
         // ASEGURAR QUE EL FORMULARIO NO RECARGUE LA PÁGINA NUNCA
         async function intentarLogin() {
+            const errDiv = document.getElementById('auth-error');
             if (!supabase) {
-                alert("Error: El sistema aún se está conectando al servidor. Espera unos segundos y vuelve a intentar.");
+                errDiv.innerText = "Conectando al servidor... Espera unos segundos y vuelve a intentar.";
+                errDiv.style.display = 'block';
                 return;
             }
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const errDiv = document.getElementById('auth-error');
+            
             
             if(!email || !password) {
                 errDiv.innerText = "Por favor ingresa correo y contraseña.";
@@ -663,18 +665,20 @@
         }
 
         // Sockets para tiempo real
-        socket.on('actualizacion_completa', (data) => {
-            if (supabase) { // solo si está auth
-                localData = data;
-                renderUI();
-                updateSync('Sincronizado', true);
-            }
-        });
-        
-        socket.on('bot_status_changed', (status) => {
-            globalBotActive = status;
-            renderGlobalBotBtn();
-        });
+        if (socket) {
+            socket.on('actualizacion_completa', (data) => {
+                if (supabase) { // solo si está auth
+                    localData = data;
+                    renderUI();
+                    updateSync('Sincronizado', true);
+                }
+            });
+            
+            socket.on('bot_status_changed', (status) => {
+                globalBotActive = status;
+                renderGlobalBotBtn();
+            });
+        }
 
         // --- RENDERIZADO (CALENDARIO Y TABLAS) ---
         function getTempColor(temp) {
