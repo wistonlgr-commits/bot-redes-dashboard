@@ -922,7 +922,7 @@
         }
 
         function renderUI() {
-            leadsData = data;
+            leadsData = localData;
             
             // Actualizar reportes automáticamente si estamos en esa vista
             generateReports();
@@ -1163,7 +1163,7 @@
 
         async function exportToExcel() {
             try {
-                if(leadsData.length === 0) return alert("No hay datos para exportar.");
+                if(!leadsData || leadsData.length === 0) return alert("No hay datos para exportar.");
                 
                 const workbook = new ExcelJS.Workbook();
                 const worksheet = workbook.addWorksheet('Pacientes');
