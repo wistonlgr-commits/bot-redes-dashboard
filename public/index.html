@@ -1271,26 +1271,44 @@
                 if(!leadsData || leadsData.length === 0) return alert("No hay datos para exportar.");
                 
                 const workbook = new ExcelJS.Workbook();
-                const worksheet = workbook.addWorksheet('Pacientes');
+                const worksheet = workbook.addWorksheet('Pacientes', { views: [{ showGridLines: false }] });
                 
-                // Define columns
+                // Add Title
+                worksheet.mergeCells('A1:J2');
+                const titleCell = worksheet.getCell('A1');
+                titleCell.value = 'Reporte de Pacientes - Dr. Ángel Trejo';
+                titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FF1E3A8A' } };
+                titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBEAFE' } };
+
+                // Add empty row
+                worksheet.addRow([]);
+                
+                // Header row index is 4
+                const headerRow = worksheet.getRow(4);
+                headerRow.values = [
+                    'Fecha Registro', 'Nombre', 'Teléfono', 'Ciudad', 
+                    'Motivo', 'Prioridad', 'Fecha Cita', 'Hora Cita', 'Fuente', 'Estado'
+                ];
+                
+                // Define column widths
                 worksheet.columns = [
-                    { header: 'Fecha Registro', key: 'created_at', width: 20 },
-                    { header: 'Nombre', key: 'Nombre', width: 25 },
-                    { header: 'Teléfono', key: 'phone_number', width: 18 },
-                    { header: 'Ciudad', key: 'Ciudad', width: 18 },
-                    { header: 'Motivo', key: 'Motivo_Consulta', width: 30 },
-                    { header: 'Prioridad', key: 'Temperatura', width: 15 },
-                    { header: 'Fecha Cita', key: 'Dia_Cita', width: 15 },
-                    { header: 'Hora Cita', key: 'Hora_Cita', width: 12 },
-                    { header: 'Fuente', key: 'Fuente', width: 15 },
-                    { header: 'Estado', key: 'Estado_Atencion', width: 18 }
+                    { key: 'created_at', width: 18 },
+                    { key: 'Nombre', width: 28 },
+                    { key: 'phone_number', width: 18 },
+                    { key: 'Ciudad', width: 20 },
+                    { key: 'Motivo_Consulta', width: 45 },
+                    { key: 'Temperatura', width: 15 },
+                    { key: 'Dia_Cita', width: 15 },
+                    { key: 'Hora_Cita', width: 15 },
+                    { key: 'Fuente', width: 15 },
+                    { key: 'Estado_Atencion', width: 18 }
                 ];
                 
                 // Style Header
-                worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
-                worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+                headerRow.font = { name: 'Arial', bold: true, color: { argb: 'FFFFFFFF' } };
+                headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+                headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
                 
                 // Add rows
                 const startDateStr = document.getElementById('export-start').value;
@@ -1319,34 +1337,54 @@
                 }
 
                 filteredData.forEach(lead => {
-                    worksheet.addRow({
+                    const row = worksheet.addRow({
                         created_at: new Date(lead.created_at).toLocaleDateString(),
                         Nombre: lead.Nombre || 'Sin nombre',
-                        phone_number: lead.phone_number || '',
-                        Ciudad: lead.Ciudad || '',
-                        Motivo_Consulta: lead.Motivo_Consulta || '',
-                        Temperatura: (lead.Temperatura || '').toUpperCase(),
-                        Dia_Cita: lead.Dia_Cita || '',
-                        Hora_Cita: lead.Hora_Cita || '',
+                        phone_number: lead.phone_number || 'No registrado',
+                        Ciudad: lead.Ciudad || 'No especificada',
+                        Motivo_Consulta: lead.Motivo_Consulta || 'No especificado',
+                        Temperatura: (lead.Temperatura || 'N/A').toUpperCase(),
+                        Dia_Cita: lead.Dia_Cita || 'No agendado',
+                        Hora_Cita: lead.Hora_Cita || 'Sin hora',
                         Fuente: lead.Fuente || 'WhatsApp',
                         Estado_Atencion: lead.Estado_Atencion || 'Pendiente'
                     });
+
+                    row.alignment = { vertical: 'middle', wrapText: true };
+                    // Center align specific columns
+                    row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
                 });
                 
                 // Add auto filters
                 worksheet.autoFilter = {
-                    from: { row: 1, column: 1 },
-                    to: { row: 1, column: 10 }
+                    from: { row: 4, column: 1 },
+                    to: { row: 4, column: 10 }
                 };
                 
-                // Style alternate rows
+                // Add Borders and alternating colors
                 worksheet.eachRow((row, rowNumber) => {
-                    if (rowNumber > 1) {
-                        row.fill = {
-                            type: 'pattern',
-                            pattern: 'solid',
-                            fgColor: { argb: rowNumber % 2 === 0 ? 'FFF1F5F9' : 'FFFFFFFF' }
-                        };
+                    if (rowNumber >= 4) { // Header and data rows
+                        row.eachCell({ includeEmpty: true }, (cell) => {
+                            cell.border = {
+                                top: {style:'thin', color: {argb:'FFCBD5E1'}},
+                                left: {style:'thin', color: {argb:'FFCBD5E1'}},
+                                bottom: {style:'thin', color: {argb:'FFCBD5E1'}},
+                                right: {style:'thin', color: {argb:'FFCBD5E1'}}
+                            };
+                        });
+                        
+                        if (rowNumber > 4) {
+                            row.fill = {
+                                type: 'pattern',
+                                pattern: 'solid',
+                                fgColor: { argb: rowNumber % 2 === 0 ? 'FFF8FAFC' : 'FFFFFFFF' }
+                            };
+                        }
                     }
                 });
 
