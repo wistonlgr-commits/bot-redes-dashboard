@@ -251,6 +251,9 @@ app.post('/api/update', async (req, res) => {
         const updatedRow = req.body;
         if (!updatedRow || !updatedRow.id) return res.status(400).json({ error: "Falta ID" });
         
+        // Evitar error de columna inexistente
+        delete updatedRow.Telefono;
+        
         const { error } = await supabase.from('leads').update(updatedRow).eq('id', updatedRow.id);
         if (error) throw error;
         
@@ -313,6 +316,15 @@ app.post('/api/add', async (req, res) => {
             return res.status(400).json({ error: "Teléfono es requerido" });
         }
         delete newRow.id; // Supabase autogenera el uuid
+        delete newRow.Telefono; // EVITAR ERROR DE COLUMNA
+        
+        // Calcular campos de alerta
+        const hoy = new Date();
+        const quincena = calcularAlertaQuincena(hoy);
+        newRow.Fecha_Seguimiento = quincena.toISOString().split('T')[0];
+        newRow.Estado_Alerta = 'PENDIENTE';
+        newRow.Fuente = 'organico';
+        newRow.Ultima_Interaccion = hoy.toISOString();
         
         const { error } = await supabase.from('leads').insert(newRow);
         if (error) throw error;
