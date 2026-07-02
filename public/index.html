@@ -12,6 +12,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
+    <!-- ExcelJS and FileSaver -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
         :root {
@@ -297,9 +300,15 @@
                 </div>
                 <div class="form-group">
                     <label>Contraseña</label>
-                    <input type="password" id="password" required placeholder="••••••••">
+                    <div style="position: relative;">
+                        <input type="password" id="password" required placeholder="••••••••" style="padding-right: 40px; width: 100%; box-sizing: border-box;">
+                        <i class="fa-solid fa-eye" id="toggle-pwd" onclick="togglePasswordVisibility()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94A3B8;"></i>
+                    </div>
                 </div>
                 <button type="button" onclick="intentarLogin()"><i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión</button>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="#" onclick="recuperarClave()" style="color: var(--secondary); font-size: 0.85rem; text-decoration: none;">¿Olvidaste tu contraseña? (Recuperar clave)</a>
+                </div>
                 <div id="auth-error" class="auth-error">Credenciales incorrectas</div>
             </form>
         </div>
@@ -311,8 +320,9 @@
         <div class="app-title">Dr. Ángel Trejo <span style="font-weight: 300; opacity: 0.5;">|</span> <span style="font-weight: 400; font-size: 1rem;">Dashboard</span></div>
         <div class="app-actions">
             <button id="btn-global-bot" class="btn btn-bot" onclick="toggleGlobalBot()">
-                <i class="fa-solid fa-robot"></i> <span>Bot Activo</span>
+                <i class="fa-solid fa-user-tie"></i> <span>Asistente Activa</span>
             </button>
+            <button class="btn btn-outline" style="margin-right: 12px; background: rgba(255,255,255,0.8);" onclick="exportToExcel()"><i class="fa-solid fa-file-excel" style="color: #10B981;"></i> Exportar Excel</button>
             <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Nuevo Paciente</button>
             <div class="sync-badge" id="sync-status"><i class="fa-solid fa-cloud"></i> Conectando...</div>
             <button class="btn btn-outline" style="padding: 8px; border-radius: 50%;" onclick="logout()" title="Cerrar Sesión"><i class="fa-solid fa-power-off"></i></button>
@@ -325,6 +335,7 @@
         <div class="nav-sidebar glass">
             <div class="nav-item active" onclick="switchView('view-calendar', this)" title="Agenda"><i class="fa-regular fa-calendar"></i></div>
             <div class="nav-item" onclick="switchView('view-database', this)" title="Base de Datos"><i class="fa-solid fa-hospital-user"></i></div>
+            <div class="nav-item" onclick="switchView('view-reports', this)" title="Reportes"><i class="fa-solid fa-chart-line"></i></div>
             <div class="nav-item" onclick="switchView('view-settings', this)" title="Ajustes"><i class="fa-solid fa-gear"></i></div>
         </div>
 
@@ -379,7 +390,7 @@
             <div id="view-calendar" class="view-pane active">
                 <div class="view-header">
                     <div class="view-title">Agenda Semanal</div>
-                    <div class="badge badge-source" style="font-size: 0.85rem;"><i class="fa-regular fa-clock"></i> Horario: Mar 2pm | Mié 8am/10am | Jue 1pm</div>
+                    <div class="badge badge-source" style="font-size: 0.85rem;"><i class="fa-regular fa-clock"></i> Horario: Mié-Vie 8am-12pm</div>
                 </div>
                 
                 <div class="calendar-wrapper">
@@ -414,7 +425,7 @@
                 <div id="bulk-actions-bar" style="display:none; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 12px 20px; border-radius: 12px; margin-bottom: 16px; align-items: center; justify-content: space-between;">
                     <div style="font-weight: 600; color: #1D4ED8;"><span id="bulk-count">0</span> pacientes seleccionados</div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="executeBulkAction('asignar_bot')"><i class="fa-solid fa-robot"></i> Activar Bot</button>
+                        <button class="btn btn-primary" onclick="executeBulkAction('asignar_bot')"><i class="fa-solid fa-user-tie"></i> Activar Asistente</button>
                         <button class="btn btn-outline" onclick="executeBulkAction('marcar_perdido')"><i class="fa-solid fa-snowflake"></i> Marcar Frío</button>
                         <button class="btn btn-outline" onclick="executeBulkAction('descartar_alerta')"><i class="fa-solid fa-check"></i> Descartar Alertas</button>
                         <button class="btn btn-outline" style="color: var(--danger); border-color: var(--danger);" onclick="executeBulkAction('eliminar')"><i class="fa-solid fa-trash"></i> Eliminar</button>
@@ -458,6 +469,59 @@
                     </form>
                 </div>
             </div>
+            
+            <!-- Vista 4: Reportes -->
+            <div id="view-reports" class="view-pane">
+                <div class="view-header">
+                    <div class="view-title">Reportes Analíticos</div>
+                </div>
+                
+                <div class="glass" style="padding: 24px; border-radius: 16px; margin-bottom: 24px;">
+                    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                        <div class="input-group">
+                            <label>Desde (Fecha de Registro)</label>
+                            <input type="date" id="rep-desde" class="input-control" onchange="generateReports()">
+                        </div>
+                        <div class="input-group">
+                            <label>Hasta (Fecha de Registro)</label>
+                            <input type="date" id="rep-hasta" class="input-control" onchange="generateReports()">
+                        </div>
+                        <div class="input-group">
+                            <label>Clasificación (Prioridad)</label>
+                            <select id="rep-temp" class="input-control" onchange="generateReports()">
+                                <option value="todas">Todas</option>
+                                <option value="caliente">Caliente</option>
+                                <option value="tibio">Tibio</option>
+                                <option value="frio">Frío</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Estado de Atención</label>
+                            <select id="rep-estado" class="input-control" onchange="generateReports()">
+                                <option value="todos">Todos</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Atendido">Atendido</option>
+                                <option value="Cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div class="glass" style="padding: 24px; border-radius: 16px; text-align: center;">
+                        <div style="font-size: 1rem; color: var(--text-muted); margin-bottom: 8px;">Total Pacientes Filtrados</div>
+                        <div id="rep-total" style="font-size: 3rem; font-weight: 700; color: var(--primary-light);">0</div>
+                    </div>
+                    <div class="glass" style="padding: 24px; border-radius: 16px; text-align: center;">
+                        <div style="font-size: 1rem; color: var(--text-muted); margin-bottom: 8px;">Origen: WhatsApp</div>
+                        <div id="rep-wa" style="font-size: 3rem; font-weight: 700; color: #10B981;">0</div>
+                    </div>
+                    <div class="glass" style="padding: 24px; border-radius: 16px; text-align: center;">
+                        <div style="font-size: 1rem; color: var(--text-muted); margin-bottom: 8px;">Origen: Manual / Otros</div>
+                        <div id="rep-manual" style="font-size: 3rem; font-weight: 700; color: #8B5CF6;">0</div>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -479,7 +543,7 @@
                         <i class="fa-solid fa-headset" style="color: var(--primary-light);"></i> 
                         <div>
                             Conversación Atendida por Humano
-                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">Pausa el bot de n8n para este paciente específico</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">Pausa a la asistente virtual para este paciente específico</div>
                         </div>
                     </div>
                     <label class="toggle-switch">
@@ -516,15 +580,8 @@
                 
                 <div class="form-grid">
                     <div class="input-group">
-                        <label>Día</label>
-                        <select id="f-dia" class="input-control">
-                            <option value="">-- Sin Asignar --</option>
-                            <option value="lunes">Lunes</option>
-                            <option value="martes">Martes</option>
-                            <option value="miercoles">Miércoles</option>
-                            <option value="jueves">Jueves</option>
-                            <option value="viernes">Viernes</option>
-                        </select>
+                        <label>Fecha de la Cita</label>
+                        <input type="date" id="f-dia" class="input-control">
                     </div>
                     <div class="input-group">
                         <label>Hora (Ej. 14:00 o 2:00 pm)</label>
@@ -539,7 +596,7 @@
 
                 <div class="form-grid">
                     <div class="input-group">
-                        <label><i class="fa-solid fa-robot"></i> Resumen de IA</label>
+                        <label><i class="fa-solid fa-user-tie"></i> Resumen de la Asistente</label>
                         <textarea id="f-resumen" class="input-control" disabled style="background: rgba(0,0,0,0.03);"></textarea>
                     </div>
                     <div class="input-group">
@@ -568,9 +625,51 @@
         let globalBotActive = true;
         let socket = null;
 
+        // LÓGICA DE INTERFAZ DE LOGIN
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggle-pwd');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                pwdInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        async function recuperarClave() {
+            const email = document.getElementById('email').value;
+            const errDiv = document.getElementById('auth-error');
+            errDiv.style.color = '#FCA5A5'; // Reset color a error
+            
+            if(!email) {
+                errDiv.innerText = "Ingresa tu correo electrónico arriba para poder enviarte la recuperación.";
+                errDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                  redirectTo: window.location.origin,
+                });
+                if(error) throw error;
+                errDiv.innerText = "Revisa tu bandeja de entrada o SPAM. Te enviamos un correo de recuperación.";
+                errDiv.style.color = "#10B981"; // Success green
+                errDiv.style.display = 'block';
+            } catch(e) {
+                console.error(e);
+                errDiv.innerText = "Error al enviar correo. Verifica si el email es correcto.";
+                errDiv.style.display = 'block';
+            }
+        }
+
         // ASEGURAR QUE EL FORMULARIO NO RECARGUE LA PÁGINA NUNCA
         async function intentarLogin() {
             const errDiv = document.getElementById('auth-error');
+            errDiv.style.color = '#FCA5A5'; // Reset color a error en caso de que venga de recuperar clave
             const btn = document.querySelector('#login-form button');
             const originalText = btn.innerHTML;
             
@@ -742,6 +841,52 @@
             return 'var(--temp-frio)';
         }
 
+        function loadData() {
+            if(!sessionToken) return;
+            socket.emit('get-leads', sessionToken);
+        }
+
+        function generateReports() {
+            if(!leadsData) return;
+            const fDesde = document.getElementById('rep-desde').value;
+            const fHasta = document.getElementById('rep-hasta').value;
+            const fTemp = document.getElementById('rep-temp').value;
+            const fEstado = document.getElementById('rep-estado').value;
+
+            let filtered = leadsData;
+
+            if(fDesde) {
+                const desdeDate = new Date(fDesde);
+                desdeDate.setHours(0,0,0,0);
+                filtered = filtered.filter(l => new Date(l.created_at) >= desdeDate);
+            }
+            if(fHasta) {
+                const hastaDate = new Date(fHasta);
+                hastaDate.setHours(23,59,59,999);
+                filtered = filtered.filter(l => new Date(l.created_at) <= hastaDate);
+            }
+            if(fTemp !== 'todas') {
+                filtered = filtered.filter(l => (l.Temperatura || 'frio').toLowerCase() === fTemp);
+            }
+            if(fEstado !== 'todos') {
+                filtered = filtered.filter(l => (l.Estado_Atencion || 'Pendiente') === fEstado);
+            }
+
+            let countWA = 0;
+            let countManual = 0;
+            filtered.forEach(l => {
+                if((l.Fuente || '').toLowerCase() === 'whatsapp') {
+                    countWA++;
+                } else {
+                    countManual++;
+                }
+            });
+
+            document.getElementById('rep-total').innerText = filtered.length;
+            document.getElementById('rep-wa').innerText = countWA;
+            document.getElementById('rep-manual').innerText = countManual;
+        }
+
         function formatPhone(phone) {
             if (!phone) return '-';
             // Si es un grupo de WhatsApp, se muestra diferente
@@ -777,6 +922,11 @@
         }
 
         function renderUI() {
+            leadsData = data;
+            
+            // Actualizar reportes automáticamente si estamos en esa vista
+            generateReports();
+            
             // Limpiar
             const tbody = document.getElementById('table-body');
             const waitlist = document.getElementById('waitlist-list');
@@ -952,10 +1102,10 @@
             const btn = document.getElementById('btn-global-bot');
             if (globalBotActive) {
                 btn.className = "btn btn-bot";
-                btn.innerHTML = '<i class="fa-solid fa-robot"></i> <span>Bot Activo</span>';
+                btn.innerHTML = '<i class="fa-solid fa-user-tie"></i> <span>Asistente Activa</span>';
             } else {
                 btn.className = "btn btn-bot off";
-                btn.innerHTML = '<i class="fa-solid fa-power-off"></i> <span>Bot Apagado</span>';
+                btn.innerHTML = '<i class="fa-solid fa-power-off"></i> <span>Asistente Pausada</span>';
             }
         }
 
@@ -1001,8 +1151,7 @@
             document.getElementById('f-ciudad').value = row.Ciudad || "";
             document.getElementById('f-temperatura').value = (row.Temperatura || "frio").toLowerCase();
             
-            let d = (row.Dia_Cita || "").toLowerCase().replace('é', 'e');
-            document.getElementById('f-dia').value = ["lunes","martes","miercoles","jueves","viernes"].includes(d) ? d : "";
+            document.getElementById('f-dia').value = row.Dia_Cita || "";
             document.getElementById('f-hora').value = row.Hora_Cita || "";
             document.getElementById('f-motivo').value = row.Motivo_Consulta || "";
             document.getElementById('f-resumen').value = row.Resumen || "";
@@ -1012,6 +1161,75 @@
 
         function closeModal() { document.getElementById('patient-modal').style.display = 'none'; }
 
+        async function exportToExcel() {
+            try {
+                if(leadsData.length === 0) return alert("No hay datos para exportar.");
+                
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('Pacientes');
+                
+                // Define columns
+                worksheet.columns = [
+                    { header: 'Fecha Registro', key: 'created_at', width: 20 },
+                    { header: 'Nombre', key: 'Nombre', width: 25 },
+                    { header: 'Teléfono', key: 'phone_number', width: 18 },
+                    { header: 'Ciudad', key: 'Ciudad', width: 18 },
+                    { header: 'Motivo', key: 'Motivo_Consulta', width: 30 },
+                    { header: 'Prioridad', key: 'Temperatura', width: 15 },
+                    { header: 'Fecha Cita', key: 'Dia_Cita', width: 15 },
+                    { header: 'Hora Cita', key: 'Hora_Cita', width: 12 },
+                    { header: 'Fuente', key: 'Fuente', width: 15 },
+                    { header: 'Estado', key: 'Estado_Atencion', width: 18 }
+                ];
+                
+                // Style Header
+                worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+                worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+                
+                // Add rows
+                leadsData.forEach(lead => {
+                    worksheet.addRow({
+                        created_at: new Date(lead.created_at).toLocaleDateString(),
+                        Nombre: lead.Nombre || 'Sin nombre',
+                        phone_number: lead.phone_number || '',
+                        Ciudad: lead.Ciudad || '',
+                        Motivo_Consulta: lead.Motivo_Consulta || '',
+                        Temperatura: (lead.Temperatura || '').toUpperCase(),
+                        Dia_Cita: lead.Dia_Cita || '',
+                        Hora_Cita: lead.Hora_Cita || '',
+                        Fuente: lead.Fuente || 'WhatsApp',
+                        Estado_Atencion: lead.Estado_Atencion || 'Pendiente'
+                    });
+                });
+                
+                // Add auto filters
+                worksheet.autoFilter = {
+                    from: { row: 1, column: 1 },
+                    to: { row: 1, column: 10 }
+                };
+                
+                // Style alternate rows
+                worksheet.eachRow((row, rowNumber) => {
+                    if (rowNumber > 1) {
+                        row.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: rowNumber % 2 === 0 ? 'FFF1F5F9' : 'FFFFFFFF' }
+                        };
+                    }
+                });
+
+                // Generate and download
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                saveAs(blob, `Pacientes_Reporte_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
+                
+            } catch(e) {
+                console.error("Error exporting to excel:", e);
+                alert("Error al exportar a Excel.");
+            }
+        }
         async function savePatient() {
             const data = {
                 id: document.getElementById('f-id').value,
