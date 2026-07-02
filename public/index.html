@@ -706,6 +706,15 @@
             return 'var(--temp-frio)';
         }
 
+        function formatPhone(phone) {
+            if (!phone) return '-';
+            let num = phone.replace(/[^0-9]/g, '');
+            if (num.startsWith('58') && num.length >= 12) {
+                return '0' + num.substring(2, 5) + '-' + num.substring(5);
+            }
+            return num;
+        }
+
         function renderUI() {
             // Limpiar
             const tbody = document.getElementById('table-body');
@@ -727,6 +736,7 @@
                 const fuente = (row.Fuente || 'organico').toLowerCase();
                 const tColor = getTempColor(temp);
                 const init = nombre.substring(0,2).toUpperCase();
+                const fPhone = formatPhone(row.phone_number);
 
                 // Logica Alerta Quincena
                 let hasAlert = false;
@@ -756,7 +766,7 @@
                                 <div class="pill-avatar" style="background: ${tColor}">${init}</div>
                                 <div class="pill-info">
                                     <div class="pill-name">${nombre} ${row.Conversacion_Abierta ? '<i class="fa-solid fa-headset" style="color:var(--primary-light); font-size:0.8rem" title="Bot Pausado"></i>' : ''}</div>
-                                    <div class="pill-desc">${sourceIcon} ${row.phone_number || ''}</div>
+                                    <div class="pill-desc">${sourceIcon} ${fPhone}</div>
                                 </div>
                                 ${hasAlert ? '<i class="fa-solid fa-bell alert-indicator"></i>' : ''}
                             </div>
@@ -783,7 +793,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td>${row.phone_number || '-'}</td>
+                        <td>${fPhone}</td>
                         <td><div class="badge badge-source">${sourceIcon} <span style="text-transform:capitalize; margin-left:4px;">${fuente}</span></div></td>
                         <td><div class="${badgeClass}">${temp}</div></td>
                         <td>${dateTxt}</td>
@@ -901,7 +911,7 @@
             
             document.getElementById('f-id').value = row.id;
             document.getElementById('f-nombre').value = row.Nombre || "";
-            document.getElementById('f-telefono').value = row.phone_number || "";
+            document.getElementById('f-telefono').value = formatPhone(row.phone_number);
             document.getElementById('f-telefono').setAttribute('disabled', 'true'); // No editar ID
             document.getElementById('f-ciudad').value = row.Ciudad || "";
             document.getElementById('f-temperatura').value = (row.Temperatura || "frio").toLowerCase();
