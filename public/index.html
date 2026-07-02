@@ -19,28 +19,27 @@
 
     <style>
         :root {
-            --primary: #0F172A;
-            --primary-light: #2563EB;
-            --secondary: #38BDF8;
-            --accent: #10B981;
-            --bg-body: #F1F5F9;
-            --bg-card: rgba(255, 255, 255, 0.9);
-            --text-main: #1E293B;
+            --primary: #1E293B;
+            --primary-light: #005C8A;
+            --secondary: #0EA5E9;
+            --accent: #059669;
+            --bg-body: #F4F7F9;
+            --bg-card: #FFFFFF;
+            --text-main: #334155;
             --text-muted: #64748B;
-            --border: rgba(226, 232, 240, 0.8);
-            --danger: #EF4444;
-            --warning: #F59E0B;
+            --border: #E2E8F0;
+            --danger: #DC2626;
+            --warning: #D97706;
             
-            --temp-frio: #38BDF8;
-            --temp-tibio: #F59E0B;
-            --temp-caliente: #EF4444;
+            --temp-frio: #0284C7;
+            --temp-tibio: #D97706;
+            --temp-caliente: #DC2626;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
         
         body {
             background-color: var(--bg-body);
-            background-image: radial-gradient(at 0% 0%, hsla(213,100%,94%,1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(199,100%,94%,1) 0, transparent 50%);
             color: var(--text-main);
             display: flex;
             height: 100vh;
@@ -48,39 +47,35 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Utilidades Glassmorphism */
+        /* Utilidades Sólidas (ex-Glassmorphism) */
         .glass {
             background: var(--bg-card);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         /* === PANTALLA DE LOGIN === */
         #auth-screen {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            background: var(--bg-body);
             display: none; justify-content: center; align-items: center;
             z-index: 9999;
             transition: opacity 0.5s ease;
         }
         .login-box {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px; border-radius: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 40px; border-radius: 12px;
             width: 100%; max-width: 420px;
-            color: white; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            color: var(--text-main); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
-        .login-box h2 { margin-bottom: 25px; font-weight: 600; text-align: center; font-size: 1.8rem; }
+        .login-box h2 { margin-bottom: 25px; font-weight: 600; text-align: center; font-size: 1.8rem; color: var(--primary); }
         .login-box .form-group { margin-bottom: 20px; }
-        .login-box label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #94A3B8; }
+        .login-box label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-muted); }
         .login-box input {
-            width: 100%; padding: 12px 16px; border-radius: 12px;
-            background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.1);
-            color: white; font-size: 1rem; outline: none; transition: 0.3s;
+            width: 100%; padding: 12px 16px; border-radius: 8px;
+            background: #F8FAFC; border: 1px solid var(--border);
+            color: var(--text-main); font-size: 1rem; outline: none; transition: 0.3s;
         }
         .login-box input:focus { border-color: var(--secondary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
         .login-box button {
