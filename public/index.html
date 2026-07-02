@@ -1220,8 +1220,8 @@
             if (timeMatch) {
                 hourNum = parseInt(timeMatch[1], 10);
                 minNum = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
-                if (hora.includes('pm') && hourNum < 12) hourNum += 12;
-                if (hora.includes('am') && hourNum === 12) hourNum = 0;
+                if ((hora.includes('pm') || hora.includes('tarde')) && hourNum < 12) hourNum += 12;
+                if ((hora.includes('am') || hora.includes('mañana')) && hourNum === 12) hourNum = 0;
             }
             const topPx = ((hourNum - 8) * 80) + (minNum * (80/60)); 
             const col = document.getElementById(colId);
