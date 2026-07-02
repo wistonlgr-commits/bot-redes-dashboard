@@ -384,19 +384,26 @@
             
             <!-- Vista 1: Calendario -->
             <div id="view-calendar" class="view-pane active">
-                <div class="view-header">
-                    <div class="view-title">Agenda Semanal</div>
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="view-title">Agenda Semanal</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="changeWeek(-1)" class="btn btn-outline" style="padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-chevron-left"></i></button>
+                            <button onclick="changeWeek(0)" class="btn btn-outline" style="padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">Hoy</button>
+                            <button onclick="changeWeek(1)" class="btn btn-outline" style="padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
                     <div class="badge badge-source" style="font-size: 0.85rem;"><i class="fa-regular fa-clock"></i> Horario: Mié-Vie 8am-12pm</div>
                 </div>
                 
                 <div class="calendar-wrapper">
                     <div class="cal-grid" id="calendar-grid">
                         <div class="cal-header" style="border-bottom: none;"></div>
-                        <div class="cal-header">LUNES</div>
-                        <div class="cal-header">MARTES</div>
-                        <div class="cal-header">MIÉRCOLES</div>
-                        <div class="cal-header">JUEVES</div>
-                        <div class="cal-header">VIERNES</div>
+                        <div class="cal-header">LUNES <div id="date-lunes" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                        <div class="cal-header">MARTES <div id="date-martes" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                        <div class="cal-header">MIÉRCOLES <div id="date-miercoles" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                        <div class="cal-header">JUEVES <div id="date-jueves" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                        <div class="cal-header">VIERNES <div id="date-viernes" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
 
                         <div class="cal-time-col" id="time-labels"></div>
                         <div class="cal-day-col" id="col-lunes"></div>
@@ -561,13 +568,24 @@
                         <label>Ciudad</label>
                         <input type="text" id="f-ciudad" class="input-control">
                     </div>
-                    <div class="input-group">
-                        <label>Clasificación del Paciente</label>
-                        <select id="f-temperatura" class="input-control">
-                            <option value="frio">Frío (Solo Información)</option>
-                            <option value="tibio">Tibio (En Evaluación)</option>
-                            <option value="caliente">Caliente (Alta Prioridad)</option>
-                        </select>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Clasificación del Paciente</label>
+                            <select id="f-temperatura" class="input-control">
+                                <option value="frio">Frío (Solo Información)</option>
+                                <option value="tibio">Tibio (En Evaluación)</option>
+                                <option value="caliente">Caliente (Alta Prioridad)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Fuente (Origen)</label>
+                            <select id="f-fuente" class="input-control">
+                                <option value="organico">Orgánico (WhatsApp Directo)</option>
+                                <option value="instagram">Instagram Ads</option>
+                                <option value="facebook">Facebook Ads</option>
+                                <option value="tiktok">TikTok Ads</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -922,6 +940,8 @@
         function renderUI() {
             leadsData = localData;
             
+            updateCalendarHeaders(); // Inicializar fechas del calendario
+            
             // Actualizar reportes automáticamente si estamos en esa vista
             generateReports();
             
@@ -1088,6 +1108,48 @@
             }
         }
 
+        let currentWeekOffset = 0;
+
+        function changeWeek(offset) {
+            if (offset === 0) {
+                currentWeekOffset = 0;
+            } else {
+                currentWeekOffset += offset;
+            }
+            updateCalendarHeaders();
+            
+            // Limpiar eventos antes de volver a renderizar
+            ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes'].forEach(day => {
+                const col = document.getElementById(day);
+                if (col) {
+                    // Mantener solo los cal-cell vacíos y eliminar los cal-event
+                    const cells = col.innerHTML.match(/<div class="cal-cell"><\/div>/g) || [];
+                    col.innerHTML = cells.join('');
+                }
+            });
+            fetchData();
+        }
+
+        function updateCalendarHeaders() {
+            const tempDate = new Date();
+            const dayOfWeek = tempDate.getDay();
+            const diffToMonday = tempDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            
+            const monday = new Date(tempDate.setDate(diffToMonday));
+            monday.setDate(monday.getDate() + (currentWeekOffset * 7));
+            
+            const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+            days.forEach((day, index) => {
+                const dateHeader = new Date(monday);
+                dateHeader.setDate(monday.getDate() + index);
+                
+                const dayStr = String(dateHeader.getDate()).padStart(2, '0');
+                const monthStr = String(dateHeader.getMonth() + 1).padStart(2, '0');
+                const el = document.getElementById(`date-${day}`);
+                if (el) el.innerText = `${dayStr}/${monthStr}`;
+            });
+        }
+
         function filterTable() {
             let input = document.getElementById("search-input").value.toLowerCase();
             document.querySelectorAll(".t-row").forEach(tr => {
@@ -1130,6 +1192,7 @@
                 document.getElementById('f-telefono').removeAttribute('disabled');
                 document.getElementById('f-ciudad').value = "";
                 document.getElementById('f-temperatura').value = "frio";
+                document.getElementById('f-fuente').value = "organico";
                 document.getElementById('f-dia').value = "";
                 document.getElementById('f-hora').value = "";
                 document.getElementById('f-motivo').value = "";
@@ -1148,6 +1211,7 @@
             document.getElementById('f-telefono').setAttribute('disabled', 'true'); // No editar ID
             document.getElementById('f-ciudad').value = row.Ciudad || "";
             document.getElementById('f-temperatura').value = (row.Temperatura || "frio").toLowerCase();
+            document.getElementById('f-fuente').value = (row.Fuente || "organico").toLowerCase();
             
             document.getElementById('f-dia').value = row.Dia_Cita || "";
             document.getElementById('f-hora').value = row.Hora_Cita || "";
@@ -1235,6 +1299,7 @@
                 Telefono: document.getElementById('f-telefono').value, // Solo para 'add'
                 Ciudad: document.getElementById('f-ciudad').value,
                 Temperatura: document.getElementById('f-temperatura').value,
+                Fuente: document.getElementById('f-fuente').value,
                 Dia_Cita: document.getElementById('f-dia').value,
                 Hora_Cita: document.getElementById('f-hora').value,
                 Motivo_Consulta: document.getElementById('f-motivo').value,

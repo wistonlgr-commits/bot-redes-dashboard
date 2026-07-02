@@ -323,7 +323,7 @@ app.post('/api/add', async (req, res) => {
         const quincena = calcularAlertaQuincena(hoy);
         newRow.Fecha_Seguimiento = quincena.toISOString().split('T')[0];
         newRow.Estado_Alerta = 'PENDIENTE';
-        newRow.Fuente = 'organico';
+        if (!newRow.Fuente) newRow.Fuente = 'organico';
         newRow.Ultima_Interaccion = hoy.toISOString();
         
         const { error } = await supabase.from('leads').insert(newRow);
