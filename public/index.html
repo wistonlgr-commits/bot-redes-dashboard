@@ -708,9 +708,34 @@
 
         function formatPhone(phone) {
             if (!phone) return '-';
+            // Si es un grupo de WhatsApp, se muestra diferente
+            if (phone.includes('@g.us')) return "Grupo: " + phone.split('@')[0];
+            
             let num = phone.replace(/[^0-9]/g, '');
-            if (num.startsWith('58') && num.length >= 12) {
-                return '0' + num.substring(2, 5) + '-' + num.substring(5);
+            if (!num) return phone;
+            
+            // Añadir + al inicio para que la librería lo detecte como internacional
+            if (!num.startsWith('+')) num = '+' + num;
+            
+            try {
+                if (window.libphonenumber) {
+                    const parsed = window.libphonenumber.parsePhoneNumber(num);
+                    if (parsed && parsed.isValid()) {
+                        // Devuelve algo como +58 412 123 4567 o +52 55 1234 5678
+                        return parsed.formatInternational(); 
+                    }
+                }
+            } catch(e) {}
+
+            // Fallback por si la librería falla a cargar
+            num = num.replace('+', '');
+            if (num.length >= 11) {
+                // Separar el código de país
+                let ccLen = num.length > 11 ? 2 : 1; 
+                if (num.startsWith('59') || num.startsWith('50')) ccLen = 3; 
+                let cc = num.substring(0, ccLen);
+                let rest = num.substring(ccLen);
+                return `(+${cc}) ${rest.substring(0,3)}-${rest.substring(3)}`;
             }
             return num;
         }
