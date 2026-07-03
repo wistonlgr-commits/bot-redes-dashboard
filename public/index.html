@@ -1048,7 +1048,8 @@
             let countWA = 0;
             let countManual = 0;
             filtered.forEach(l => {
-                if((l.Fuente || '').toLowerCase() === 'whatsapp') {
+                const f = (l.Fuente || '').toLowerCase();
+                if(f === 'whatsapp' || f === 'organico' || f === 'instagram' || f === 'facebook' || f === 'tiktok') {
                     countWA++;
                 } else {
                     countManual++;
