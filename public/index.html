@@ -545,18 +545,30 @@
                     </div>
                 </div>
 
-                <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px;">Total Pacientes Filtrados</div>
-                        <div id="rep-total" style="font-size: 2.2rem; font-weight: 700; color: var(--primary-light);">0</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Total Filtrados</div>
+                        <div id="rep-total" style="font-size: 2rem; font-weight: 700; color: var(--primary-light);">0</div>
                     </div>
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px;">Origen: WhatsApp</div>
-                        <div id="rep-wa" style="font-size: 2.2rem; font-weight: 700; color: #10B981;">0</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Orgánico (WhatsApp)</div>
+                        <div id="rep-wa" style="font-size: 2rem; font-weight: 700; color: #10B981;">0</div>
                     </div>
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px;">Origen: Manual / Otros</div>
-                        <div id="rep-manual" style="font-size: 2.2rem; font-weight: 700; color: #8B5CF6;">0</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Instagram Ads</div>
+                        <div id="rep-ig" style="font-size: 2rem; font-weight: 700; color: #E1306C;">0</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Facebook Ads</div>
+                        <div id="rep-fb" style="font-size: 2rem; font-weight: 700; color: #1877F2;">0</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">TikTok Ads</div>
+                        <div id="rep-tk" style="font-size: 2rem; font-weight: 700; color: #000000;">0</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Manual / Otros</div>
+                        <div id="rep-manual" style="font-size: 2rem; font-weight: 700; color: #8B5CF6;">0</div>
                     </div>
                 </div>
             </div>
@@ -1046,11 +1058,21 @@
             }
 
             let countWA = 0;
+            let countIG = 0;
+            let countFB = 0;
+            let countTK = 0;
             let countManual = 0;
+
             filtered.forEach(l => {
                 const f = (l.Fuente || '').toLowerCase();
-                if(f === 'whatsapp' || f === 'organico' || f === 'instagram' || f === 'facebook' || f === 'tiktok') {
+                if(f === 'whatsapp' || f === 'organico') {
                     countWA++;
+                } else if(f === 'instagram') {
+                    countIG++;
+                } else if(f === 'facebook') {
+                    countFB++;
+                } else if(f === 'tiktok') {
+                    countTK++;
                 } else {
                     countManual++;
                 }
@@ -1058,6 +1080,9 @@
 
             document.getElementById('rep-total').innerText = filtered.length;
             document.getElementById('rep-wa').innerText = countWA;
+            document.getElementById('rep-ig').innerText = countIG;
+            document.getElementById('rep-fb').innerText = countFB;
+            document.getElementById('rep-tk').innerText = countTK;
             document.getElementById('rep-manual').innerText = countManual;
         }
 
