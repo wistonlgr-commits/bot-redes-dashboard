@@ -1592,12 +1592,12 @@
                     }
                 }
                 closeBlockModal();
-                updateSyncStatus("online");
+                updateSync('Sincronizado', true);
                 fetchData();
             } catch (err) {
                 console.error(err);
                 alert("Error al guardar el bloqueo: " + err.message);
-                updateSyncStatus("error");
+                updateSync('Error', false);
             } finally {
                 btn.innerHTML = '<i class="fa-solid fa-lock"></i> Guardar Bloqueo';
                 btn.disabled = false;
