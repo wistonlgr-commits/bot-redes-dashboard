@@ -174,7 +174,7 @@ app.post('/webhook/n8n', async (req, res) => {
             // Detectar fuente: Usar lo que envíe n8n explícitamente en "Fuente".
             // Si n8n nos manda todo el payload de WhatsApp anidado, buscamos el referral.
             let fuente = 'organico';
-            if (data.Fuente) {
+            if (data.Fuente && !data.Fuente.includes('{{')) {
                 fuente = data.Fuente.toLowerCase();
             } else if (data.referral || (data.message && data.message.referral)) {
                 // Si encontramos la etiqueta de Ads (referral) de WhatsApp directamente

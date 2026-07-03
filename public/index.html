@@ -416,7 +416,7 @@
                             <button onclick="changeWeek(1)" class="btn btn-outline" style="padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-chevron-right"></i></button>
                         </div>
                     </div>
-                    <div class="badge badge-source" style="font-size: 0.85rem;"><i class="fa-regular fa-clock"></i> Horario: Mié-Vie 8am-12pm</div>
+                    <div class="badge badge-source" style="font-size: 0.85rem;"><i class="fa-regular fa-clock"></i> Horario: Lun-Vie 8am-4pm</div>
                 </div>
                 
                 <div class="calendar-wrapper">
@@ -1243,9 +1243,9 @@
         });
 
         function renderCalendarEvent(row, color) {
-            const diaStr = (row.Dia_Cita || "").toLowerCase().replace('é', 'e');
-            const hora = (row.Hora_Cita || "").toLowerCase();
-            const temp = (row.Temperatura || "").toLowerCase();
+            const diaStr = (row.Dia_Cita || "").toLowerCase().trim().replace('é', 'e');
+            const hora = (row.Hora_Cita || "").toLowerCase().trim();
+            const temp = (row.Temperatura || "").toLowerCase().trim();
             let colIds = [];
             
             // Lógica de Paginación y Fecha Real
@@ -1534,15 +1534,14 @@
                 selectedPills.forEach(pill => {
                     blocksData.push({
                         Nombre: `[BLOQUEO] ${motivo}`,
-                        Telefono: "0000000000",
+                        Telefono: "000" + Math.floor(Math.random() * 100000000).toString(),
                         Temperatura: "bloqueo",
                         Fuente: "sistema",
                         Dia_Cita: fecha,
                         Hora_Cita: pill.innerText,
                         Motivo_Consulta: motivo,
                         Conversacion_Abierta: false,
-                        Ciudad: "",
-                        Notas: ""
+                        Ciudad: ""
                     });
                 });
             } else if (tipo === 'dia') {
@@ -1550,15 +1549,14 @@
                 if (!fecha) return alert("Selecciona la fecha");
                 blocksData.push({
                     Nombre: `[BLOQUEO] ${motivo}`,
-                    Telefono: "0000000000",
+                    Telefono: "000" + Math.floor(Math.random() * 100000000).toString(),
                     Temperatura: "bloqueo",
                     Fuente: "sistema",
                     Dia_Cita: fecha,
                     Hora_Cita: "TODO EL DIA",
                     Motivo_Consulta: motivo,
                     Conversacion_Abierta: false,
-                    Ciudad: "",
-                    Notas: ""
+                    Ciudad: ""
                 });
             } else if (tipo === 'semana') {
                 const sInit = document.getElementById('b-semana-inicio').value;
@@ -1566,15 +1564,14 @@
                 if (!sInit || !sEnd) return alert("Selecciona el inicio y fin de la semana");
                 blocksData.push({
                     Nombre: `[BLOQUEO] ${motivo}`,
-                    Telefono: "0000000000",
+                    Telefono: "000" + Math.floor(Math.random() * 100000000).toString(),
                     Temperatura: "bloqueo",
                     Fuente: "sistema",
                     Dia_Cita: sInit + " a " + sEnd,
                     Hora_Cita: "TODA LA SEMANA",
                     Motivo_Consulta: motivo,
                     Conversacion_Abierta: false,
-                    Ciudad: "",
-                    Notas: ""
+                    Ciudad: ""
                 });
             }
 
