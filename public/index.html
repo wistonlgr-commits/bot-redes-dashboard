@@ -1586,14 +1586,17 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
-                    if (!res.ok) throw new Error("Fallo al guardar bloqueo");
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || "Fallo al guardar bloqueo en la base de datos");
+                    }
                 }
                 closeBlockModal();
                 updateSyncStatus("online");
                 fetchData();
             } catch (err) {
                 console.error(err);
-                alert("Error al guardar el bloqueo");
+                alert("Error al guardar el bloqueo: " + err.message);
                 updateSyncStatus("error");
             } finally {
                 btn.innerHTML = '<i class="fa-solid fa-lock"></i> Guardar Bloqueo';
