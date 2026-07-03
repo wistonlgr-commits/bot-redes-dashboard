@@ -1131,7 +1131,8 @@
                 const temp = (row.Temperatura || 'frio').toLowerCase();
                 const dia = (row.Dia_Cita || '').toLowerCase().trim();
                 const hora = (row.Hora_Cita || '').toLowerCase().trim();
-                const fuente = (row.Fuente || 'organico').toLowerCase();
+                let fuente = (row.Fuente || 'organico').toLowerCase().replace(/=/g, '').trim();
+                if (fuente === 'whatsapp') fuente = 'organico';
                 const tColor = getTempColor(temp);
                 const init = nombre.substring(0,2).toUpperCase();
                 const fPhone = formatPhone(row.phone_number);
@@ -1462,7 +1463,7 @@
             document.getElementById('f-telefono').setAttribute('disabled', 'true'); // No editar ID
             document.getElementById('f-ciudad').value = row.Ciudad || "";
             document.getElementById('f-temperatura').value = (row.Temperatura || "frio").toLowerCase();
-            let fuenteVal = (row.Fuente || "organico").toLowerCase();
+            let fuenteVal = (row.Fuente || "organico").toLowerCase().replace(/=/g, '').trim();
             if (fuenteVal === 'whatsapp') fuenteVal = 'organico';
             document.getElementById('f-fuente').value = fuenteVal;
             
