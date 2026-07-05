@@ -1065,13 +1065,13 @@
 
             filtered.forEach(l => {
                 const f = (l.Fuente || '').toLowerCase();
-                if(f === 'whatsapp' || f === 'organico') {
+                if(f.includes('whatsapp') || f.includes('organico')) {
                     countWA++;
-                } else if(f === 'instagram') {
+                } else if(f.includes('instagram')) {
                     countIG++;
-                } else if(f === 'facebook') {
+                } else if(f.includes('facebook')) {
                     countFB++;
-                } else if(f === 'tiktok') {
+                } else if(f.includes('tiktok')) {
                     countTK++;
                 } else {
                     countManual++;
@@ -1490,7 +1490,11 @@
             document.getElementById('f-ciudad').value = row.Ciudad || "";
             document.getElementById('f-temperatura').value = (row.Temperatura || "frio").toLowerCase();
             let fuenteVal = (row.Fuente || "organico").toLowerCase().replace(/=/g, '').trim();
-            if (fuenteVal === 'whatsapp') fuenteVal = 'organico';
+            if (fuenteVal.includes('whatsapp') || fuenteVal.includes('organico')) fuenteVal = 'organico';
+            else if (fuenteVal.includes('instagram')) fuenteVal = 'instagram';
+            else if (fuenteVal.includes('facebook')) fuenteVal = 'facebook';
+            else if (fuenteVal.includes('tiktok')) fuenteVal = 'tiktok';
+            
             document.getElementById('f-fuente').value = fuenteVal;
             
             document.getElementById('f-dia').value = row.Dia_Cita || "";
