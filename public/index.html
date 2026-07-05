@@ -1158,7 +1158,10 @@
                 const dia = (row.Dia_Cita || '').toLowerCase().trim();
                 const hora = (row.Hora_Cita || '').toLowerCase().trim();
                 let fuente = (row.Fuente || 'organico').toLowerCase().replace(/=/g, '').trim();
-                if (fuente === 'whatsapp') fuente = 'organico';
+                if (fuente.includes('whatsapp') || fuente.includes('organico')) fuente = 'organico';
+                else if (fuente.includes('instagram')) fuente = 'instagram';
+                else if (fuente.includes('facebook')) fuente = 'facebook';
+                else if (fuente.includes('tiktok')) fuente = 'tiktok';
                 const tColor = getTempColor(temp);
                 const init = nombre.substring(0,2).toUpperCase();
                 const fPhone = formatPhone(row.phone_number);
