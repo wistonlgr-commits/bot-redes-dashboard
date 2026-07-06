@@ -665,7 +665,25 @@
             
             <div class="modal-body">
                 <input type="hidden" id="f-id">
+                <input type="hidden" id="f-requiere-asistencia-humana">
                 
+                <!-- Alerta Humana -->
+                <div id="human-alert-banner" style="display: none; background-color: #FEF2F2; border: 1px solid #F87171; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <div style="color: #DC2626; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> El Bot requiere asistencia humana
+                            </div>
+                            <div id="human-alert-text" style="color: #7F1D1D; font-size: 0.85rem; margin-top: 6px;">
+                                <!-- Texto de la alerta -->
+                            </div>
+                        </div>
+                        <button type="button" onclick="resolveHumanAlert()" style="background: #DC2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500; margin-left: 15px; flex-shrink: 0;">
+                            <i class="fa-solid fa-check"></i> Resolver
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Toggle Bot -->
                 <div class="toggle-container" style="margin-bottom: 24px;">
                     <div class="toggle-label">
@@ -1181,6 +1199,9 @@
                         isAlertProxima = true;
                     }
                 }
+                
+                // Lógica de Asistencia Humana (Bot)
+                let requiresHuman = row.requiere_asistencia_humana && row.requiere_asistencia_humana.trim() !== '';
 
                 // Generar iconos de fuente
                 let sourceIcon = '<i class="fa-brands fa-whatsapp"></i>';
@@ -1196,7 +1217,10 @@
                     
                     let extraBadge = '';
                     if (estadoAlerta === 'PROGRAMADA_BOT') {
-                        extraBadge = '<div style="font-size: 0.7rem; color: var(--primary-light); font-weight: bold; margin-top:4px;"><i class="fa-solid fa-robot"></i> Bot Programado</div>';
+                        extraBadge += '<div style="font-size: 0.7rem; color: var(--primary-light); font-weight: bold; margin-top:4px;"><i class="fa-solid fa-robot"></i> Bot Programado</div>';
+                    }
+                    if (requiresHuman) {
+                        extraBadge += '<div style="font-size: 0.75rem; color: var(--danger); font-weight: bold; margin-top:4px;"><i class="fa-solid fa-triangle-exclamation"></i> Bot solicita ayuda</div>';
                     }
                     
                     const pillHtml = `
@@ -1209,18 +1233,21 @@
                                     <div class="pill-desc">${sourceIcon} ${fPhone}</div>
                                     ${extraBadge}
                                 </div>
-                                ${(isAlertHoy || isAlertProxima) ? '<i class="fa-solid fa-bell alert-indicator" ' + (isAlertProxima ? 'style="color: var(--warning);"' : '') + '></i>' : ''}
+                                ${(isAlertHoy || isAlertProxima || requiresHuman) ? '<i class="fa-solid ' + (requiresHuman ? 'fa-triangle-exclamation' : 'fa-bell') + ' alert-indicator" style="color: ' + (requiresHuman ? 'var(--danger)' : (isAlertProxima ? 'var(--warning)' : 'var(--danger)')) + ';"></i>' : ''}
                             </div>
                         </div>
                     `;
                     
                     if (temp !== 'bloqueo') {
                         if (isAlertHoy) {
-                            alertlist.innerHTML += pillHtml;
+                            if (requiresHuman) alertlist.innerHTML = pillHtml + alertlist.innerHTML;
+                            else alertlist.innerHTML += pillHtml;
                         } else if (isAlertProxima) {
-                            document.getElementById('upcoming-alert-list').innerHTML += pillHtml;
+                            if (requiresHuman) document.getElementById('upcoming-alert-list').innerHTML = pillHtml + document.getElementById('upcoming-alert-list').innerHTML;
+                            else document.getElementById('upcoming-alert-list').innerHTML += pillHtml;
                         } else {
-                            waitlist.innerHTML += pillHtml;
+                            if (requiresHuman) waitlist.innerHTML = pillHtml + waitlist.innerHTML;
+                            else waitlist.innerHTML += pillHtml;
                         }
                     }
                 }
@@ -1238,7 +1265,7 @@
                             <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="openModal('${id}')">
                                 <div class="pill-avatar" style="background:${tColor}; width:32px; height:32px; font-size:0.75rem;">${init}</div>
                                 <div>
-                                    <div style="font-weight:600;">${nombre} ${row.Conversacion_Abierta ? '<i class="fa-solid fa-headset" style="color:var(--primary-light); font-size:0.8rem; margin-left:4px;" title="Bot Pausado"></i>' : ''} ${(isAlertHoy || isAlertProxima) ? '<i class="fa-solid fa-bell alert-indicator" style="font-size:0.8rem; margin-left:4px;"></i>' : ''}</div>
+                                    <div style="font-weight:600;">${nombre} ${row.Conversacion_Abierta ? '<i class="fa-solid fa-headset" style="color:var(--primary-light); font-size:0.8rem; margin-left:4px;" title="Bot Pausado"></i>' : ''} ${(isAlertHoy || isAlertProxima || requiresHuman) ? '<i class="fa-solid ' + (requiresHuman ? 'fa-triangle-exclamation' : 'fa-bell') + ' alert-indicator" style="color: ' + (requiresHuman ? 'var(--danger)' : 'var(--danger)') + '; font-size:0.8rem; margin-left:4px;"></i>' : ''}</div>
                                 </div>
                             </div>
                         </td>
@@ -1465,6 +1492,11 @@
         function openModal(id = null) {
             document.getElementById('patient-modal').style.display = 'flex';
             
+            // Reseteo de alerta humana
+            document.getElementById('human-alert-banner').style.display = 'none';
+            document.getElementById('human-alert-text').innerText = '';
+            document.getElementById('f-requiere-asistencia-humana').value = '';
+            
             if (!id) {
                 // Nuevo
                 document.getElementById('f-id').value = "";
@@ -1485,6 +1517,12 @@
 
             const row = localData.find(p => p.id === id);
             if (!row) return;
+            
+            if (row.requiere_asistencia_humana && row.requiere_asistencia_humana.trim() !== '') {
+                document.getElementById('human-alert-banner').style.display = 'block';
+                document.getElementById('human-alert-text').innerText = row.requiere_asistencia_humana;
+                document.getElementById('f-requiere-asistencia-humana').value = row.requiere_asistencia_humana;
+            }
             
             document.getElementById('f-id').value = row.id;
             document.getElementById('f-nombre').value = row.Nombre || "";
@@ -1768,7 +1806,14 @@
                 console.error("Error exporting to excel:", e);
                 alert("Error al exportar a Excel.");
             }
+        function resolveHumanAlert() {
+            if(confirm("¿Marcar esta alerta como resuelta?")) {
+                document.getElementById('human-alert-banner').style.display = 'none';
+                document.getElementById('f-requiere-asistencia-humana').value = '';
+                // No guardamos automáticamente para que Laura pueda cambiar notas u otras cosas y darle a 'Guardar Cambios' al final.
+            }
         }
+
         async function savePatient() {
             const data = {
                 id: document.getElementById('f-id').value,
@@ -1781,7 +1826,8 @@
                 Hora_Cita: document.getElementById('f-hora').value,
                 Motivo_Consulta: document.getElementById('f-motivo').value,
                 Notas: document.getElementById('f-notas').value,
-                Conversacion_Abierta: document.getElementById('f-pausar-bot').checked
+                Conversacion_Abierta: document.getElementById('f-pausar-bot').checked,
+                requiere_asistencia_humana: document.getElementById('f-requiere-asistencia-humana').value
             };
 
             const endpoint = data.id ? '/api/update' : '/api/add';
