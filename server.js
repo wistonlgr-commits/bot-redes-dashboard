@@ -40,7 +40,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 async function broadcastData() {
     if (!supabaseUrl) return;
     try {
-        const { data, error } = await supabase.from('leads').select('*').order('Ultima_Interaccion', { ascending: false });
+        const { data, error } = await supabase.from('leads').select('*').order('Ultima_Interaccion', { ascending: false }).limit(250);
         if (!error && data) {
             io.emit('actualizacion_completa', data);
         }
@@ -369,7 +369,7 @@ io.on('connection', async (socket) => {
     // Enviar datos actuales al conectar
     try {
         if (supabaseUrl) {
-            const { data } = await supabase.from('leads').select('*').order('Ultima_Interaccion', { ascending: false });
+            const { data } = await supabase.from('leads').select('*').order('Ultima_Interaccion', { ascending: false }).limit(250);
             if (data) socket.emit('actualizacion_completa', data);
         }
     } catch(e) {}
