@@ -292,6 +292,54 @@
             .modal-footer div { display: flex; flex-direction: column; gap: 12px; width: 100%;}
             .modal-footer button { width: 100%; justify-content: center; padding: 14px; }
         }
+
+        /* --- Toggle Switch CSS --- */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+        input:checked + .slider {
+            background-color: var(--secondary);
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--secondary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body>
@@ -370,6 +418,10 @@
                     <div class="stat-card">
                         <div class="stat-num" id="stat-citas">0</div>
                         <div class="stat-label">Citas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-num" id="stat-bot">0</div>
+                        <div class="stat-label">Vía Bot</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-num" id="stat-pendientes">0</div>
@@ -495,7 +547,7 @@
                 <div class="view-header">
                     <div class="view-title">Configuración del Sistema</div>
                 </div>
-                <div class="glass" style="padding: 32px; border-radius: 16px; max-width: 600px;">
+                <div class="glass" style="padding: 32px; border-radius: 16px; max-width: 600px; margin-bottom: 24px;">
                     <h3 style="margin-bottom: 20px;">Cambiar Contraseña</h3>
                     <form id="password-form">
                         <div class="input-group" style="margin-bottom: 20px;">
@@ -505,6 +557,35 @@
                         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-key"></i> Actualizar Contraseña</button>
                         <p id="pwd-msg" style="margin-top: 10px; font-size: 0.9rem; font-weight: 600;"></p>
                     </form>
+                </div>
+
+                <div class="glass" style="padding: 32px; border-radius: 16px; max-width: 600px;">
+                    <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-calendar-day" style="color: var(--secondary);"></i> Configuración de Agenda</h3>
+                    <div class="form-group" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 1.05rem;">Trabajar los Sábados</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Permite al bot agendar citas los días sábado.</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="sat-enabled" onchange="toggleSaturdaySettings()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <div id="sat-time-settings" style="display: none; padding-top: 15px; border-top: 1px solid var(--border); margin-top: 15px;">
+                        <div style="display: flex; gap: 15px;">
+                            <div class="input-group" style="flex: 1;">
+                                <label>Hora de Inicio</label>
+                                <input type="time" id="sat-start" class="input-control">
+                            </div>
+                            <div class="input-group" style="flex: 1;">
+                                <label>Hora de Fin</label>
+                                <input type="time" id="sat-end" class="input-control">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" style="margin-top: 15px; width: 100%;" onclick="saveSaturdayConfig()"><i class="fa-solid fa-floppy-disk"></i> Guardar Horario</button>
+                        <p id="sat-msg" style="margin-top: 10px; font-size: 0.9rem; font-weight: 600; text-align: center;"></p>
+                    </div>
                 </div>
             </div>
             
@@ -972,6 +1053,41 @@
             }
         }
 
+        // --- CONFIGURACION SABADOS ---
+        function toggleSaturdaySettings() {
+            const enabled = document.getElementById('sat-enabled').checked;
+            document.getElementById('sat-time-settings').style.display = enabled ? 'block' : 'none';
+        }
+
+        async function saveSaturdayConfig() {
+            const enabled = document.getElementById('sat-enabled').checked;
+            const start = document.getElementById('sat-start').value;
+            const end = document.getElementById('sat-end').value;
+            const msg = document.getElementById('sat-msg');
+            
+            try {
+                msg.style.color = 'var(--text-muted)';
+                msg.innerText = 'Guardando...';
+                
+                const res = await fetch('/api/bot-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ saturday_enabled: enabled, saturday_start: start, saturday_end: end })
+                });
+                const json = await res.json();
+                
+                if (json.success) {
+                    msg.style.color = 'var(--accent)';
+                    msg.innerText = 'Configuración de sábados guardada';
+                } else {
+                    throw new Error(json.error || 'Error desconocido');
+                }
+            } catch (err) {
+                msg.style.color = 'var(--danger)';
+                msg.innerText = err.message;
+            }
+        }
+
         // --- UI & NAVEGACIÓN ---
         function toggleSidebar() {
             document.getElementById('info-sidebar').classList.toggle('hidden');
@@ -989,11 +1105,19 @@
             // Cargar datos por API (pasando token)
             try {
                 const { data: { session } } = await supabaseClient.auth.getSession();
-                // Obtener estado global del bot
-                const botRes = await fetch('/api/bot-status-global');
+                // Obtener estado global del bot y config general
+                const botRes = await fetch('/api/bot-config-global');
                 const botData = await botRes.json();
                 globalBotActive = botData.active;
                 renderGlobalBotBtn();
+                
+                // Setear campos de sabado en UI
+                if (botData.saturday_enabled !== undefined) {
+                    document.getElementById('sat-enabled').checked = botData.saturday_enabled;
+                    document.getElementById('sat-start').value = botData.saturday_start || '08:00';
+                    document.getElementById('sat-end').value = botData.saturday_end || '13:00';
+                    toggleSaturdaySettings();
+                }
 
                 // Obtener pacientes
                 const res = await fetch('/api/data', { headers: { 'Authorization': `Bearer ${session.access_token}` } });
@@ -1159,15 +1283,19 @@
             const alertlist = document.getElementById('alert-list');
             const upcominglist = document.getElementById('upcoming-alert-list');
             
-            tbody.innerHTML = ''; 
-            waitlist.innerHTML = ''; 
-            alertlist.innerHTML = '';
-            if (upcominglist) upcominglist.innerHTML = '';
-            
             document.querySelectorAll('.cal-event').forEach(e => e.remove());
 
-            let citasCount = 0; let pendCount = 0;
+            let citasCount = 0; let pendCount = 0; let botCount = 0;
             const hoy = new Date();
+            
+            // Accumulate HTML instead of directly modifying DOM
+            let tbodyHTML = '';
+            let waitlistHTML = '';
+            let alertlistHTML = '';
+            let upcominglistHTML = '';
+            
+            // Cache para números formateados para no llamar a libphonenumber en cada render
+            if (!window.phoneCache) window.phoneCache = {};
 
             localData.forEach(row => {
                 const id = row.id;
@@ -1182,7 +1310,12 @@
                 else if (fuente.includes('tiktok')) fuente = 'tiktok';
                 const tColor = getTempColor(temp);
                 const init = nombre.substring(0,2).toUpperCase();
-                const fPhone = formatPhone(row.phone_number);
+                
+                let fPhone = row.phone_number;
+                if (!window.phoneCache[row.phone_number]) {
+                    window.phoneCache[row.phone_number] = formatPhone(row.phone_number);
+                }
+                fPhone = window.phoneCache[row.phone_number];
 
                 // Logica Alerta Quincena
                 let isAlertHoy = false;
@@ -1202,6 +1335,12 @@
                 
                 // Lógica de Asistencia Humana (Bot)
                 let requiresHuman = row.requiere_asistencia_humana && row.requiere_asistencia_humana.trim() !== '';
+
+                // Lógica de Atendidos por Bot
+                // Si la conversacion NO está abierta por un humano (es decir, la maneja el bot) y hay historial, cuenta como atendido por el bot.
+                if (row.Conversacion_Abierta === false && row.chat_history && row.chat_history.length > 0) {
+                    botCount++;
+                }
 
                 // Generar iconos de fuente
                 let sourceIcon = '<i class="fa-brands fa-whatsapp"></i>';
@@ -1240,14 +1379,14 @@
                     
                     if (temp !== 'bloqueo') {
                         if (isAlertHoy) {
-                            if (requiresHuman) alertlist.innerHTML = pillHtml + alertlist.innerHTML;
-                            else alertlist.innerHTML += pillHtml;
+                            if (requiresHuman) alertlistHTML = pillHtml + alertlistHTML;
+                            else alertlistHTML += pillHtml;
                         } else if (isAlertProxima) {
-                            if (requiresHuman) document.getElementById('upcoming-alert-list').innerHTML = pillHtml + document.getElementById('upcoming-alert-list').innerHTML;
-                            else document.getElementById('upcoming-alert-list').innerHTML += pillHtml;
+                            if (requiresHuman) upcominglistHTML = pillHtml + upcominglistHTML;
+                            else upcominglistHTML += pillHtml;
                         } else {
-                            if (requiresHuman) waitlist.innerHTML = pillHtml + waitlist.innerHTML;
-                            else waitlist.innerHTML += pillHtml;
+                            if (requiresHuman) waitlistHTML = pillHtml + waitlistHTML;
+                            else waitlistHTML += pillHtml;
                         }
                     }
                 }
@@ -1256,7 +1395,7 @@
                 let badgeClass = `badge badge-${temp}`;
                 let dateTxt = (dia && hora && dia !== 'no') ? `${dia.toUpperCase()} ${hora}` : '<span style="color:var(--text-muted)">Pendiente</span>';
                 
-                tbody.innerHTML += `
+                tbodyHTML += `
                     <tr class="t-row">
                         <td style="text-align: center;">
                             <input type="checkbox" class="row-checkbox" value="${id}" onclick="updateBulkBar()" style="transform: scale(1.2); cursor: pointer;">
@@ -1281,9 +1420,16 @@
                     </tr>
                 `;
             });
+            
+            // Assign HTML all at once
+            tbody.innerHTML = tbodyHTML;
+            alertlist.innerHTML = alertlistHTML;
+            if (upcominglist) upcominglist.innerHTML = upcominglistHTML;
+            waitlist.innerHTML = waitlistHTML;
 
             document.getElementById('stat-citas').innerText = citasCount;
             document.getElementById('stat-pendientes').innerText = pendCount;
+            document.getElementById('stat-bot').innerText = botCount;
             
             if(alertlist.innerHTML === '') alertlist.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 20px;">Todo al día</p>';
             if(waitlist.innerHTML === '') waitlist.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 20px;">Bandeja limpia</p>';

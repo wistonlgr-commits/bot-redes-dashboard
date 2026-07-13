@@ -49,6 +49,15 @@ async function broadcastData() {
     }
 }
 
+// Debounce para evitar broadcasts duplicados cuando múltiples eventos llegan rápido
+let _broadcastTimer = null;
+function debouncedBroadcast() {
+    if (_broadcastTimer) clearTimeout(_broadcastTimer);
+    _broadcastTimer = setTimeout(() => {
+        broadcastData();
+    }, 300);
+}
+
 // Helper para calcular fecha de seguimiento de quincena (días 15 y 30)
 function calcularAlertaQuincena() {
     const ahora = new Date();
@@ -127,13 +136,44 @@ app.post('/api/toggle-bot', async (req, res) => {
     }
 });
 
-// Endpoint para que el Frontend obtenga el estado global del bot
+// Endpoint para que el Frontend obtenga el estado global del bot (legacy)
 app.get('/api/bot-status-global', async (req, res) => {
     try {
         const { data: config } = await supabase.from('bot_config').select('is_active').eq('id', 1).single();
         res.json({ active: config ? config.is_active : true });
     } catch (error) {
         res.json({ active: true });
+    }
+});
+
+// Endpoint para que el Frontend obtenga la configuracion completa del bot
+app.get('/api/bot-config-global', async (req, res) => {
+    try {
+        const { data: config } = await supabase.from('bot_config').select('*').eq('id', 1).single();
+        res.json({ 
+            active: config ? config.is_active : true,
+            saturday_enabled: config ? config.saturday_enabled : false,
+            saturday_start: config ? config.saturday_start : '08:00',
+            saturday_end: config ? config.saturday_end : '13:00'
+        });
+    } catch (error) {
+        res.json({ active: true, saturday_enabled: false });
+    }
+});
+
+// Endpoint para guardar configuracion general del bot (sabados, etc)
+app.post('/api/bot-config', async (req, res) => {
+    try {
+        const { saturday_enabled, saturday_start, saturday_end } = req.body;
+        await supabase.from('bot_config').upsert({ 
+            id: 1, 
+            saturday_enabled: saturday_enabled,
+            saturday_start: saturday_start,
+            saturday_end: saturday_end
+        });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -218,7 +258,7 @@ app.post('/webhook/n8n', async (req, res) => {
             
             if (error) throw error;
 
-            broadcastData();
+            debouncedBroadcast();
             console.log(`[Webhook] Procesado paciente: ${phoneStr}`);
         } else if (Array.isArray(data)) {
             // Legacy/Masivo (por si mandas el array de google sheets)
@@ -237,7 +277,7 @@ app.post('/webhook/n8n', async (req, res) => {
                     }, { onConflict: 'phone_number' });
                 }
             }
-            broadcastData();
+            debouncedBroadcast();
         }
 
         res.status(200).json({ success: true });
@@ -259,7 +299,7 @@ app.post('/api/update', async (req, res) => {
         const { error } = await supabase.from('leads').update(updatedRow).eq('id', updatedRow.id);
         if (error) throw error;
         
-        broadcastData();
+        debouncedBroadcast();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -300,7 +340,7 @@ app.post('/api/bulk-action', async (req, res) => {
             if (error) throw error;
         }
 
-        broadcastData();
+        debouncedBroadcast();
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('Error bulk action:', error);
@@ -339,7 +379,7 @@ app.post('/api/add', async (req, res) => {
             throw error;
         }
         
-        broadcastData();
+        debouncedBroadcast();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -355,7 +395,7 @@ app.post('/api/delete', async (req, res) => {
         const { error } = await supabase.from('leads').delete().eq('id', id);
         if (error) throw error;
 
-        broadcastData();
+        debouncedBroadcast();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -384,7 +424,7 @@ if (supabaseUrl) {
     supabase
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, (payload) => {
-          broadcastData(); // Notifica a los sockets
+          debouncedBroadcast(); // Notifica a los sockets
       })
       .subscribe();
 }
