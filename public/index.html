@@ -640,7 +640,6 @@
                                 <option value="instagram">Solo Instagram Ads</option>
                                 <option value="facebook">Solo Facebook Ads</option>
                                 <option value="organico">Solo Orgánico</option>
-                                <option value="tiktok">Solo TikTok</option>
                             </select>
                         </div>
                     </div>
@@ -650,7 +649,7 @@
                 <div style="font-weight: 600; font-size: 1rem; color: var(--primary); margin-bottom: 12px;"><i class="fa-solid fa-chart-pie" style="margin-right: 6px;"></i> Resumen General</div>
                 <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Total Filtrados</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Total Leads</div>
                         <div id="rep-total" style="font-size: 2rem; font-weight: 700; color: var(--primary-light);">0</div>
                     </div>
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
@@ -664,10 +663,6 @@
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Facebook Ads</div>
                         <div id="rep-fb" style="font-size: 2rem; font-weight: 700; color: #1877F2;">0</div>
-                    </div>
-                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">TikTok Ads</div>
-                        <div id="rep-tk" style="font-size: 2rem; font-weight: 700; color: #000000;">0</div>
                     </div>
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Manual / Otros</div>
@@ -1348,13 +1343,11 @@
             }
 
             // --- CONTADORES GENERALES ---
-            let countWA = 0, countIG = 0, countFB = 0, countTK = 0, countManual = 0;
+            let countWA = 0, countIG = 0, countFB = 0, countManual = 0;
 
             // --- CONTADORES BOT ---
             let botAtendidos = 0, botCitas = 0, botTransferidos = 0, totalMensajesBot = 0;
             let botCualificados = 0;
-            
-            // Contadores para conversión: tibio + caliente
             let countTibioCaliente = 0;
 
             // --- CONTADORES PUBLICIDAD ---
@@ -1362,25 +1355,27 @@
             let adsTibioCaliente = 0, adsTibioCalienteCitas = 0;
             
             // --- CONTADORES TEMPERATURA ---
-            let tempFrio = 0, tempTibio = 0, tempCaliente = 0, tempBloqueo = 0;
+            let tempFrio = 0, tempTibio = 0, tempCaliente = 0;
 
             filtered.forEach(l => {
+                const temp = (l.Temperatura || 'frio').toLowerCase();
+                
+                // Excluir bloqueos de TODOS los conteos (no son leads reales)
+                if (temp === 'bloqueo') return;
+                
                 const f = (l.Fuente || '').toLowerCase();
                 const isIG = f.includes('instagram');
                 const isFB = f.includes('facebook');
                 const isAd = isIG || isFB || f.includes('meta') || f.includes('ads');
                 const tieneCita = l.Dia_Cita && l.Dia_Cita.trim() !== '' && l.Hora_Cita && l.Hora_Cita.trim() !== '';
-                const temp = (l.Temperatura || 'frio').toLowerCase();
 
-                // Conteo por fuente
+                // Conteo por fuente (sin TikTok)
                 if(f.includes('whatsapp') || f.includes('organico') || f.includes('orgánico') || f === '') {
                     countWA++;
                 } else if(isIG) {
                     countIG++;
                 } else if(isFB) {
                     countFB++;
-                } else if(f.includes('tiktok')) {
-                    countTK++;
                 } else {
                     countManual++;
                 }
@@ -1388,7 +1383,6 @@
                 // Conteo por temperatura
                 if (temp === 'caliente') { tempCaliente++; }
                 else if (temp === 'tibio') { tempTibio++; }
-                else if (temp === 'bloqueo') { tempBloqueo++; }
                 else { tempFrio++; }
                 
                 // Tibio + Caliente (base para conversión)
@@ -1432,12 +1426,14 @@
                 }
             });
 
+            // Total real (sin bloqueos)
+            const totalReal = countWA + countIG + countFB + countManual;
+
             // --- ACTUALIZAR DOM: Resumen General ---
-            document.getElementById('rep-total').innerText = filtered.length;
+            document.getElementById('rep-total').innerText = totalReal;
             document.getElementById('rep-wa').innerText = countWA;
             document.getElementById('rep-ig').innerText = countIG;
             document.getElementById('rep-fb').innerText = countFB;
-            document.getElementById('rep-tk').innerText = countTK;
             document.getElementById('rep-manual').innerText = countManual;
 
             // --- ACTUALIZAR DOM: Publicidad ---
@@ -1451,7 +1447,6 @@
             document.getElementById('rep-ads-total').innerText = adsTotal;
             document.getElementById('rep-ads-total-citas').innerText = adsTotalCitas + ' agendaron';
             
-            // Conversión Ads = tibio+caliente de ads que agendaron / tibio+caliente de ads total
             const adsConversion = adsTibioCaliente > 0 ? ((adsTibioCalienteCitas / adsTibioCaliente) * 100).toFixed(1) : 0;
             document.getElementById('rep-ads-conversion').innerText = adsConversion + '%';
             
@@ -1465,35 +1460,56 @@
             document.getElementById('rep-bot-citas').innerText = botCitas;
             document.getElementById('rep-bot-transferidos').innerText = botTransferidos;
             
-            // Conversión = citas / (tibio + caliente)
             const conversion = countTibioCaliente > 0 ? ((botCitas / countTibioCaliente) * 100).toFixed(1) : 0;
             document.getElementById('rep-bot-conversion').innerText = conversion + '%';
             
-            // Promedio mensajes
             const avgMsgs = botAtendidos > 0 ? (totalMensajesBot / botAtendidos).toFixed(1) : 0;
             document.getElementById('rep-bot-avg-msg').innerText = avgMsgs;
 
             // --- GRÁFICOS ---
             renderCharts({
-                countWA, countIG, countFB, countTK, countManual,
+                countWA, countIG, countFB, countManual,
                 adsIG, adsFB, adsIGCitas, adsFBCitas,
-                tempFrio, tempTibio, tempCaliente, tempBloqueo,
+                tempFrio, tempTibio, tempCaliente,
                 botAtendidos, botCualificados, countTibioCaliente, botCitas
             });
         }
 
-        // --- CHART.JS RENDERING ---
+        // --- CHART.JS RENDERING (Minimalista) ---
         let _charts = {};
         function renderCharts(d) {
             if (typeof Chart === 'undefined') return;
             
+            // Estilo global minimalista
+            Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
+            
             const chartDefaults = {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: { duration: 600, easing: 'easeOutQuart' },
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { color: '#94a3b8', font: { size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'circle' }
+                        labels: { 
+                            color: '#64748b', 
+                            font: { size: 11, weight: '500' }, 
+                            padding: 16, 
+                            usePointStyle: true, 
+                            pointStyle: 'rectRounded',
+                            boxWidth: 8,
+                            boxHeight: 8
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleFont: { size: 12, weight: '600' },
+                        bodyFont: { size: 11 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        boxWidth: 8,
+                        boxHeight: 8,
+                        boxPadding: 4
                     }
                 }
             };
@@ -1507,17 +1523,19 @@
                 _charts.fuentes = new Chart(ctxFuentes, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Orgánico', 'Instagram', 'Facebook', 'TikTok', 'Manual/Otros'],
+                        labels: ['Orgánico', 'Instagram', 'Facebook', 'Manual/Otros'],
                         datasets: [{
-                            data: [d.countWA, d.countIG, d.countFB, d.countTK, d.countManual],
-                            backgroundColor: ['#10B981', '#E1306C', '#1877F2', '#000000', '#8B5CF6'],
-                            borderWidth: 0,
-                            hoverOffset: 8
+                            data: [d.countWA, d.countIG, d.countFB, d.countManual],
+                            backgroundColor: ['#34d399', '#f472b6', '#60a5fa', '#a78bfa'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 6
                         }]
                     },
                     options: {
                         ...chartDefaults,
-                        cutout: '60%',
+                        cutout: '68%',
+                        layout: { padding: 4 }
                     }
                 });
             }
@@ -1528,42 +1546,51 @@
                 _charts.adsBar = new Chart(ctxBar, {
                     type: 'bar',
                     data: {
-                        labels: ['Orgánico', 'Instagram', 'Facebook', 'TikTok', 'Manual'],
+                        labels: ['Orgánico', 'Instagram', 'Facebook', 'Manual'],
                         datasets: [
                             {
                                 label: 'Leads',
-                                data: [d.countWA, d.countIG, d.countFB, d.countTK, d.countManual],
-                                backgroundColor: 'rgba(14, 165, 233, 0.7)',
-                                borderRadius: 6,
-                                barPercentage: 0.6
+                                data: [d.countWA, d.countIG, d.countFB, d.countManual],
+                                backgroundColor: 'rgba(96, 165, 250, 0.6)',
+                                borderRadius: 8,
+                                barPercentage: 0.55,
+                                categoryPercentage: 0.7
                             },
                             {
-                                label: 'Citas Agendadas',
+                                label: 'Citas',
                                 data: [
-                                    // Orgánicos con cita: botCitas - adsCitas
                                     Math.max(0, d.botCitas - d.adsIGCitas - d.adsFBCitas),
                                     d.adsIGCitas,
                                     d.adsFBCitas,
-                                    0,
                                     0
                                 ],
-                                backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                                borderRadius: 6,
-                                barPercentage: 0.6
+                                backgroundColor: 'rgba(52, 211, 153, 0.7)',
+                                borderRadius: 8,
+                                barPercentage: 0.55,
+                                categoryPercentage: 0.7
                             }
                         ]
                     },
                     options: {
                         ...chartDefaults,
                         scales: {
-                            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
-                            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                            y: { 
+                                beginAtZero: true, 
+                                ticks: { color: '#94a3b8', font: { size: 10 } }, 
+                                grid: { color: 'rgba(148,163,184,0.08)', drawBorder: false },
+                                border: { display: false }
+                            },
+                            x: { 
+                                ticks: { color: '#94a3b8', font: { size: 10 } }, 
+                                grid: { display: false },
+                                border: { display: false }
+                            }
                         }
                     }
                 });
             }
 
-            // 3. DONUT: Clasificación de Leads (sin bloqueos)
+            // 3. DONUT: Clasificación de Leads
             const ctxTemp = document.getElementById('chart-temperatura');
             if (ctxTemp) {
                 _charts.temp = new Chart(ctxTemp, {
@@ -1572,14 +1599,16 @@
                         labels: ['Frío', 'Tibio', 'Caliente'],
                         datasets: [{
                             data: [d.tempFrio, d.tempTibio, d.tempCaliente],
-                            backgroundColor: ['#3B82F6', '#F59E0B', '#EF4444'],
-                            borderWidth: 0,
-                            hoverOffset: 8
+                            backgroundColor: ['#93c5fd', '#fbbf24', '#f87171'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 6
                         }]
                     },
                     options: {
                         ...chartDefaults,
-                        cutout: '60%',
+                        cutout: '68%',
+                        layout: { padding: 4 }
                     }
                 });
             }
@@ -1592,10 +1621,10 @@
                     data: {
                         labels: ['Total Leads', 'Atendidos Bot', 'Cualificados', 'Tibio+Caliente', 'Agendaron'],
                         datasets: [{
-                            data: [d.botAtendidos + (d.countManual || 0), d.botAtendidos, d.botCualificados, d.countTibioCaliente, d.botCitas],
-                            backgroundColor: ['#64748b', '#0EA5E9', '#8B5CF6', '#F59E0B', '#10B981'],
-                            borderRadius: 6,
-                            barPercentage: 0.7
+                            data: [d.countWA + d.countIG + d.countFB + d.countManual, d.botAtendidos, d.botCualificados, d.countTibioCaliente, d.botCitas],
+                            backgroundColor: ['#94a3b8', '#60a5fa', '#a78bfa', '#fbbf24', '#34d399'],
+                            borderRadius: 8,
+                            barPercentage: 0.65
                         }]
                     },
                     options: {
@@ -1603,8 +1632,17 @@
                         indexAxis: 'y',
                         plugins: { ...chartDefaults.plugins, legend: { display: false } },
                         scales: {
-                            x: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
-                            y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { display: false } }
+                            x: { 
+                                beginAtZero: true, 
+                                ticks: { color: '#94a3b8', font: { size: 10 } }, 
+                                grid: { color: 'rgba(148,163,184,0.08)', drawBorder: false },
+                                border: { display: false }
+                            },
+                            y: { 
+                                ticks: { color: '#64748b', font: { size: 11, weight: '500' } }, 
+                                grid: { display: false },
+                                border: { display: false }
+                            }
                         }
                     }
                 });
