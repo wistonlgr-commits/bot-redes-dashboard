@@ -16,6 +16,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/libphonenumber-js/1.10.49/libphonenumber-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
         :root {
@@ -677,27 +678,27 @@
                 <!-- PUBLICIDAD -->
                 <div style="font-weight: 600; font-size: 1rem; color: var(--primary); margin: 28px 0 12px 0;"><i class="fa-solid fa-bullhorn" style="margin-right: 6px;"></i> Rendimiento de Publicidad</div>
                 <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px;">
-                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid #E1306C;">
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-brands fa-instagram" style="color:#E1306C"></i> Leads IG</div>
                         <div id="rep-ads-ig" style="font-size: 2rem; font-weight: 700; color: #E1306C;">0</div>
                         <div id="rep-ads-ig-citas" style="font-size: 0.8rem; color: var(--accent); margin-top: 4px;">0 agendaron</div>
                     </div>
-                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid #1877F2;">
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-brands fa-facebook" style="color:#1877F2"></i> Leads FB</div>
                         <div id="rep-ads-fb" style="font-size: 2rem; font-weight: 700; color: #1877F2;">0</div>
                         <div id="rep-ads-fb-citas" style="font-size: 0.8rem; color: var(--accent); margin-top: 4px;">0 agendaron</div>
                     </div>
-                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid #8B5CF6;">
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-solid fa-ad" style="color:#8B5CF6"></i> Total Publicidad</div>
                         <div id="rep-ads-total" style="font-size: 2rem; font-weight: 700; color: #8B5CF6;">0</div>
                         <div id="rep-ads-total-citas" style="font-size: 0.8rem; color: var(--accent); margin-top: 4px;">0 agendaron</div>
                     </div>
-                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid var(--accent);">
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-solid fa-percent" style="color:var(--accent)"></i> Conversión Ads</div>
                         <div id="rep-ads-conversion" style="font-size: 2rem; font-weight: 700; color: var(--accent);">0%</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">leads → citas</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">tibio+caliente → citas</div>
                     </div>
-                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid var(--warning);">
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-solid fa-fire" style="color:var(--warning)"></i> Calientes (Ads)</div>
                         <div id="rep-ads-calientes" style="font-size: 2rem; font-weight: 700; color: var(--warning);">0</div>
                         <div id="rep-ads-calientes-pct" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">0% del total</div>
@@ -725,23 +726,34 @@
                         <div id="rep-bot-transferidos" style="font-size: 2rem; font-weight: 700; color: var(--warning);">0</div>
                     </div>
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Conversión General</div>
-                        <div id="rep-bot-conversion" style="font-size: 2rem; font-weight: 700; color: var(--text-muted);">0%</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">sobre todos</div>
-                    </div>
-                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border: 2px solid var(--accent);">
-                        <div style="font-size: 0.85rem; color: var(--accent); margin-bottom: 4px; font-weight: 600;">Conversión Real</div>
-                        <div id="rep-bot-conversion-real" style="font-size: 2rem; font-weight: 700; color: var(--accent);">0%</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">sobre cualificados</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Tasa de Conversión</div>
+                        <div id="rep-bot-conversion" style="font-size: 2rem; font-weight: 700; color: var(--accent);">0%</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">tibio+caliente → citas</div>
                     </div>
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Msj Promedio por Chat</div>
                         <div id="rep-bot-avg-msg" style="font-size: 2rem; font-weight: 700; color: #8B5CF6;">0</div>
                     </div>
-                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Abandonaron (1 msj)</div>
-                        <div id="rep-bot-abandonos" style="font-size: 2rem; font-weight: 700; color: var(--danger);">0</div>
-                        <div id="rep-bot-abandonos-pct" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">0%</div>
+                </div>
+
+                <!-- GRÁFICOS -->
+                <div style="font-weight: 600; font-size: 1rem; color: var(--primary); margin: 28px 0 12px 0;"><i class="fa-solid fa-chart-bar" style="margin-right: 6px;"></i> Gráficos</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                    <div class="glass" style="padding: 20px; border-radius: 16px;">
+                        <div style="font-size: 0.9rem; font-weight: 600; color: var(--primary); margin-bottom: 12px; text-align: center;">Origen de Leads</div>
+                        <div style="position: relative; height: 260px;"><canvas id="chart-fuentes"></canvas></div>
+                    </div>
+                    <div class="glass" style="padding: 20px; border-radius: 16px;">
+                        <div style="font-size: 0.9rem; font-weight: 600; color: var(--primary); margin-bottom: 12px; text-align: center;">Leads vs Citas por Fuente</div>
+                        <div style="position: relative; height: 260px;"><canvas id="chart-ads-bar"></canvas></div>
+                    </div>
+                    <div class="glass" style="padding: 20px; border-radius: 16px;">
+                        <div style="font-size: 0.9rem; font-weight: 600; color: var(--primary); margin-bottom: 12px; text-align: center;">Clasificación de Leads</div>
+                        <div style="position: relative; height: 260px;"><canvas id="chart-temperatura"></canvas></div>
+                    </div>
+                    <div class="glass" style="padding: 20px; border-radius: 16px;">
+                        <div style="font-size: 0.9rem; font-weight: 600; color: var(--primary); margin-bottom: 12px; text-align: center;">Embudo de Conversión</div>
+                        <div style="position: relative; height: 260px;"><canvas id="chart-funnel"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -1340,11 +1352,17 @@
 
             // --- CONTADORES BOT ---
             let botAtendidos = 0, botCitas = 0, botTransferidos = 0, totalMensajesBot = 0;
-            let botCualificados = 0; // 3+ mensajes de ida y vuelta
-            let botAbandonos = 0;   // solo 1 mensaje del paciente
+            let botCualificados = 0;
+            
+            // Contadores para conversión: tibio + caliente
+            let countTibioCaliente = 0;
 
             // --- CONTADORES PUBLICIDAD ---
             let adsIG = 0, adsFB = 0, adsIGCitas = 0, adsFBCitas = 0, adsCalientes = 0;
+            let adsTibioCaliente = 0, adsTibioCalienteCitas = 0;
+            
+            // --- CONTADORES TEMPERATURA ---
+            let tempFrio = 0, tempTibio = 0, tempCaliente = 0, tempBloqueo = 0;
 
             filtered.forEach(l => {
                 const f = (l.Fuente || '').toLowerCase();
@@ -1366,6 +1384,17 @@
                 } else {
                     countManual++;
                 }
+                
+                // Conteo por temperatura
+                if (temp === 'caliente') { tempCaliente++; }
+                else if (temp === 'tibio') { tempTibio++; }
+                else if (temp === 'bloqueo') { tempBloqueo++; }
+                else { tempFrio++; }
+                
+                // Tibio + Caliente (base para conversión)
+                if (temp === 'tibio' || temp === 'caliente') {
+                    countTibioCaliente++;
+                }
 
                 // Publicidad detallada
                 if (isIG) {
@@ -1377,6 +1406,10 @@
                     if (tieneCita) adsFBCitas++;
                 }
                 if (isAd && temp === 'caliente') adsCalientes++;
+                if (isAd && (temp === 'tibio' || temp === 'caliente')) {
+                    adsTibioCaliente++;
+                    if (tieneCita) adsTibioCalienteCitas++;
+                }
 
                 // Bot metrics
                 const hasChat = l.chat_history && Array.isArray(l.chat_history) && l.chat_history.length > 0;
@@ -1385,17 +1418,9 @@
                     botAtendidos++;
                     totalMensajesBot += l.chat_history.length;
                     
-                    // Contar mensajes del paciente (role: user)
                     const userMsgs = l.chat_history.filter(m => m.role === 'user').length;
-                    
-                    // Lead cualificado = paciente envió 2+ mensajes (tuvo conversación real)
                     if (userMsgs >= 2) {
                         botCualificados++;
-                    }
-                    
-                    // Abandono = paciente solo envió 1 mensaje y no respondió más
-                    if (userMsgs <= 1) {
-                        botAbandonos++;
                     }
                     
                     if (tieneCita && f !== 'manual') {
@@ -1426,7 +1451,8 @@
             document.getElementById('rep-ads-total').innerText = adsTotal;
             document.getElementById('rep-ads-total-citas').innerText = adsTotalCitas + ' agendaron';
             
-            const adsConversion = adsTotal > 0 ? ((adsTotalCitas / adsTotal) * 100).toFixed(1) : 0;
+            // Conversión Ads = tibio+caliente de ads que agendaron / tibio+caliente de ads total
+            const adsConversion = adsTibioCaliente > 0 ? ((adsTibioCalienteCitas / adsTibioCaliente) * 100).toFixed(1) : 0;
             document.getElementById('rep-ads-conversion').innerText = adsConversion + '%';
             
             document.getElementById('rep-ads-calientes').innerText = adsCalientes;
@@ -1439,22 +1465,150 @@
             document.getElementById('rep-bot-citas').innerText = botCitas;
             document.getElementById('rep-bot-transferidos').innerText = botTransferidos;
             
-            // Conversión general (sobre todos los atendidos)
-            const conversion = botAtendidos > 0 ? ((botCitas / botAtendidos) * 100).toFixed(1) : 0;
+            // Conversión = citas / (tibio + caliente)
+            const conversion = countTibioCaliente > 0 ? ((botCitas / countTibioCaliente) * 100).toFixed(1) : 0;
             document.getElementById('rep-bot-conversion').innerText = conversion + '%';
-            
-            // Conversión REAL (sobre leads cualificados con 3+ mensajes)
-            const conversionReal = botCualificados > 0 ? ((botCitas / botCualificados) * 100).toFixed(1) : 0;
-            document.getElementById('rep-bot-conversion-real').innerText = conversionReal + '%';
             
             // Promedio mensajes
             const avgMsgs = botAtendidos > 0 ? (totalMensajesBot / botAtendidos).toFixed(1) : 0;
             document.getElementById('rep-bot-avg-msg').innerText = avgMsgs;
+
+            // --- GRÁFICOS ---
+            renderCharts({
+                countWA, countIG, countFB, countTK, countManual,
+                adsIG, adsFB, adsIGCitas, adsFBCitas,
+                tempFrio, tempTibio, tempCaliente, tempBloqueo,
+                botAtendidos, botCualificados, countTibioCaliente, botCitas
+            });
+        }
+
+        // --- CHART.JS RENDERING ---
+        let _charts = {};
+        function renderCharts(d) {
+            if (typeof Chart === 'undefined') return;
             
-            // Abandonos
-            document.getElementById('rep-bot-abandonos').innerText = botAbandonos;
-            const abandonPct = botAtendidos > 0 ? ((botAbandonos / botAtendidos) * 100).toFixed(0) : 0;
-            document.getElementById('rep-bot-abandonos-pct').innerText = abandonPct + '% del total';
+            const chartDefaults = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94a3b8', font: { size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'circle' }
+                    }
+                }
+            };
+            
+            // Destruir charts anteriores
+            Object.keys(_charts).forEach(k => { if (_charts[k]) _charts[k].destroy(); });
+
+            // 1. DONUT: Origen de Leads
+            const ctxFuentes = document.getElementById('chart-fuentes');
+            if (ctxFuentes) {
+                _charts.fuentes = new Chart(ctxFuentes, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Orgánico', 'Instagram', 'Facebook', 'TikTok', 'Manual/Otros'],
+                        datasets: [{
+                            data: [d.countWA, d.countIG, d.countFB, d.countTK, d.countManual],
+                            backgroundColor: ['#10B981', '#E1306C', '#1877F2', '#000000', '#8B5CF6'],
+                            borderWidth: 0,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        cutout: '60%',
+                    }
+                });
+            }
+
+            // 2. BAR: Leads vs Citas por Fuente
+            const ctxBar = document.getElementById('chart-ads-bar');
+            if (ctxBar) {
+                _charts.adsBar = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Orgánico', 'Instagram', 'Facebook', 'TikTok', 'Manual'],
+                        datasets: [
+                            {
+                                label: 'Leads',
+                                data: [d.countWA, d.countIG, d.countFB, d.countTK, d.countManual],
+                                backgroundColor: 'rgba(14, 165, 233, 0.7)',
+                                borderRadius: 6,
+                                barPercentage: 0.6
+                            },
+                            {
+                                label: 'Citas Agendadas',
+                                data: [
+                                    // Orgánicos con cita: botCitas - adsCitas
+                                    Math.max(0, d.botCitas - d.adsIGCitas - d.adsFBCitas),
+                                    d.adsIGCitas,
+                                    d.adsFBCitas,
+                                    0,
+                                    0
+                                ],
+                                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                                borderRadius: 6,
+                                barPercentage: 0.6
+                            }
+                        ]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // 3. DONUT: Clasificación de Leads (sin bloqueos)
+            const ctxTemp = document.getElementById('chart-temperatura');
+            if (ctxTemp) {
+                _charts.temp = new Chart(ctxTemp, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Frío', 'Tibio', 'Caliente'],
+                        datasets: [{
+                            data: [d.tempFrio, d.tempTibio, d.tempCaliente],
+                            backgroundColor: ['#3B82F6', '#F59E0B', '#EF4444'],
+                            borderWidth: 0,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        cutout: '60%',
+                    }
+                });
+            }
+
+            // 4. BAR HORIZONTAL: Embudo de Conversión
+            const ctxFunnel = document.getElementById('chart-funnel');
+            if (ctxFunnel) {
+                _charts.funnel = new Chart(ctxFunnel, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Total Leads', 'Atendidos Bot', 'Cualificados', 'Tibio+Caliente', 'Agendaron'],
+                        datasets: [{
+                            data: [d.botAtendidos + (d.countManual || 0), d.botAtendidos, d.botCualificados, d.countTibioCaliente, d.botCitas],
+                            backgroundColor: ['#64748b', '#0EA5E9', '#8B5CF6', '#F59E0B', '#10B981'],
+                            borderRadius: 6,
+                            barPercentage: 0.7
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        indexAxis: 'y',
+                        plugins: { ...chartDefaults.plugins, legend: { display: false } },
+                        scales: {
+                            x: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                            y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
         }
 
         function formatPhone(phone) {
