@@ -1157,6 +1157,8 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             element.classList.add('active');
+            // Si cambiamos a reportes, regenerarlos (porque renderUI los omite si no están activos)
+            if (viewId === 'view-reports') generateReports();
         }
 
         // --- CARGA DE DATOS Y RENDERIZADO ---
@@ -1209,13 +1211,17 @@
             if(isGood) badge.classList.add('active'); else badge.classList.remove('active');
         }
 
-        // Sockets para tiempo real
+        // Sockets para tiempo real (con debounce para evitar renders excesivos)
+        let _socketRenderTimer = null;
         if (socket) {
             socket.on('actualizacion_completa', (data) => {
                 if (supabaseClient) { // solo si está auth
                     localData = data;
-                    renderUI();
-                    updateSync('Sincronizado', true);
+                    if (_socketRenderTimer) cancelAnimationFrame(_socketRenderTimer);
+                    _socketRenderTimer = requestAnimationFrame(() => {
+                        renderUI();
+                        updateSync('Sincronizado', true);
+                    });
                 }
             });
             
@@ -1368,11 +1374,15 @@
 
         function renderUI() {
             leadsData = localData;
+            _calendarHTML = {}; // Reset calendario acumulado
             
             updateCalendarHeaders(); // Inicializar fechas del calendario
             
-            // Actualizar reportes automáticamente si estamos en esa vista
-            generateReports();
+            // Solo actualizar reportes si esa pestaña está activa (evita cálculos innecesarios)
+            const reportPane = document.getElementById('view-reports');
+            if (reportPane && reportPane.classList.contains('active')) {
+                generateReports();
+            }
             
             // Logica visual calendario sabado
             const satEnabled = window.botDataGlobal && window.botDataGlobal.saturday_enabled;
@@ -1384,18 +1394,27 @@
                 document.getElementById('calendar-grid').style.gridTemplateColumns = satEnabled ? '60px repeat(6, 1fr)' : '60px repeat(5, 1fr)';
             }
             
-            // Limpiar
+            // Limpiar calendario de forma más eficiente (innerHTML en vez de remove individual)
+            const calDays = ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes', 'col-sabado'];
+            const calCellsCache = {};
+            calDays.forEach(day => {
+                const col = document.getElementById(day);
+                if (col) {
+                    const cellCount = times.length;
+                    calCellsCache[day] = '';
+                    col.innerHTML = '<div class="cal-cell"></div>'.repeat(cellCount);
+                }
+            });
+            
             const tbody = document.getElementById('table-body');
             const waitlist = document.getElementById('waitlist-list');
             const alertlist = document.getElementById('alert-list');
             const upcominglist = document.getElementById('upcoming-alert-list');
-            
-            document.querySelectorAll('.cal-event').forEach(e => e.remove());
 
             let citasCount = 0; let pendCount = 0; let botCount = 0;
             const hoy = new Date();
             
-            // Accumulate HTML instead of directly modifying DOM
+            // Accumulate ALL HTML (including calendar) to reduce DOM reflows
             let tbodyHTML = '';
             let waitlistHTML = '';
             let alertlistHTML = '';
@@ -1457,7 +1476,7 @@
                 // Si tiene cita agendada
                 if (dia && hora && dia !== 'no') {
                     if (temp !== 'bloqueo') citasCount++;
-                    renderCalendarEvent(row, tColor);
+                    renderCalendarEvent(row, tColor); // Acumula en _calendarHTML
                 } else {
                     if (temp !== 'bloqueo') pendCount++;
                     
@@ -1528,11 +1547,19 @@
                 `;
             });
             
-            // Assign HTML all at once
+            // Assign ALL HTML at once (single DOM reflow)
             tbody.innerHTML = tbodyHTML;
             alertlist.innerHTML = alertlistHTML;
             if (upcominglist) upcominglist.innerHTML = upcominglistHTML;
             waitlist.innerHTML = waitlistHTML;
+            
+            // Inyectar calendario acumulado de golpe (en vez de innerHTML+= por cada evento)
+            calDays.forEach(day => {
+                const col = document.getElementById(day);
+                if (col && _calendarHTML[day]) {
+                    col.innerHTML += _calendarHTML[day];
+                }
+            });
 
             document.getElementById('stat-citas').innerText = citasCount;
             document.getElementById('stat-pendientes').innerText = pendCount;
@@ -1551,6 +1578,9 @@
             times.forEach(() => col.innerHTML += `<div class="cal-cell"></div>`);
         });
 
+        // Acumula HTML del calendario en un objeto, luego se inyecta todo de golpe en renderUI
+        let _calendarHTML = {};
+        
         function renderCalendarEvent(row, color) {
             const diaStr = (row.Dia_Cita || "").toLowerCase().trim().replace('é', 'e');
             const hora = (row.Hora_Cita || "").toLowerCase().trim();
@@ -1560,24 +1590,22 @@
             // Lógica de Paginación y Fecha Real
             let eventDate = null;
             if (/^\d{4}-\d{2}-\d{2}/.test(diaStr)) {
-                // Formato YYYY-MM-DD
                 const match = diaStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
                 eventDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
             }
 
             if (eventDate && currentWeekMonday) {
-                // Si tiene fecha exacta, verificar que esté en la semana actual
                 const startOfWeek = new Date(currentWeekMonday);
                 startOfWeek.setHours(0,0,0,0);
                 const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(endOfWeek.getDate() + 5); // Lunes a Sabado
+                endOfWeek.setDate(endOfWeek.getDate() + 5);
                 endOfWeek.setHours(23,59,59,999);
                 
                 if (eventDate >= startOfWeek && eventDate <= endOfWeek) {
                     if (hora === 'toda la semana') {
                         colIds = ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes', 'col-sabado'];
                     } else {
-                        const dayIndex = eventDate.getDay(); // 1=Lunes, 6=Sabado
+                        const dayIndex = eventDate.getDay();
                         if (dayIndex === 1) colIds.push('col-lunes');
                         else if (dayIndex === 2) colIds.push('col-martes');
                         else if (dayIndex === 3) colIds.push('col-miercoles');
@@ -1587,7 +1615,6 @@
                     }
                 }
             } else {
-                // Fallback para días texto "jueves" (legacy). Solo renderizar si estamos en la semana actual (offset 0)
                 if (currentWeekOffset === 0) {
                     if (hora === 'toda la semana') {
                         colIds = ['col-lunes', 'col-martes', 'col-miercoles', 'col-jueves', 'col-viernes', 'col-sabado'];
@@ -1611,7 +1638,7 @@
 
             if (hora === 'todo el dia' || hora === 'toda la semana') {
                 topPx = 0;
-                heightPx = 820; // Ocupa toda la columna
+                heightPx = 820;
                 blockStyle = 'background: repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 10px, #e2e8f0 10px, #e2e8f0 20px); border: 1px solid #cbd5e1; color: #64748b; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; opacity: 0.9; pointer-events: auto; cursor: pointer;';
             } else {
                 let hourNum = 8; let minNum = 0;
@@ -1629,26 +1656,25 @@
                 }
             }
 
+            // Acumular HTML en vez de manipular DOM directamente
             colIds.forEach(colId => {
-                const col = document.getElementById(colId);
-                if (col) {
-                    if (isBlock) {
-                        col.innerHTML += `
-                            <div class="cal-event" style="top: ${topPx}px; height: ${heightPx}px; ${blockStyle}" onclick="openModal('${row.id}')">
-                                <i class="fa-solid fa-ban" style="font-size: ${hora.includes('todo') ? '2rem' : '1.2rem'}; margin-bottom: 8px;"></i>
-                                <div style="text-align: center; padding: 0 10px; font-size: ${hora.includes('todo') ? '1rem' : '0.8rem'}; line-height: 1.2;">
-                                    ${row.Nombre.replace('[BLOQUEO]', '').trim()}
-                                </div>
+                if (!_calendarHTML[colId]) _calendarHTML[colId] = '';
+                if (isBlock) {
+                    _calendarHTML[colId] += `
+                        <div class="cal-event" style="top: ${topPx}px; height: ${heightPx}px; ${blockStyle}" onclick="openModal('${row.id}')">
+                            <i class="fa-solid fa-ban" style="font-size: ${hora.includes('todo') ? '2rem' : '1.2rem'}; margin-bottom: 8px;"></i>
+                            <div style="text-align: center; padding: 0 10px; font-size: ${hora.includes('todo') ? '1rem' : '0.8rem'}; line-height: 1.2;">
+                                ${row.Nombre.replace('[BLOQUEO]', '').trim()}
                             </div>
-                        `;
-                    } else {
-                        col.innerHTML += `
-                            <div class="cal-event" style="top: ${topPx}px; height: 74px; background-color: ${color};" onclick="openModal('${row.id}')">
-                                <div class="cal-event-time">${hora.toUpperCase()}</div>
-                                <div class="cal-event-title">${row.Nombre}</div>
-                            </div>
-                        `;
-                    }
+                        </div>
+                    `;
+                } else {
+                    _calendarHTML[colId] += `
+                        <div class="cal-event" style="top: ${topPx}px; height: 74px; background-color: ${color};" onclick="openModal('${row.id}')">
+                            <div class="cal-event-time">${hora.toUpperCase()}</div>
+                            <div class="cal-event-title">${row.Nombre}</div>
+                        </div>
+                    `;
                 }
             });
         }
