@@ -632,17 +632,21 @@
                             </select>
                         </div>
                         <div class="input-group">
-                            <label>Estado de Atención</label>
-                            <select id="rep-estado" class="input-control" onchange="generateReports()">
-                                <option value="todos">Todos</option>
-                                <option value="Pendiente">Pendiente</option>
-                                <option value="Atendido">Atendido</option>
-                                <option value="Cancelado">Cancelado</option>
+                            <label>Fuente</label>
+                            <select id="rep-fuente" class="input-control" onchange="generateReports()">
+                                <option value="todas">Todas</option>
+                                <option value="publicidad">Solo Publicidad (IG + FB)</option>
+                                <option value="instagram">Solo Instagram Ads</option>
+                                <option value="facebook">Solo Facebook Ads</option>
+                                <option value="organico">Solo Orgánico</option>
+                                <option value="tiktok">Solo TikTok</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
+                <!-- RESUMEN GENERAL -->
+                <div style="font-weight: 600; font-size: 1rem; color: var(--primary); margin-bottom: 12px;"><i class="fa-solid fa-chart-pie" style="margin-right: 6px;"></i> Resumen General</div>
                 <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Total Filtrados</div>
@@ -670,14 +674,47 @@
                     </div>
                 </div>
 
-                <div class="view-header" style="margin-top: 30px;">
-                    <div class="view-title">Rendimiento del Bot</div>
+                <!-- PUBLICIDAD -->
+                <div style="font-weight: 600; font-size: 1rem; color: var(--primary); margin: 28px 0 12px 0;"><i class="fa-solid fa-bullhorn" style="margin-right: 6px;"></i> Rendimiento de Publicidad</div>
+                <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px;">
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid #E1306C;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-brands fa-instagram" style="color:#E1306C"></i> Leads IG</div>
+                        <div id="rep-ads-ig" style="font-size: 2rem; font-weight: 700; color: #E1306C;">0</div>
+                        <div id="rep-ads-ig-citas" style="font-size: 0.8rem; color: var(--accent); margin-top: 4px;">0 agendaron</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid #1877F2;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-brands fa-facebook" style="color:#1877F2"></i> Leads FB</div>
+                        <div id="rep-ads-fb" style="font-size: 2rem; font-weight: 700; color: #1877F2;">0</div>
+                        <div id="rep-ads-fb-citas" style="font-size: 0.8rem; color: var(--accent); margin-top: 4px;">0 agendaron</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid #8B5CF6;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-solid fa-ad" style="color:#8B5CF6"></i> Total Publicidad</div>
+                        <div id="rep-ads-total" style="font-size: 2rem; font-weight: 700; color: #8B5CF6;">0</div>
+                        <div id="rep-ads-total-citas" style="font-size: 0.8rem; color: var(--accent); margin-top: 4px;">0 agendaron</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid var(--accent);">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-solid fa-percent" style="color:var(--accent)"></i> Conversión Ads</div>
+                        <div id="rep-ads-conversion" style="font-size: 2rem; font-weight: 700; color: var(--accent);">0%</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">leads → citas</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border-left: 4px solid var(--warning);">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-solid fa-fire" style="color:var(--warning)"></i> Calientes (Ads)</div>
+                        <div id="rep-ads-calientes" style="font-size: 2rem; font-weight: 700; color: var(--warning);">0</div>
+                        <div id="rep-ads-calientes-pct" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">0% del total</div>
+                    </div>
                 </div>
-                
+
+                <!-- RENDIMIENTO DEL BOT -->
+                <div style="font-weight: 600; font-size: 1rem; color: var(--primary); margin: 28px 0 12px 0;"><i class="fa-solid fa-robot" style="margin-right: 6px;"></i> Rendimiento del Bot</div>
                 <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Atendidos por Bot</div>
                         <div id="rep-bot-atendidos" style="font-size: 2rem; font-weight: 700; color: var(--accent);">0</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Leads Cualificados</div>
+                        <div id="rep-bot-cualificados" style="font-size: 2rem; font-weight: 700; color: #0EA5E9;">0</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">3+ mensajes</div>
                     </div>
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Citas Agendadas (Bot)</div>
@@ -688,12 +725,23 @@
                         <div id="rep-bot-transferidos" style="font-size: 2rem; font-weight: 700; color: var(--warning);">0</div>
                     </div>
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Tasa de Conversión</div>
-                        <div id="rep-bot-conversion" style="font-size: 2rem; font-weight: 700; color: var(--primary-light);">0%</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Conversión General</div>
+                        <div id="rep-bot-conversion" style="font-size: 2rem; font-weight: 700; color: var(--text-muted);">0%</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">sobre todos</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center; border: 2px solid var(--accent);">
+                        <div style="font-size: 0.85rem; color: var(--accent); margin-bottom: 4px; font-weight: 600;">Conversión Real</div>
+                        <div id="rep-bot-conversion-real" style="font-size: 2rem; font-weight: 700; color: var(--accent);">0%</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">sobre cualificados</div>
                     </div>
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Msj Promedio por Chat</div>
                         <div id="rep-bot-avg-msg" style="font-size: 2rem; font-weight: 700; color: #8B5CF6;">0</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Abandonaron (1 msj)</div>
+                        <div id="rep-bot-abandonos" style="font-size: 2rem; font-weight: 700; color: var(--danger);">0</div>
+                        <div id="rep-bot-abandonos-pct" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">0%</div>
                     </div>
                 </div>
             </div>
@@ -1249,45 +1297,69 @@
             const fDesde = document.getElementById('rep-desde').value;
             const fHasta = document.getElementById('rep-hasta').value;
             const fTemp = document.getElementById('rep-temp').value;
-            const fEstado = document.getElementById('rep-estado').value;
+            const fFuente = document.getElementById('rep-fuente') ? document.getElementById('rep-fuente').value : 'todas';
 
             let filtered = localData;
 
+            // Filtro por fecha (usa Ultima_Interaccion como respaldo si no hay created_at)
             if(fDesde) {
                 const desdeDate = new Date(fDesde);
                 desdeDate.setHours(0,0,0,0);
-                filtered = filtered.filter(l => new Date(l.created_at) >= desdeDate);
+                filtered = filtered.filter(l => {
+                    const fecha = new Date(l.Ultima_Interaccion || l.created_at);
+                    return fecha >= desdeDate;
+                });
             }
             if(fHasta) {
                 const hastaDate = new Date(fHasta);
                 hastaDate.setHours(23,59,59,999);
-                filtered = filtered.filter(l => new Date(l.created_at) <= hastaDate);
+                filtered = filtered.filter(l => {
+                    const fecha = new Date(l.Ultima_Interaccion || l.created_at);
+                    return fecha <= hastaDate;
+                });
             }
             if(fTemp !== 'todas') {
                 filtered = filtered.filter(l => (l.Temperatura || 'frio').toLowerCase() === fTemp);
             }
-            if(fEstado !== 'todos') {
-                filtered = filtered.filter(l => (l.Estado_Atencion || 'Pendiente') === fEstado);
+
+            // Filtro por fuente
+            if (fFuente !== 'todas') {
+                filtered = filtered.filter(l => {
+                    const f = (l.Fuente || '').toLowerCase();
+                    if (fFuente === 'publicidad') return f.includes('instagram') || f.includes('facebook') || f.includes('meta') || f.includes('ads');
+                    if (fFuente === 'instagram') return f.includes('instagram');
+                    if (fFuente === 'facebook') return f.includes('facebook');
+                    if (fFuente === 'organico') return f.includes('organico') || f.includes('whatsapp') || f === '' || f === 'orgánico';
+                    if (fFuente === 'tiktok') return f.includes('tiktok');
+                    return true;
+                });
             }
 
-            let countWA = 0;
-            let countIG = 0;
-            let countFB = 0;
-            let countTK = 0;
-            let countManual = 0;
+            // --- CONTADORES GENERALES ---
+            let countWA = 0, countIG = 0, countFB = 0, countTK = 0, countManual = 0;
 
-            let botAtendidos = 0;
-            let botCitas = 0;
-            let botTransferidos = 0;
-            let totalMensajesBot = 0;
+            // --- CONTADORES BOT ---
+            let botAtendidos = 0, botCitas = 0, botTransferidos = 0, totalMensajesBot = 0;
+            let botCualificados = 0; // 3+ mensajes de ida y vuelta
+            let botAbandonos = 0;   // solo 1 mensaje del paciente
+
+            // --- CONTADORES PUBLICIDAD ---
+            let adsIG = 0, adsFB = 0, adsIGCitas = 0, adsFBCitas = 0, adsCalientes = 0;
 
             filtered.forEach(l => {
                 const f = (l.Fuente || '').toLowerCase();
-                if(f.includes('whatsapp') || f.includes('organico')) {
+                const isIG = f.includes('instagram');
+                const isFB = f.includes('facebook');
+                const isAd = isIG || isFB || f.includes('meta') || f.includes('ads');
+                const tieneCita = l.Dia_Cita && l.Dia_Cita.trim() !== '' && l.Hora_Cita && l.Hora_Cita.trim() !== '';
+                const temp = (l.Temperatura || 'frio').toLowerCase();
+
+                // Conteo por fuente
+                if(f.includes('whatsapp') || f.includes('organico') || f.includes('orgánico') || f === '') {
                     countWA++;
-                } else if(f.includes('instagram')) {
+                } else if(isIG) {
                     countIG++;
-                } else if(f.includes('facebook')) {
+                } else if(isFB) {
                     countFB++;
                 } else if(f.includes('tiktok')) {
                     countTK++;
@@ -1295,15 +1367,38 @@
                     countManual++;
                 }
 
+                // Publicidad detallada
+                if (isIG) {
+                    adsIG++;
+                    if (tieneCita) adsIGCitas++;
+                }
+                if (isFB) {
+                    adsFB++;
+                    if (tieneCita) adsFBCitas++;
+                }
+                if (isAd && temp === 'caliente') adsCalientes++;
+
                 // Bot metrics
-                const isManualSource = f === 'manual';
                 const hasChat = l.chat_history && Array.isArray(l.chat_history) && l.chat_history.length > 0;
                 
                 if (hasChat) {
                     botAtendidos++;
                     totalMensajesBot += l.chat_history.length;
                     
-                    if (l.Dia_Cita && l.Hora_Cita && !isManualSource) {
+                    // Contar mensajes del paciente (role: user)
+                    const userMsgs = l.chat_history.filter(m => m.role === 'user').length;
+                    
+                    // Lead cualificado = paciente envió 2+ mensajes (tuvo conversación real)
+                    if (userMsgs >= 2) {
+                        botCualificados++;
+                    }
+                    
+                    // Abandono = paciente solo envió 1 mensaje y no respondió más
+                    if (userMsgs <= 1) {
+                        botAbandonos++;
+                    }
+                    
+                    if (tieneCita && f !== 'manual') {
                         botCitas++;
                     }
                     if (l.requiere_asistencia_humana && l.requiere_asistencia_humana.trim() !== '') {
@@ -1312,6 +1407,7 @@
                 }
             });
 
+            // --- ACTUALIZAR DOM: Resumen General ---
             document.getElementById('rep-total').innerText = filtered.length;
             document.getElementById('rep-wa').innerText = countWA;
             document.getElementById('rep-ig').innerText = countIG;
@@ -1319,16 +1415,46 @@
             document.getElementById('rep-tk').innerText = countTK;
             document.getElementById('rep-manual').innerText = countManual;
 
-            // Bot metrics DOM updates
+            // --- ACTUALIZAR DOM: Publicidad ---
+            const adsTotal = adsIG + adsFB;
+            const adsTotalCitas = adsIGCitas + adsFBCitas;
+            
+            document.getElementById('rep-ads-ig').innerText = adsIG;
+            document.getElementById('rep-ads-ig-citas').innerText = adsIGCitas + ' agendaron';
+            document.getElementById('rep-ads-fb').innerText = adsFB;
+            document.getElementById('rep-ads-fb-citas').innerText = adsFBCitas + ' agendaron';
+            document.getElementById('rep-ads-total').innerText = adsTotal;
+            document.getElementById('rep-ads-total-citas').innerText = adsTotalCitas + ' agendaron';
+            
+            const adsConversion = adsTotal > 0 ? ((adsTotalCitas / adsTotal) * 100).toFixed(1) : 0;
+            document.getElementById('rep-ads-conversion').innerText = adsConversion + '%';
+            
+            document.getElementById('rep-ads-calientes').innerText = adsCalientes;
+            const adsCalpct = adsTotal > 0 ? ((adsCalientes / adsTotal) * 100).toFixed(1) : 0;
+            document.getElementById('rep-ads-calientes-pct').innerText = adsCalpct + '% del total';
+
+            // --- ACTUALIZAR DOM: Bot ---
             document.getElementById('rep-bot-atendidos').innerText = botAtendidos;
+            document.getElementById('rep-bot-cualificados').innerText = botCualificados;
             document.getElementById('rep-bot-citas').innerText = botCitas;
             document.getElementById('rep-bot-transferidos').innerText = botTransferidos;
             
+            // Conversión general (sobre todos los atendidos)
             const conversion = botAtendidos > 0 ? ((botCitas / botAtendidos) * 100).toFixed(1) : 0;
-            document.getElementById('rep-bot-conversion').innerText = `${conversion}%`;
+            document.getElementById('rep-bot-conversion').innerText = conversion + '%';
             
+            // Conversión REAL (sobre leads cualificados con 3+ mensajes)
+            const conversionReal = botCualificados > 0 ? ((botCitas / botCualificados) * 100).toFixed(1) : 0;
+            document.getElementById('rep-bot-conversion-real').innerText = conversionReal + '%';
+            
+            // Promedio mensajes
             const avgMsgs = botAtendidos > 0 ? (totalMensajesBot / botAtendidos).toFixed(1) : 0;
             document.getElementById('rep-bot-avg-msg').innerText = avgMsgs;
+            
+            // Abandonos
+            document.getElementById('rep-bot-abandonos').innerText = botAbandonos;
+            const abandonPct = botAtendidos > 0 ? ((botAbandonos / botAtendidos) * 100).toFixed(0) : 0;
+            document.getElementById('rep-bot-abandonos-pct').innerText = abandonPct + '% del total';
         }
 
         function formatPhone(phone) {
