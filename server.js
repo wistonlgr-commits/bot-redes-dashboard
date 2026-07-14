@@ -154,7 +154,10 @@ app.get('/api/bot-config-global', async (req, res) => {
             active: config ? config.is_active : true,
             saturday_enabled: config ? config.saturday_enabled : false,
             saturday_start: config ? config.saturday_start : '08:00',
-            saturday_end: config ? config.saturday_end : '13:00'
+            saturday_end: config ? config.saturday_end : '13:00',
+            saturday_mode: config ? config.saturday_mode : 'all',
+            saturday_specific_dates: config ? config.saturday_specific_dates : [],
+            saturday_consultation_type: config ? config.saturday_consultation_type : 'both'
         });
     } catch (error) {
         res.json({ active: true, saturday_enabled: false });
@@ -164,12 +167,15 @@ app.get('/api/bot-config-global', async (req, res) => {
 // Endpoint para guardar configuracion general del bot (sabados, etc)
 app.post('/api/bot-config', async (req, res) => {
     try {
-        const { saturday_enabled, saturday_start, saturday_end } = req.body;
+        const { saturday_enabled, saturday_start, saturday_end, saturday_mode, saturday_specific_dates, saturday_consultation_type } = req.body;
         await supabase.from('bot_config').upsert({ 
             id: 1, 
             saturday_enabled: saturday_enabled,
             saturday_start: saturday_start,
-            saturday_end: saturday_end
+            saturday_end: saturday_end,
+            saturday_mode: saturday_mode,
+            saturday_specific_dates: saturday_specific_dates,
+            saturday_consultation_type: saturday_consultation_type
         });
         res.json({ success: true });
     } catch (error) {

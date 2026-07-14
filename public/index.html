@@ -248,10 +248,7 @@
         .toggle-label { font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; }
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #CBD5E1; transition: .3s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
-        input:checked + .slider { background-color: var(--accent); }
-        input:checked + .slider:before { transform: translateX(24px); }
+
 
         .modal-footer { padding: 24px 32px; border-top: 1px solid var(--border); background: #F8FAFC; border-radius: 0 0 24px 24px; display: flex; justify-content: space-between; }
         
@@ -479,7 +476,7 @@
                         <div class="cal-header">MIÉRCOLES <div id="date-miercoles" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
                         <div class="cal-header">JUEVES <div id="date-jueves" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
                         <div class="cal-header">VIERNES <div id="date-viernes" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
-                        <div class="cal-header" style="background-color: #f8fafc;">SÁBADO <div id="date-sabado" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                        <div class="cal-header" id="header-sabado" style="background-color: #f8fafc; display: none;">SÁBADO <div id="date-sabado" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
 
                         <div class="cal-time-col" id="time-labels"></div>
                         <div class="cal-day-col" id="col-lunes"></div>
@@ -487,7 +484,7 @@
                         <div class="cal-day-col" id="col-miercoles"></div>
                         <div class="cal-day-col" id="col-jueves"></div>
                         <div class="cal-day-col" id="col-viernes"></div>
-                        <div class="cal-day-col" id="col-sabado" style="background-color: #fcfcfc;"></div>
+                        <div class="cal-day-col" id="col-sabado" style="background-color: #fcfcfc; display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -573,7 +570,7 @@
                     </div>
                     
                     <div id="sat-time-settings" style="display: none; padding-top: 15px; border-top: 1px solid var(--border); margin-top: 15px;">
-                        <div style="display: flex; gap: 15px;">
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
                             <div class="input-group" style="flex: 1;">
                                 <label>Hora de Inicio</label>
                                 <input type="time" id="sat-start" class="input-control">
@@ -582,6 +579,26 @@
                                 <label>Hora de Fin</label>
                                 <input type="time" id="sat-end" class="input-control">
                             </div>
+                        </div>
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label>Modalidad de Atención</label>
+                            <select id="sat-consultation-type" class="input-control">
+                                <option value="both">Presencial y Online</option>
+                                <option value="presencial">Solo Presencial</option>
+                                <option value="online">Solo Online</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label>Frecuencia</label>
+                            <select id="sat-mode" class="input-control" onchange="toggleSaturdaySpecificDates()">
+                                <option value="all">Todos los Sábados</option>
+                                <option value="biweekly">Sábados Quincenales (1er y 3ro)</option>
+                                <option value="specific">Fechas Específicas</option>
+                            </select>
+                        </div>
+                        <div id="sat-specific-dates-container" class="input-group" style="display: none; margin-bottom: 15px;">
+                            <label>Fechas Específicas (YYYY-MM-DD separadas por coma)</label>
+                            <input type="text" id="sat-specific-dates" class="input-control" placeholder="Ej: 2026-07-18, 2026-08-01">
                         </div>
                         <button type="button" class="btn btn-primary" style="margin-top: 15px; width: 100%;" onclick="saveSaturdayConfig()"><i class="fa-solid fa-floppy-disk"></i> Guardar Horario</button>
                         <p id="sat-msg" style="margin-top: 10px; font-size: 0.9rem; font-weight: 600; text-align: center;"></p>
@@ -650,6 +667,33 @@
                     <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Manual / Otros</div>
                         <div id="rep-manual" style="font-size: 2rem; font-weight: 700; color: #8B5CF6;">0</div>
+                    </div>
+                </div>
+
+                <div class="view-header" style="margin-top: 30px;">
+                    <div class="view-title">Rendimiento del Bot</div>
+                </div>
+                
+                <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Atendidos por Bot</div>
+                        <div id="rep-bot-atendidos" style="font-size: 2rem; font-weight: 700; color: var(--accent);">0</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Citas Agendadas (Bot)</div>
+                        <div id="rep-bot-citas" style="font-size: 2rem; font-weight: 700; color: #10B981;">0</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Transferidos a Humano</div>
+                        <div id="rep-bot-transferidos" style="font-size: 2rem; font-weight: 700; color: var(--warning);">0</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Tasa de Conversión</div>
+                        <div id="rep-bot-conversion" style="font-size: 2rem; font-weight: 700; color: var(--primary-light);">0%</div>
+                    </div>
+                    <div class="glass" style="padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Msj Promedio por Chat</div>
+                        <div id="rep-bot-avg-msg" style="font-size: 2rem; font-weight: 700; color: #8B5CF6;">0</div>
                     </div>
                 </div>
             </div>
@@ -1059,10 +1103,18 @@
             document.getElementById('sat-time-settings').style.display = enabled ? 'block' : 'none';
         }
 
+        function toggleSaturdaySpecificDates() {
+            const mode = document.getElementById('sat-mode').value;
+            document.getElementById('sat-specific-dates-container').style.display = (mode === 'specific') ? 'block' : 'none';
+        }
+
         async function saveSaturdayConfig() {
             const enabled = document.getElementById('sat-enabled').checked;
             const start = document.getElementById('sat-start').value;
             const end = document.getElementById('sat-end').value;
+            const mode = document.getElementById('sat-mode').value;
+            const specificDates = document.getElementById('sat-specific-dates').value.split(',').map(d => d.trim()).filter(d => d);
+            const consultationType = document.getElementById('sat-consultation-type').value;
             const msg = document.getElementById('sat-msg');
             
             try {
@@ -1072,7 +1124,14 @@
                 const res = await fetch('/api/bot-config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ saturday_enabled: enabled, saturday_start: start, saturday_end: end })
+                    body: JSON.stringify({ 
+                        saturday_enabled: enabled, 
+                        saturday_start: start, 
+                        saturday_end: end,
+                        saturday_mode: mode,
+                        saturday_specific_dates: specificDates,
+                        saturday_consultation_type: consultationType
+                    })
                 });
                 const json = await res.json();
                 
@@ -1107,16 +1166,22 @@
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 // Obtener estado global del bot y config general
                 const botRes = await fetch('/api/bot-config-global');
-                const botData = await botRes.json();
-                globalBotActive = botData.active;
+                window.botDataGlobal = await botRes.json();
+                globalBotActive = window.botDataGlobal.active;
                 renderGlobalBotBtn();
                 
                 // Setear campos de sabado en UI
-                if (botData.saturday_enabled !== undefined) {
-                    document.getElementById('sat-enabled').checked = botData.saturday_enabled;
-                    document.getElementById('sat-start').value = botData.saturday_start || '08:00';
-                    document.getElementById('sat-end').value = botData.saturday_end || '13:00';
+                if (window.botDataGlobal.saturday_enabled !== undefined) {
+                    document.getElementById('sat-enabled').checked = window.botDataGlobal.saturday_enabled;
+                    document.getElementById('sat-start').value = window.botDataGlobal.saturday_start || '08:00';
+                    document.getElementById('sat-end').value = window.botDataGlobal.saturday_end || '13:00';
+                    if(window.botDataGlobal.saturday_mode) document.getElementById('sat-mode').value = window.botDataGlobal.saturday_mode;
+                    if(window.botDataGlobal.saturday_consultation_type) document.getElementById('sat-consultation-type').value = window.botDataGlobal.saturday_consultation_type;
+                    if(window.botDataGlobal.saturday_specific_dates && Array.isArray(window.botDataGlobal.saturday_specific_dates)) {
+                        document.getElementById('sat-specific-dates').value = window.botDataGlobal.saturday_specific_dates.join(', ');
+                    }
                     toggleSaturdaySettings();
+                    toggleSaturdaySpecificDates();
                 }
 
                 // Obtener pacientes
@@ -1174,13 +1239,13 @@
         }
 
         function generateReports() {
-            if(!leadsData) return;
+            if(!localData) return;
             const fDesde = document.getElementById('rep-desde').value;
             const fHasta = document.getElementById('rep-hasta').value;
             const fTemp = document.getElementById('rep-temp').value;
             const fEstado = document.getElementById('rep-estado').value;
 
-            let filtered = leadsData;
+            let filtered = localData;
 
             if(fDesde) {
                 const desdeDate = new Date(fDesde);
@@ -1205,6 +1270,11 @@
             let countTK = 0;
             let countManual = 0;
 
+            let botAtendidos = 0;
+            let botCitas = 0;
+            let botTransferidos = 0;
+            let totalMensajesBot = 0;
+
             filtered.forEach(l => {
                 const f = (l.Fuente || '').toLowerCase();
                 if(f.includes('whatsapp') || f.includes('organico')) {
@@ -1218,6 +1288,22 @@
                 } else {
                     countManual++;
                 }
+
+                // Bot metrics
+                const isManualSource = f === 'manual';
+                const hasChat = l.chat_history && Array.isArray(l.chat_history) && l.chat_history.length > 0;
+                
+                if (hasChat) {
+                    botAtendidos++;
+                    totalMensajesBot += l.chat_history.length;
+                    
+                    if (l.Dia_Cita && l.Hora_Cita && !isManualSource) {
+                        botCitas++;
+                    }
+                    if (l.requiere_asistencia_humana && l.requiere_asistencia_humana.trim() !== '') {
+                        botTransferidos++;
+                    }
+                }
             });
 
             document.getElementById('rep-total').innerText = filtered.length;
@@ -1226,6 +1312,17 @@
             document.getElementById('rep-fb').innerText = countFB;
             document.getElementById('rep-tk').innerText = countTK;
             document.getElementById('rep-manual').innerText = countManual;
+
+            // Bot metrics DOM updates
+            document.getElementById('rep-bot-atendidos').innerText = botAtendidos;
+            document.getElementById('rep-bot-citas').innerText = botCitas;
+            document.getElementById('rep-bot-transferidos').innerText = botTransferidos;
+            
+            const conversion = botAtendidos > 0 ? ((botCitas / botAtendidos) * 100).toFixed(1) : 0;
+            document.getElementById('rep-bot-conversion').innerText = `${conversion}%`;
+            
+            const avgMsgs = botAtendidos > 0 ? (totalMensajesBot / botAtendidos).toFixed(1) : 0;
+            document.getElementById('rep-bot-avg-msg').innerText = avgMsgs;
         }
 
         function formatPhone(phone) {
@@ -1276,6 +1373,16 @@
             
             // Actualizar reportes automáticamente si estamos en esa vista
             generateReports();
+            
+            // Logica visual calendario sabado
+            const satEnabled = window.botDataGlobal && window.botDataGlobal.saturday_enabled;
+            const headerSabado = document.getElementById('header-sabado');
+            const colSabado = document.getElementById('col-sabado');
+            if (headerSabado && colSabado) {
+                headerSabado.style.display = satEnabled ? 'block' : 'none';
+                colSabado.style.display = satEnabled ? 'block' : 'none';
+                document.getElementById('calendar-grid').style.gridTemplateColumns = satEnabled ? '60px repeat(6, 1fr)' : '60px repeat(5, 1fr)';
+            }
             
             // Limpiar
             const tbody = document.getElementById('table-body');
@@ -1779,17 +1886,23 @@
                 const sInit = document.getElementById('b-semana-inicio').value;
                 const sEnd = document.getElementById('b-semana-fin').value;
                 if (!sInit || !sEnd) return alert("Selecciona el inicio y fin de la semana");
-                blocksData.push({
-                    Nombre: `[BLOQUEO] ${motivo}`,
-                    Telefono: "000" + Math.floor(Math.random() * 100000000).toString(),
-                    Temperatura: "bloqueo",
-                    Fuente: "sistema",
-                    Dia_Cita: sInit + " a " + sEnd,
-                    Hora_Cita: "TODA LA SEMANA",
-                    Motivo_Consulta: motivo,
-                    Conversacion_Abierta: false,
-                    Ciudad: ""
-                });
+                
+                const startDate = new Date(sInit + 'T00:00:00');
+                const endDate = new Date(sEnd + 'T00:00:00');
+                
+                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                    blocksData.push({
+                        Nombre: `[BLOQUEO] ${motivo}`,
+                        Telefono: "000" + Math.floor(Math.random() * 100000000).toString(),
+                        Temperatura: "bloqueo",
+                        Fuente: "sistema",
+                        Dia_Cita: d.toISOString().split('T')[0],
+                        Hora_Cita: "TODA LA SEMANA",
+                        Motivo_Consulta: motivo,
+                        Conversacion_Abierta: false,
+                        Ciudad: ""
+                    });
+                }
             }
 
             const btn = document.querySelector('#block-modal .btn-primary');
@@ -2063,7 +2176,16 @@
             }
         }
 
-        window.onclick = function(e) { if (e.target == document.getElementById('patient-modal')) closeModal(); }
+        window.onclick = function(e) { 
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.style.display = "none";
+                if(e.target.id === 'patient-modal') {
+                    document.getElementById('save-btn').style.display = 'block';
+                    document.getElementById('loading-indicator').style.display = 'none';
+                    if (window.chatInterval) clearInterval(window.chatInterval);
+                }
+            }
+        }
 
         // Start
         initApp();
