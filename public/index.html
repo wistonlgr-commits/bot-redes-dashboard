@@ -1420,7 +1420,7 @@
                     if (tieneCita && f !== 'manual') {
                         botCitas++;
                     }
-                    if (l.requiere_asistencia_humana && l.requiere_asistencia_humana.trim() !== '') {
+                    if (l.Conversacion_Abierta === true || (l.requiere_asistencia_humana && String(l.requiere_asistencia_humana).trim() !== '' && String(l.requiere_asistencia_humana).toLowerCase() !== 'false')) {
                         botTransferidos++;
                     }
                 }
