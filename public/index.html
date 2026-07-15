@@ -1310,16 +1310,16 @@
 
             // Filtro por fecha de REGISTRO (usa Fecha_Primer_Contacto o created_at como prioridad, Ultima_Interaccion solo como respaldo)
             if(fDesde) {
-                const desdeDate = new Date(fDesde);
-                desdeDate.setHours(0,0,0,0);
+                const parts = fDesde.split('-');
+                const desdeDate = new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
                 filtered = filtered.filter(l => {
                     const fecha = new Date(l.Fecha_Primer_Contacto || l.created_at || l.Ultima_Interaccion);
                     return fecha >= desdeDate;
                 });
             }
             if(fHasta) {
-                const hastaDate = new Date(fHasta);
-                hastaDate.setHours(23,59,59,999);
+                const parts = fHasta.split('-');
+                const hastaDate = new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59, 999);
                 filtered = filtered.filter(l => {
                     const fecha = new Date(l.Fecha_Primer_Contacto || l.created_at || l.Ultima_Interaccion);
                     return fecha <= hastaDate;
