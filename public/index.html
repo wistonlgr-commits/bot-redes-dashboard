@@ -477,7 +477,7 @@
                         <div class="cal-header">MIÉRCOLES <div id="date-miercoles" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
                         <div class="cal-header">JUEVES <div id="date-jueves" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
                         <div class="cal-header">VIERNES <div id="date-viernes" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
-                        <div class="cal-header" id="header-sabado" style="background-color: #f8fafc; display: none;">SÁBADO <div id="date-sabado" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                        <div class="cal-header" id="header-sabado" style="background-color: #f8fafc;">SÁBADO <div id="date-sabado" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
 
                         <div class="cal-time-col" id="time-labels"></div>
                         <div class="cal-day-col" id="col-lunes"></div>
@@ -485,7 +485,7 @@
                         <div class="cal-day-col" id="col-miercoles"></div>
                         <div class="cal-day-col" id="col-jueves"></div>
                         <div class="cal-day-col" id="col-viernes"></div>
-                        <div class="cal-day-col" id="col-sabado" style="background-color: #fcfcfc; display: none;"></div>
+                        <div class="cal-day-col" id="col-sabado" style="background-color: #fcfcfc;"></div>
                     </div>
                 </div>
             </div>
@@ -1707,9 +1707,7 @@
             const headerSabado = document.getElementById('header-sabado');
             const colSabado = document.getElementById('col-sabado');
             if (headerSabado && colSabado) {
-                headerSabado.style.display = satEnabled ? 'block' : 'none';
-                colSabado.style.display = satEnabled ? 'block' : 'none';
-                document.getElementById('calendar-grid').style.gridTemplateColumns = satEnabled ? '60px repeat(6, 1fr)' : '60px repeat(5, 1fr)';
+                document.getElementById('calendar-grid').style.gridTemplateColumns = '60px repeat(6, 1fr)';
             }
             
             // Limpiar calendario de forma más eficiente (innerHTML en vez de remove individual)
