@@ -52,8 +52,8 @@ for (let i = 0; i < 14; i++) {
     const dayOfWeek = d.getDay();
     const dateStr = d.toISOString().split('T')[0];
 
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-        bloqueosFijos[dateStr] = 'DÍA COMPLETO BLOQUEADO (fin de semana)';
+    if (dayOfWeek === 0) {
+        bloqueosFijos[dateStr] = 'DÍA COMPLETO BLOQUEADO (Domingo)';
     } else if (dayOfWeek === 1 || dayOfWeek === 2 || dayOfWeek === 3 || dayOfWeek === 5) {
         bloqueosFijos[dateStr] = 'BLOQUEADO desde 12:00 pm en adelante (NO agendar en la tarde)';
     } else if (dayOfWeek === 4) {
