@@ -923,7 +923,17 @@
                     </div>
                     <div class="input-group">
                         <label>Hora (Ej. 14:00 o 2:00 pm)</label>
-                        <input type="text" id="f-hora" class="input-control">
+                        <select id="f-hora" class="input-control">
+                            <option value="">-- Sin asignar --</option>
+                            <option value="08:00:00">08:00 am (Presencial)</option>
+                            <option value="09:00:00">09:00 am (Presencial)</option>
+                            <option value="10:00:00">10:00 am (Presencial)</option>
+                            <option value="11:00:00">11:00 am (Presencial)</option>
+                            <option value="16:00:00">04:00 pm (Online L/J)</option>
+                            <option value="17:00:00">05:00 pm (Online L/J)</option>
+                            <option value="TODO EL DIA">BLOQUEO: Todo el día</option>
+                            <option value="TODA LA SEMANA">BLOQUEO: Toda la semana</option>
+                        </select>
                     </div>
                 </div>
 
@@ -2134,7 +2144,15 @@
             document.getElementById('f-fuente').value = fuenteVal;
             
             document.getElementById('f-dia').value = row.Dia_Cita || "";
-            document.getElementById('f-hora').value = row.Hora_Cita || "";
+            let fHora = document.getElementById('f-hora');
+            let horaVal = row.Hora_Cita || "";
+            if (horaVal && !Array.from(fHora.options).some(opt => opt.value === horaVal)) {
+                let newOpt = document.createElement('option');
+                newOpt.value = horaVal;
+                newOpt.text = horaVal + " (Legado)";
+                fHora.add(newOpt);
+            }
+            fHora.value = horaVal;
             document.getElementById('f-motivo').value = row.Motivo_Consulta || "";
             document.getElementById('f-resumen').value = row.Resumen || "";
             document.getElementById('f-notas').value = row.Notas || "";
