@@ -818,7 +818,7 @@
     },
     {
       "parameters": {
-        "jsCode": "let occupied = [];\nconst todayStr = new Date(new Date().toLocaleString(\"en-US\", {timeZone: \"America/Caracas\"})).toISOString().split('T')[0];\nfor (const lead of $input.all()) {\n  const date = lead.json.Dia_Cita;\n  const time = lead.json.Hora_Cita || 'Hora no especificada';\n  if (date && date >= todayStr && date !== '') {\n    occupied.push(`- ${date} a las ${time}`);\n  }\n}\nlet txt = occupied.length > 0 ? occupied.join('\\n') : 'Agenda libre';\nreturn { agenda_ocupada: txt };"
+        "jsCode": "let occupied = [];\nconst now = new Date(new Date().toLocaleString(\"en-US\", {timeZone: \"America/Caracas\"}));\nconst todayStr = now.toISOString().split('T')[0];\n\n// Función para sumar 1 hora a la hora inicial (ej: \"15:30\" -> \"16:30\")\n// Esto hace que la IA entienda que el bloqueo consume el bloque completo.\nfunction calculateEndTime(timeStr) {\n    if (!timeStr) return '';\n    const t = timeStr.toLowerCase();\n    if (t.includes('dia') || t.includes('semana') || t.includes('toda')) {\n        return timeStr; \n    }\n    \n    const parts = timeStr.trim().split(':');\n    if (parts.length >= 2) {\n        let hour = parseInt(parts[0], 10);\n        let min = parts[1].substring(0, 2); \n        \n        if (!isNaN(hour)) {\n            let nextHour = hour + 1;\n            return `${nextHour.toString().padStart(2, '0')}:${min}`;\n        }\n    }\n    return timeStr; \n}\n\n// 1. CITAS REALES Y BLOQUEOS DE LA BASE DE DATOS\nfor (const lead of $input.all()) {\n    const date = lead.json.Dia_Cita;\n    const time = lead.json.Hora_Cita || '';\n    \n    if (date && date >= todayStr && date !== '') {\n        if (time.toLowerCase().includes('todo el dia') || time.toLowerCase().includes('toda la semana')) {\n            occupied.push(`- ${date} ⛔ TODO EL DÍA BLOQUEADO`);\n        } else if (time) {\n            const endTime = calculateEndTime(time);\n            occupied.push(`- ${date} ⛔ OCUPADO de ${time} a ${endTime}`);\n        } else {\n            occupied.push(`- ${date} ⛔ OCUPADO`);\n        }\n    }\n}\n\n// 2. BLOQUEOS FIJOS DEL DOCTOR (próximos 14 días)\nfor (let i = 0; i < 14; i++) {\n    const d = new Date(now);\n    d.setDate(d.getDate() + i);\n    const dayOfWeek = d.getDay(); // 0=Dom, 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie, 6=Sab\n    const dateStr = d.toISOString().split('T')[0];\n\n    if (dayOfWeek === 0 || dayOfWeek === 6) {\n        // Fines de semana\n        occupied.push(`- ${dateStr} ⛔ DÍA COMPLETO BLOQUEADO (fin de semana)`);\n    } else if (dayOfWeek === 1 || dayOfWeek === 2 || dayOfWeek === 3 || dayOfWeek === 5) {\n        // Lunes, Martes, Miércoles y Viernes: Bloqueado en la tarde\n        occupied.push(`- ${dateStr} ⛔ BLOQUEADO desde 12:00 pm en adelante (NO agendar en la tarde)`);\n    } else if (dayOfWeek === 4) {\n        // Jueves: (disponible después de 3:30)\n        occupied.push(`- ${dateStr} ⛔ BLOQUEADO de 12:00 pm a 3:30 pm (solo disponible antes de 12pm o después de 3:30pm)`);\n    }\n}\n\n// 3. FORMATEAR SALIDA FINAL\nlet txt = occupied.length > 0 ? occupied.join('\\n') : 'Agenda libre';\nreturn { agenda_ocupada: txt };"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1056,7 +1056,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "5a40e929-7240-47d0-900c-8e0e794b2516",
+  "versionId": "c6ec3970-4eb4-459b-8215-494ee35dcd46",
   "meta": {
     "instanceId": "3eee2c5f8edefa6ced8d845098f5317aa081eb5e3b1a63d9120e26a5b465907e"
   },
