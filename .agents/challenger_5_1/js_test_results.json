@@ -1,0 +1,113 @@
+{
+  "timestamp": "2026-07-26T20:53:41.000Z",
+  "targetFile": "c:\\Users\\Leor\\Desktop\\bot whatsapp\\flujo asistente de whatsapp.json",
+  "kahnTopologicalSort": {
+    "totalNodes": 23,
+    "zeroInDegreeNodes": [
+      "Recibir WhatsApp"
+    ],
+    "topoOrder": [
+      "Recibir WhatsApp",
+      "Obtener_Configuracion",
+      "¿Es mensaje válido?",
+      "¿Lo envió el paciente?",
+      "Apagar Bot (Silenciador) ",
+      "Buscar Paciente (Supabase)",
+      "¿El Paciente Existe?",
+      "Crear Nuevo Paciente",
+      "Actualizar Última Interacción",
+      "Pausa Anti-Spam",
+      "Refrescar Datos de Supabase",
+      "¿El Bot está Autorizado?",
+      "Bloquear Bot (Mutex)",
+      "Consultar Agenda Global",
+      "Formatear Agenda",
+      "Mostrar \"Escribiendo...\"",
+      "Cerebro Inteligencia Artificial",
+      "Formatear Respuesta",
+      "Guardar Resumen en Supabase",
+      "Respaldar en Google Sheets",
+      "¿Existe Incidencia de Calidad?",
+      "Registrar Incidencia (Supabase)",
+      "Enviar Mensaje de WhatsApp"
+    ],
+    "hasCycle": false,
+    "orphanNodesCount": 0,
+    "orphanNodes": [],
+    "status": "PASSED"
+  },
+  "reachability": {
+    "root": "Recibir WhatsApp",
+    "totalNodes": 23,
+    "reachableCount": 23,
+    "unreachableCount": 0,
+    "unreachableNodes": [],
+    "allReachable": true,
+    "status": "PASSED"
+  },
+  "jsExecutionResults": [
+    {
+      "nodeName": "Formatear Agenda",
+      "nodeId": "9d5ef635-9c04-433b-9a63-a4495b0dd7f9",
+      "type": "n8n-nodes-base.code",
+      "success": true,
+      "error": null,
+      "testDetails": [
+        {
+          "testCase": "Default Mock Input (Leads array with dates/times & todo el dia)",
+          "status": "PASSED",
+          "outputKeys": ["agenda_disponible", "agenda_ocupada"]
+        },
+        {
+          "testCase": "Empty Lead Array",
+          "status": "PASSED",
+          "outputKeys": ["agenda_disponible", "agenda_ocupada"]
+        }
+      ]
+    },
+    {
+      "nodeName": "Formatear Respuesta",
+      "nodeId": "8fd94881-ca56-4855-8462-ef0109762964",
+      "type": "n8n-nodes-base.code",
+      "success": true,
+      "error": null,
+      "testDetails": [
+        {
+          "case": "Valid AI Response with |||DATOS|||",
+          "success": true,
+          "result": "Sanitizes bot reply and extracts patient JSON fields"
+        },
+        {
+          "case": "Malformed JSON in |||DATOS||| (Regex Fallback Test)",
+          "success": true,
+          "result": "Fallback regex parses fields without throwing JSON parse error"
+        },
+        {
+          "case": "Empty Response (Fallback Trigger)",
+          "success": true,
+          "result": "Triggers RESPUESTA_VACIA_FALLBACK with default greeting"
+        },
+        {
+          "case": "Weekend Date Attempt (Saturday Invalidation)",
+          "success": true,
+          "result": "Escudo Validador detects Saturday, clears dia_cita/hora_cita, flags ALUCINACION_FIN_DE_SEMANA"
+        },
+        {
+          "case": "Invalid Time Slot Attempt (14:30 Invalidation)",
+          "success": true,
+          "result": "Escudo Validador detects invalid slot 14:30, clears dia_cita/hora_cita, flags ALUCINACION_HORARIO"
+        },
+        {
+          "case": "Past Date Booking Attempt",
+          "success": true,
+          "result": "Escudo Validador detects past date, clears dia_cita/hora_cita, flags ALUCINACION_FECHA_PASADA"
+        },
+        {
+          "case": "Booking Without Patient Name Guard",
+          "success": true,
+          "result": "Escudo Validador detects missing name, clears dia_cita/hora_cita, flags AGENDAMIENTO_SIN_NOMBRE"
+        }
+      ]
+    }
+  ]
+}

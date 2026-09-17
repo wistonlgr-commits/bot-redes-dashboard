@@ -1,0 +1,284 @@
+[
+  {
+    "parameters": {
+      "modelId": {
+        "__rl": true,
+        "value": "models/gemini-3.1-flash-lite",
+        "mode": "list",
+        "cachedResultName": "models/gemini-3.1-flash-lite"
+      },
+      "messages": {
+        "values": [
+          {
+            "content": "=Eres la asistente del Dr. Ángel Trejo Alvarado. Trabajas atendiendo pacientes por WhatsApp.\n\nIDENTIDAD:\n- Preséntate como \"la asistente del Dr. Angel\". NUNCA reveles que eres inteligencia artificial, un bot, un sistema automatizado ni uses nombres internos. Eres una asistente humana real.\n- Si alguien te pregunta directamente si eres un bot o una IA, responde con naturalidad: \"No, soy la asistente del doctor, te ayudo con lo que necesites\".\n\nOBJETIVO PRINCIPAL:\nAtender al paciente con naturalidad, resolver sus dudas y cerrar agendando una cita. Llevarlo paso a paso de forma fluida. Tu misión invisible es AGENDAR.\n\nCONOCIMIENTO INTERNO (NUNCA REVELAR AL PACIENTE):\n- El doctor es médico flebólogo, cirujano general y especialista en preservación de la vena safena. Realiza cirugías (láser, esclerosis, safenectomía, entre otras).\n- Información solo para contexto médico interno. JAMÁS la compartas con el paciente.\n- PROHIBIDO QUEDARSE MUDA: NUNCA devuelvas únicamente la etiqueta |||DATOS||| con el JSON. SIEMPRE, de forma obligatoria, debes escribir primero tu mensaje de texto conversacional dirigido al paciente y LUEGO poner los |||DATOS||| al final.\n\nBASE DE CONOCIMIENTO PÚBLICA:\n- Ubicación: Maracay, Centro Empresarial Uniaragua, Piso 3, Oficina 302 (Av. Mariño Sur, San Miguel).\n- Consulta presencial: $100 a tasa BCV. Incluye Eco Doppler Venoso.\n- Asesoría online NACIONAL (Venezuela fuera de Maracay): $50 a tasa BCV.\n- Asesoría online INTERNACIONAL (fuera de Venezuela): $80 USD.\n- Sesión de esclerosis (arañitas): $120 por sesión (por cada pierna).\n- Horario presencial: Lunes a Viernes de 8:00 am a 12:00 pm en Uniaragua.\n- Horario online: EXCLUSIVAMENTE Lunes y Jueves en la tarde (4:00 pm o 5:00 pm).\n- No se necesitan exámenes de laboratorio previos, el doctor hace todo en consulta.\n- Condiciones que atiende: várices, arañitas vasculares, úlceras venosas, pie diabético, trombosis venosa, dolor o pesadez en piernas, mala circulación, linfedema, calambres nocturnos en piernas, hinchazón de piernas.\n- EXÁMENES PREVIOS (CRÍTICO): El doctor SOLO trabaja y evalúa los Eco Doppler que él mismo realiza durante la consulta. Tienes PROHIBIDO decirle al paciente que el doctor revisará ecos, resultados o informes médicos que traigan de otras clínicas. Si el paciente dice que ya tiene un eco, respóndele amablemente que el doctor debe realizar el suyo propio en la consulta para poder dar un diagnóstico certero.\n\nREGLAS DE INFORMACIÓN RESTRINGIDA:\n- SEGUROS MÉDICOS: Si preguntan, NO digas si acepta o no. Responde: \"Esa información se la puede dar el doctor directamente en consulta, le agendo una cita para que se la facilite?\" y guíalo a agendar.\n- MÉTODOS DE PAGO: Acepta Zelle, Pago Móvil, Efectivo, Punto de Venta, Binance y transferencia bancaria. PROHIBIDO mencionarlos de primeras. Solo revelarlos si el paciente ya tiene cita agendada o insiste mucho después de haber dado la mayoría de sus datos.\n- CIRUGÍAS Y PRESUPUESTOS QUIRÚRGICOS: NUNCA des precios de cirugías. Si preguntan por costos de operaciones, láser o procedimientos quirúrgicos, responde profesionalmente guiando a consulta: \"Para eso el doctor necesita evaluarlo en consulta y realizarle el Eco Doppler, asi puede darle un presupuesto exacto según su caso. Le busco un espacio en la agenda?\"\n- NO INVENTES información que no esté aquí. Si no sabes algo, delega a la secretaria.\n- PROHIBIDO MENTIR SOBRE DISPONIBILIDAD: Nunca le digas al paciente que un día está \"muy ocupado\" o \"lleno\" para ofrecerle otra fecha, a menos que veas en la AGENDA DISPONIBLE que de verdad no hay espacios. Si un día tiene disponibilidad, ofrécelo siempre. Si el paciente no te responde claramente qué día quiere, vuelve a repetirle las primeras opciones disponibles sin inventar excusas.\n- BLOQUEOS Y DISPONIBILIDAD: Si un horario o día está bloqueado (ej: lunes en la tarde), NUNCA des explicaciones de por qué. NUNCA menciones que el doctor está en otra clínica, en otro centro médico o que tiene compromisos. Simplemente di: \"Ese día por la tarde no tenemos disponibilidad, te ofrezco [Opciones]\".\n\nBLOQUEOS DE AGENDA (NUNCA agendes presencial en estos bloques):\n- Lunes desde las 12:00 pm: Ambulatorio del Norte.\n- Martes desde las 12:00 pm: Más Salud (Av. Aragua).\n- Miércoles desde las 12:00 pm hasta las 4:00 pm: Prevaler.\n- Jueves desde las 12:00 pm hasta las 4:00 pm: Calicanto / Policlínica de Turmero.\n- Viernes desde las 12:00 pm: NO TRABAJA en la tarde.\n- Sábados y Domingos: NO se agendan citas para fines de semana.\n\nREGLA ESTRICTA DE REAGENDAMIENTO:\nSi un paciente solicita reagendar o cambiar la fecha/hora de su cita, infórmale con mucha amabilidad que, por políticas del consultorio, es necesario realizar un abono del 50% del costo de la consulta para poder reservar un nuevo espacio.\nPregúntale si está de acuerdo con esta política para proceder.\nSi el paciente ACEPTA: Responde diciéndole \"Perfecto. En unos momentos nuestra secretaria se pondrá en contacto contigo por este medio para facilitarte los métodos de pago y confirmar tu nueva fecha.\"\nACCIÓN OBLIGATORIA (JSON): En ese momento, emite en tu JSON \"requiere_asistencia_humana\": \"true\". PROHIBIDO AGENDAR: NO modifiques bajo ninguna circunstancia la fecha ni la hora actual en el JSON (dia_cita y hora_cita), la secretaria se encargará de hacer el cambio manualmente una vez reciba el pago.\n\nREGLA DINÁMICA DE HORARIOS:\n{{ (() => { const ahora = new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Caracas'})); const dia = ahora.getDay(); if (dia === 0 || dia === 6) { return 'HOY ES FIN DE SEMANA. Citas para la próxima semana (lunes a viernes). Puedes ofrecer disponibilidad en la MAÑANA (8:00 am a 12:00 pm) y en la TARDE (4:00 pm y 5:00 pm, respetando bloqueos de agenda).'; } else { return 'HOY ES DÍA DE SEMANA. Puedes ofrecer MAÑANA (8:00 am a 12:00 pm) y TARDE (desde las 4:00 pm, si no choca con bloqueos).'; } })() }}\n\nAGENDA DISPONIBLE:\n[AGENDA_DISPONIBLE]\n{{ $node[\"Formatear Agenda\"].json.agenda_disponible || $node[\"Formatear Agenda\"].json.agenda_ocupada || \"Sin disponibilidad\" }}\n[/AGENDA_DISPONIBLE]\n\nESTILO DE ESCRITURA:\n- EXTREMADAMENTE CORTO. Responde como si estuvieras chateando rápido desde un celular. Máximo 2 o 3 oraciones cortas por mensaje. NUNCA envíes párrafos largos.\n- TONO: Profesional pero relajado. Como una secretaria real de consultorio por WhatsApp.\n- PROHIBIDO: negritas, guiones, viñetas, listas numeradas. Todo en texto corrido natural.\n- PROHIBIDO: ambos signos de exclamación (¡!). Usa solo el de cierre: Hola!\n- PROHIBIDO: palabras de IA (crucial, vital, en resumen, en conclusión, excelente elección, no dudes en, estaré encantada, con gusto, perfecto elección).\n- Usa expresiones naturales variadas: \"Ok\", \"Dale\", \"Listo\", \"Claro\", \"Perfecto\", \"Bueno\". NUNCA repitas la misma expresión dos mensajes seguidos.\n- Para sonar humana en WhatsApp: omite tildes ocasionalmente en palabras comunes (esta, asi, aqui, tambien). Usa \"..\" en vez de \"...\" a veces. No exageres, sé sutil.\n- El mensaje debe ser continuo. UN SOLO salto de línea al final para separar el JSON.\n- SOLO UN TURNO: Tú eres la asistente. SOLO debes escribir tu propia respuesta. NUNCA inventes, simules ni asumas lo que el paciente va a decir. Escribe tu mensaje corto, pon el JSON y DETENTE por completo. Tienes que esperar a que el humano real responda.\nNUNCA escribas la palabra 'Paciente:' ni inventes lo que dice el usuario. Tu turno termina en el momento exacto en que haces una pregunta. Escribe SOLO el texto de la asistente y nada más.\n\nREGLA DE PRIORIDAD DE AGENDA:\nPRIORIDAD ESTRICTA: Ofrece SIEMPRE el primer día laborable disponible MÁS CERCANO (empezando por mañana). Jamás ofrezcas fechas lejanas si tienes disponibilidad en los próximos 1 o 2 días. Llena los espacios vacíos lo más pronto posible.\nOBLIGATORIO - LLENAR ESPACIOS CERCANOS: Tu objetivo número uno es llenar los días más próximos. Si el paciente pide un cambio de turno (ejemplo: dice \"¿y en la mañana?\"), SIEMPRE debes ofrecerle primero la disponibilidad en la mañana de los días más cercanos (el lunes o el martes) antes de ofrecerle días más lejanos de la semana (miércoles en adelante). Solo ofreces días lejanos si los primeros días están 100% llenos.\n\nFLUJO DE VENTAS (Paso a Paso):\n\n1. SALUDO (Si no sabes ciudad ni motivo):\nHola! Soy la asistente del Dr. Angel, cuentame desde que ciudad nos escribes y en que te podemos ayudar?\nEXCEPCIÓN: Si el paciente ya dice su ciudad y motivo en el primer mensaje, salta al Paso 2.\nEXCEPCIÓN: Si el paciente solo dice \"Hola\" o \"Buenos días\" sin más, responde solo el saludo corto: \"Hola! En que te puedo ayudar?\" No lances toda la información.\n\n2. PRECIO Y UBICACIÓN (Cuando ya sabes ciudad y motivo):\nNUNCA des precios sin saber la ciudad.\n- Maracay o ciudades cercanas (La Victoria, Cagua, Turmero, Palo Negro, San Mateo, Mariara, etc.): Precio presencial $100 + dirección.\n- Venezuela fuera de Maracay: OBLIGATORIO ofrecer AMBAS opciones (online $50 y presencial $100).\n- Extranjero: Asesoría online internacional $80 USD.\n- Si preguntan por arañitas/esclerosis: $120 por sesión, por cada pierna.\n\n3. OFRECER MAÑANA O TARDE (Después de dar precio):\nNO des horas exactas aquí. Pregunta preferencia:\n\"Revisando la agenda tengo espacios para este [día más cercano a partir de mañana]. Te queda mejor por la mañana o por la tarde?\"\n\n4. HORAS EXACTAS (Cuando eligió mañana o tarde):\nANTES de ofrecer cualquier hora, ES OBLIGATORIO LEER LA [AGENDA_DISPONIBLE].\nDa DOS opciones de horas disponibles. OBLIGATORIO: Las consultas duran 1 hora y debes ofrecer únicamente \"HORAS EN PUNTO\" (ej. 8:00 am, 9:00 am, 10:00 am, 11:00 am, 4:00 pm, 5:00 pm).\nESTÁ ESTRICTAMENTE PROHIBIDO ofrecer horas intermedias con minutos (ej. NO des minutos, SOLO horas en punto como 8:00 am, 9:00 am, 4:00 pm, 5:00 pm) y ofrecer una hora si ya aparece ocupada en ese día o si el día dice \"TODO EL DIA\" bloqueado. Si el día está bloqueado o lleno, discúlpate y ofrece el siguiente día hábil.\n\"Para ese día me queda un espacio a las [Hora en punto 1] y otro a las [Hora en punto 2], cuál te queda mejor?\"\n\n5. RECOPILAR DATOS (Cuando eligió hora):\nCRÍTICO: Todavía NO emitas dia_cita ni hora_cita en el JSON. Debes tener los datos primero.\nFASE 1: \"Ok, le aparto la hora entonces? Me pasa su nombre y apellido para la confirmacion de la cita\"\nFASE 2 (cuando da el nombre): \"Perfecto. Y su número de cédula y edad por favor\"\nEXCEPCIÓN: Si ya dio varios datos antes, pide solo los que falten.\n\n6. CONFIRMACIÓN (Cuando tiene todos los datos):\n\"Listo [Nombre]! Quedo anotada tu cita para el [Día] a las [Hora]. Te esperamos en el Centro Empresarial Uniaragua, Piso 3, Oficina 302 (Av. Mariño Sur). Que tengas buen dia!\"\n\nPACIENTES ANTIGUOS:\n- Por defecto asume pacientes nuevos.\n- SI YA TIENE CITA AGENDADA y escribe para confirmar o dice que ya llegó: \"Hola! En un momento la secretaria te atiende personalmente, un saludo!\"\n- Si mencionan que ya fueron a consulta o se operaron: trato más cercano, indaga sutilmente. Incluir todo en el campo resumen del JSON.\n\nCANCELACIONES E INASISTENCIAS:\n- Cancelar o reagendar: responde amable, ofrece reagendar. Anota en resumen.\n- No-show (no asistió a cita previa) quiere reagendar: \"Entiendo, para reagendar luego de una inasistencia hay un proceso especial. Te voy a derivar con la secretaria para que te ayude con eso.\" Llena requiere_asistencia_humana: \"Paciente no asistió a cita previa. Aplicar protocolo de penalización.\"\n- Si CANCELA o RECHAZA cita: dia_cita y hora_cita DEBEN ir vacíos en el JSON.\n\nDELEGACIÓN HUMANA (requiere_asistencia_humana):\nResponde amable al paciente diciendo que la secretaria lo contactará pronto. Llena el campo con el motivo.\nCasos que REQUIEREN delegación obligatoria:\n- Reagendamiento de cita (tras aplicar política de 50%).\n- No-show que quiere reagendar.\n- Preguntas médicas complejas fuera de tu base de conocimiento.\n- Precios de procedimientos o cirugías que no conoces.\n- El paciente envía nota de voz o imagen (responde: \"Disculpa, no puedo abrir audios ni imagenes por aqui. Me escribes por texto lo que necesitas?\").\n- El paciente se queja del servicio, del doctor o de una experiencia pasada.\n- El paciente pregunta en un idioma que no es español.\n- El paciente quiere agendar para varios familiares en una misma cita.\n- El paciente describe una emergencia médica o síntomas graves urgentes (responde: \"Por lo que me describes, te recomiendo acudir a la emergencia más cercana lo antes posible. Si luego necesitas una consulta con el doctor, aqui estamos para ayudarte\").\n- Cualquier situación donde no tengas certeza de la respuesta.\n\nEXTRACCIÓN DE DATOS:\nFECHA ACTUAL: {{ $now.setZone('America/Caracas').format('cccc, yyyy-MM-dd') }}.\nAl final de CADA respuesta, haz UN salto de línea y agrega |||DATOS||| seguido del JSON en texto plano. El bloque debe empezar con llaves dobles.\n\n|||DATOS|||\n{{ String.fromCharCode(123, 123) }}\"nombre\": \"\", \"ciudad\": \"\", \"motivo_consulta\": \"\", \"temperatura\": \"frio/tibio/caliente\", \"resumen\": \"\", \"dia_cita\": \"YYYY-MM-DD\", \"hora_cita\": \"\", \"requiere_asistencia_humana\": \"\"{{ String.fromCharCode(125, 125) }}\n\nREGLAS JSON:\n- dia_cita: YYYY-MM-DD. Solo cuando el paciente CONFIRME el día Y ya tengas su nombre, motivo y ciudad. NO LLENAR SI FALTAN DATOS.\n- hora_cita: Solo cuando elija la hora exacta Y ya tengas su nombre, motivo y ciudad. NO LLENAR SI FALTAN DATOS.\n- requiere_asistencia_humana: Vacío si todo va normal.\n- Si CANCELA: dia_cita y hora_cita vacíos.\n\nDATOS DEL PACIENTE ACTUAL:\nNombre: {{ $node[\"Refrescar Datos de Supabase\"].json.Nombre || \"Aún no lo ha dicho\" }}\nCita Programada: {{ $node[\"Refrescar Datos de Supabase\"].json.Dia_Cita ? ($node[\"Refrescar Datos de Supabase\"].json.Dia_Cita + \" a las \" + $node[\"Refrescar Datos de Supabase\"].json.Hora_Cita) : \"Ninguna\" }}\n\nREGLA DE ORO SI YA TIENE CITA:\nSi el paciente ya tiene Cita Programada (que no sea Ninguna), ESA HORA ES SUYA. No le digas que está ocupada. No le agendes una nueva. Si confirma: \"Hola [Nombre]! Si, tu cita es el [Día] a las [Hora]. Te esperamos!\"\n\nHISTORIAL DE LA CONVERSACIÓN:\n{{ (() => { const h = $node[\"Refrescar Datos de Supabase\"].json.chat_history || []; return h.map(m => (m.role === 'user' ? 'Paciente: ' : 'Asistente: ') + m.content).join('\\n'); })() }}"
+          }
+        ]
+      },
+      "builtInTools": {},
+      "options": {}
+    },
+    "type": "@n8n/n8n-nodes-langchain.googleGemini",
+    "typeVersion": 1.1,
+    "position": [
+      496,
+      304
+    ],
+    "id": "8214de70-11ae-4afb-8049-f5527562c61b",
+    "name": "Cerebro Inteligencia Artificial",
+    "retryOnFail": true,
+    "maxTries": 4,
+    "waitBetweenTries": 5000,
+    "credentials": {
+      "googlePalmApi": {
+        "id": "RbtGkF3BwVhe1MFw",
+        "name": "Google Gemini(PaLM) Api account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "jsCode": "// =====================================================\n// CÓDIGO CORREGIDO PARA \"Formatear Respuesta\"\n// FIX: Limpia doble llaves {{ }} antes de parsear JSON\n// FIX: Fallback regex extrae TODOS los campos, no solo 3\n// =====================================================\n// Busca texto recursivamente en cualquier estructura JSON\nfunction findText(obj, depth) {\n  if (depth > 5) return \"\";\n  if (typeof obj === 'string' && obj.length > 20) return obj;\n  if (Array.isArray(obj)) {\n    for (const item of obj) {\n      const found = findText(item, depth + 1);\n      if (found) return found;\n    }\n  }\n  if (typeof obj === 'object' && obj !== null) {\n    for (const val of Object.values(obj)) {\n      const found = findText(val, depth + 1);\n      if (found) return found;\n    }\n  }\n  return \"\";\n}\nlet history = $node[\"Refrescar Datos de Supabase\"].json.chat_history || [];\nlet fullResponse = findText($json, 0);\nif (!fullResponse) {\n  fullResponse = \"Hola! en qué te puedo ayudar?\";\n}\nfullResponse = fullResponse.replace(/\\\\\\\\n/g, ' ').replace(/\\\\n/g, ' ').replace(/  +/g, ' ').trim();\nlet botMsg = fullResponse;\nlet datosExtraidos = {\n  nombre: undefined, ciudad: undefined, motivo_consulta: undefined,\n  temperatura: undefined, resumen: undefined, dia_cita: undefined,\n  hora_cita: undefined, requiere_asistencia_humana: undefined\n};\nif (fullResponse.includes('|||DATOS|||')) {\n  const partes = fullResponse.split('|||DATOS|||');\n  botMsg = partes[0].trim();\n  let jsonStr = partes[1].trim();\n  // ══════════════════════════════════════════════\n  // FIX 1: Limpiar doble llaves {{ }} → { }\n  // La IA a veces copia el template del prompt con {{ }}\n  // ══════════════════════════════════════════════\n  jsonStr = jsonStr.replace(/^\\{\\{/, '{').replace(/\\}\\}$/, '}');\n  // También limpiar si hay {{ }} internos sueltos\n  jsonStr = jsonStr.replace(/\\{\\{/g, '{').replace(/\\}\\}/g, '}');\n  // Limpiar posibles bloques de código markdown\n  jsonStr = jsonStr.replace(/```json\\s*/gi, '').replace(/```\\s*/gi, '').trim();\n  let parseOk = false;\n  try {\n    const datos = JSON.parse(jsonStr);\n    parseOk = true;\n    if ('nombre' in datos) datosExtraidos.nombre = datos.nombre || \"\";\n    if ('ciudad' in datos) datosExtraidos.ciudad = datos.ciudad || \"\";\n    if ('motivo_consulta' in datos) datosExtraidos.motivo_consulta = datos.motivo_consulta || \"\";\n    if ('temperatura' in datos) datosExtraidos.temperatura = datos.temperatura || \"\";\n    if ('resumen' in datos) datosExtraidos.resumen = datos.resumen || \"\";\n    if ('dia_cita' in datos) datosExtraidos.dia_cita = typeof datos.dia_cita === 'string' ? datos.dia_cita : \"\";\n    if ('hora_cita' in datos) datosExtraidos.hora_cita = typeof datos.hora_cita === 'string' ? datos.hora_cita : \"\";\n    if ('requiere_asistencia_humana' in datos) datosExtraidos.requiere_asistencia_humana = datos.requiere_asistencia_humana || \"\";\n  } catch (e) {\n    // JSON.parse falló, usar fallback regex\n  }\n  // ══════════════════════════════════════════════\n  // FIX 2: Fallback regex COMPLETO para TODOS los campos\n  // Se ejecuta si JSON.parse falló\n  // ══════════════════════════════════════════════\n  if (!parseOk) {\n    try {\n      const extraer = (campo) => {\n        const regex = new RegExp('\"' + campo + '\"\\\\s*:\\\\s*\"([^\"]*)\"');\n        const match = jsonStr.match(regex);\n        return match ? match[1] : undefined;\n      };\n      const nombre = extraer('nombre');\n      const ciudad = extraer('ciudad');\n      const motivo = extraer('motivo_consulta');\n      const temp = extraer('temperatura');\n      const resumen = extraer('resumen');\n      const dia = extraer('dia_cita');\n      const hora = extraer('hora_cita');\n      const alerta = extraer('requiere_asistencia_humana');\n      if (nombre !== undefined) datosExtraidos.nombre = nombre;\n      if (ciudad !== undefined) datosExtraidos.ciudad = ciudad;\n      if (motivo !== undefined) datosExtraidos.motivo_consulta = motivo;\n      if (temp !== undefined) datosExtraidos.temperatura = temp;\n      if (resumen !== undefined) datosExtraidos.resumen = resumen;\n      if (dia !== undefined) datosExtraidos.dia_cita = dia;\n      if (hora !== undefined) datosExtraidos.hora_cita = hora;\n      if (alerta !== undefined) datosExtraidos.requiere_asistencia_humana = alerta;\n    } catch (e2) {}\n  }\n}\nconst prevData = $node[\"Refrescar Datos de Supabase\"].json || {};\nconst nombre_final = datosExtraidos.nombre !== undefined ? datosExtraidos.nombre : (prevData.Nombre || \"\");\nconst ciudad_final = datosExtraidos.ciudad !== undefined ? datosExtraidos.ciudad : (prevData.Ciudad || \"\");\nconst motivo_final = datosExtraidos.motivo_consulta !== undefined ? datosExtraidos.motivo_consulta : (prevData.Motivo_Consulta || \"\");\nconst temp_final = datosExtraidos.temperatura !== undefined ? datosExtraidos.temperatura : (prevData.Temperatura || \"\");\nconst resumen_final = datosExtraidos.resumen !== undefined ? datosExtraidos.resumen : (prevData.Resumen || \"\");\n// FIX CRÍTICO: Si la IA manda dia_cita como string vacío \"\", respetamos ese vacío para borrar la cita.\nconst dia_final = datosExtraidos.dia_cita !== undefined ? datosExtraidos.dia_cita : (prevData.Dia_Cita || \"\");\nconst hora_final = datosExtraidos.hora_cita !== undefined ? datosExtraidos.hora_cita : (prevData.Hora_Cita || \"\");\nlet alerta_final = datosExtraidos.requiere_asistencia_humana !== undefined ? datosExtraidos.requiere_asistencia_humana : (prevData.requiere_asistencia_humana || \"\");\nif (alerta_final === 'false' || alerta_final === 'False' || alerta_final === 'no') {\n  alerta_final = \"\";\n}\nhistory.push({ role: \"assistant\", content: botMsg });\nif (history.length > 8) history = history.slice(history.length - 8);\nlet random_delay = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;\n// Trampa para atrapar a la IA cuando se queda muda\nif (botMsg === undefined || botMsg.trim() === \"\") {\n    throw new Error(\"🚨 ALERTA: La IA se quedó muda. No generó texto, solo el JSON.\");\n}\nreturn {\n  final_history: history,\n  bot_reply: botMsg,\n  delay: random_delay,\n  nombre: nombre_final,\n  ciudad: ciudad_final,\n  motivo_consulta: motivo_final,\n  temperatura: temp_final,\n  resumen: resumen_final,\n  dia_cita: dia_final,\n  hora_cita: hora_final,\n  requiere_asistencia_humana: alerta_final\n};\n"
+    },
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+      864,
+      256
+    ],
+    "id": "8fd94881-ca56-4855-8462-ef0109762964",
+    "name": "Formatear Respuesta"
+  },
+  {
+    "parameters": {
+      "operation": "appendOrUpdate",
+      "documentId": {
+        "__rl": true,
+        "value": "https://docs.google.com/spreadsheets/d/1fUhIYYlhs4jAm6IxzRrDhlCAWVnICyLp5odm0VnRwro/edit?gid=0#gid=0",
+        "mode": "url"
+      },
+      "sheetName": {
+        "__rl": true,
+        "value": "Hoja 1",
+        "mode": "name"
+      },
+      "columns": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "Telefono": "={{ $node['Recibir WhatsApp'].json.body.data.key.remoteJid }}",
+          "Nombre": "={{ $json.nombre }}",
+          "Ciudad": "={{ $json.ciudad }}",
+          "Motivo_Consulta": "={{ $json.motivo_consulta }}",
+          "Temperatura": "={{ $json.temperatura }}",
+          "Ultima_Interaccion": "={{ $now }}",
+          "Resumen": "=\t{{ $json.resumen }}",
+          "Dia_Cita": "={{ $json.dia_cita }}",
+          "Hora_Cita": "={{ $json.hora_cita }}"
+        },
+        "matchingColumns": [
+          "Telefono"
+        ],
+        "schema": [
+          {
+            "id": "Telefono",
+            "displayName": "Telefono",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "type": "string",
+            "canBeUsedToMatch": true,
+            "removed": false
+          },
+          {
+            "id": "Nombre",
+            "displayName": "Nombre",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "type": "string",
+            "canBeUsedToMatch": true,
+            "removed": false
+          },
+          {
+            "id": "Ciudad",
+            "displayName": "Ciudad",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "type": "string",
+            "canBeUsedToMatch": true,
+            "removed": false
+          },
+          {
+            "id": "Motivo_Consulta",
+            "displayName": "Motivo_Consulta",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "type": "string",
+            "canBeUsedToMatch": true,
+            "removed": false
+          },
+          {
+            "id": "Temperatura",
+            "displayName": "Temperatura",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "type": "string",
+            "canBeUsedToMatch": true,
+            "removed": false
+          },
+          {
+            "id": "Ultima_Interaccion",
+            "displayName": "Ultima_Interaccion",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "type": "string",
+            "canBeUsedToMatch": true,
+            "removed": false
+          },
+          {
+            "id": "Resumen",
+            "displayName": "Resumen",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "type": "string",
+            "canBeUsedToMatch": true,
+            "removed": false
+          },
+          {
+            "id": "Dia_Cita",
+            "displayName": "Dia_Cita",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "type": "string",
+            "canBeUsedToMatch": true,
+            "removed": false
+          },
+          {
+            "id": "Hora_Cita",
+            "displayName": "Hora_Cita",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "type": "string",
+            "canBeUsedToMatch": true,
+            "removed": false
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": false
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.googleSheets",
+    "typeVersion": 4.7,
+    "position": [
+      1056,
+      208
+    ],
+    "id": "db5cb0f9-2ed8-4ce7-af24-9fdb3e3474e5",
+    "name": "Respaldar en Google Sheets",
+    "retryOnFail": true,
+    "maxTries": 5,
+    "credentials": {
+      "googleSheetsOAuth2Api": {
+        "id": "ICBlcz55sFQrShP5",
+        "name": "Google Sheets account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "operation": "update",
+      "tableId": "leads",
+      "filters": {
+        "conditions": [
+          {
+            "keyName": "phone_number",
+            "condition": "eq",
+            "keyValue": "={{ $node[\"Recibir WhatsApp\"].json.body.data.key.remoteJid }}"
+          }
+        ]
+      },
+      "fieldsUi": {
+        "fieldValues": [
+          {
+            "fieldId": "chat_history",
+            "fieldValue": "={{ $json.final_history }}"
+          },
+          {
+            "fieldId": "Nombre",
+            "fieldValue": "={{ $json.nombre }}"
+          },
+          {
+            "fieldId": "Ciudad",
+            "fieldValue": "={{ $json.ciudad }}"
+          },
+          {
+            "fieldId": "Motivo_Consulta",
+            "fieldValue": "={{ $json.motivo_consulta }}"
+          },
+          {
+            "fieldId": "Temperatura",
+            "fieldValue": "={{ $json.temperatura }}"
+          },
+          {
+            "fieldId": "Resumen",
+            "fieldValue": "={{ $json.resumen }}"
+          },
+          {
+            "fieldId": "Dia_Cita",
+            "fieldValue": "={{ $json.dia_cita }}"
+          },
+          {
+            "fieldId": "Hora_Cita",
+            "fieldValue": "={{ $json.hora_cita }}"
+          },
+          {
+            "fieldId": "Ultima_Interaccion",
+            "fieldValue": "={{ $now }}"
+          },
+          {
+            "fieldId": "bot_is_typing",
+            "fieldValue": "={{ false }}"
+          },
+          {
+            "fieldId": "requiere_asistencia_humana",
+            "fieldValue": "={{ $json.requiere_asistencia_humana }}"
+          }
+        ]
+      }
+    },
+    "type": "n8n-nodes-base.supabase",
+    "typeVersion": 1,
+    "position": [
+      1056,
+      416
+    ],
+    "id": "ca9bf834-c7cd-4976-a364-c4148ffe2287",
+    "name": "Guardar Resumen en Supabase",
+    "credentials": {
+      "supabaseApi": {
+        "id": "gidwrNK4lcuu0fQR",
+        "name": "Supabase account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "jsCode": "// =====================================================\n// CÓDIGO CORREGIDO PARA EL NODO \"Formatear Agenda\" (Paso 2)\n// Transforma la agenda a Horas Disponibles Exactas (:00)\n// =====================================================\n\nconst timezone = 'America/Caracas';\nconst now = new Date();\nconst dateFormatter = new Intl.DateTimeFormat('en-CA', {\n    timeZone: timezone,\n    year: 'numeric',\n    month: '2-digit',\n    day: '2-digit'\n});\nconst todayStr = dateFormatter.format(now);\n\n// Base date a mediodía Caracas para evitar desfasamiento al sumar días\nconst baseDate = new Date(todayStr + 'T12:00:00-04:00');\n\n// Slots candidatos exactos (:00)\nconst SLOTS_MANANA = [\"08:00\", \"09:00\", \"10:00\", \"11:00\"];\nconst SLOTS_TARDE = [\"16:00\", \"17:00\"];\n\nconst ocupacionSupabase = {};\nconst diasBloqueadosCompletos = new Set();\n\n// 1. RECOGER Y MAPEAR CITAS DE SUPABASE CON PARSER 12H/24H CORREGIDO\nfor (const lead of $input.all()) {\n    const json = lead.json || {};\n    const date = json.Dia_Cita;\n    const timeRaw = (json.Hora_Cita || '').toString().trim();\n\n    if (!date || date === '' || date < todayStr) continue;\n\n    const timeLower = timeRaw.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n\n    // Bloqueo explícito de día completo o semana completa\n    if (timeLower.includes('todo el dia') || timeLower.includes('toda la semana') || timeLower.includes('bloqueado') || timeLower.includes('vacaciones') || timeLower.includes('no laborable')) {\n        diasBloqueadosCompletos.add(date);\n        continue;\n    }\n\n    // Parsear hora 12h/24h a entero 0-23\n    const hour24 = parseTimeTo24hHour(timeRaw);\n    if (hour24 !== null) {\n        const slotStr = hour24.toString().padStart(2, '0') + ':00';\n        if (!ocupacionSupabase[date]) {\n            ocupacionSupabase[date] = new Set();\n        }\n        ocupacionSupabase[date].add(slotStr);\n    }\n}\n\n// Parser numérico de hora 12h/24h (previene que 4:00 pm bloquee 4:00 am)\nfunction parseTimeTo24hHour(raw) {\n    if (!raw) return null;\n    const str = raw.toString().toLowerCase().replace(/\\./g, '').trim();\n    if (!str) return null;\n\n    const isPM = str.includes('pm');\n    const isAM = str.includes('am');\n\n    const clean = str.replace(/(am|pm)/g, '').trim();\n    const parts = clean.split(':');\n    if (parts.length === 0) return null;\n\n    let h = parseInt(parts[0], 10);\n    if (isNaN(h)) return null;\n\n    if (isPM) {\n        if (h < 12) h += 12;\n    } else if (isAM) {\n        if (h === 12) h = 0;\n    }\n\n    if (h >= 0 && h <= 23) {\n        return h;\n    }\n    return null;\n}\n\n// 2. GENERAR DISPONIBILIDAD POSITIVA PARA PRÓXIMOS 14 DÍAS\nconst reporteDisponibilidad = [];\n\nfor (let i = 0; i < 14; i++) {\n    const d = new Date(baseDate.getTime() + i * 86400000);\n    const dateStr = dateFormatter.format(d);\n    const dayOfWeek = new Date(dateStr + 'T12:00:00Z').getUTCDay(); // 0 = Dom, 1 = Lun, 2 = Mar, 3 = Mié, 4 = Jue, 5 = Vie, 6 = Sáb\n\n    // Fines de semana (Sábado y Domingo): 100% Bloqueados\n    if (dayOfWeek === 0 || dayOfWeek === 6) {\n        reporteDisponibilidad.push(`- ${dateStr} (Fin de semana): NO LABORABLE`);\n        continue;\n    }\n\n    // Bloqueo explícito de día completo desde Supabase\n    if (diasBloqueadosCompletos.has(dateStr)) {\n        reporteDisponibilidad.push(`- ${dateStr}: MAÑANA DISPONIBLE: [Sin disponibilidad] | TARDE DISPONIBLE: [Sin disponibilidad] (Bloqueado)`);\n        continue;\n    }\n\n    // Reglas de clínicas externas por día de semana:\n    // Mañana: Lunes a Viernes 08:00, 09:00, 10:00, 11:00 disponible en Uniaragua.\n    // Tarde:\n    // - Lunes: Ambulatorio del Norte (12:00 pm en adelante bloqueado -> Tarde 0)\n    // - Martes: Más Salud (12:00 pm en adelante bloqueado -> Tarde 0)\n    // - Miércoles: Prevaler (12:00 pm - 4:00 pm bloqueado -> Tarde abre a las 16:00 -> 16:00, 17:00 disponibles)\n    // - Jueves: Calicanto / Policlínica Turmero (12:00 pm - 4:00 pm bloqueado -> Tarde abre a las 16:00 -> 16:00, 17:00 disponibles)\n    // - Viernes: Viernes Tarde no laborable (16:00 - 18:00 bloqueado -> Tarde 0)\n    const candManana = [...SLOTS_MANANA];\n    let candTarde = [];\n\n    if (dayOfWeek === 3 || dayOfWeek === 4) {\n        candTarde = [...SLOTS_TARDE];\n    }\n\n    // Descontar citas registradas en Supabase\n    const ocupadas = ocupacionSupabase[dateStr] || new Set();\n    const dispManana = candManana.filter(h => !ocupadas.has(h));\n    const dispTarde = candTarde.filter(h => !ocupadas.has(h));\n\n    const mananaTxt = dispManana.length > 0 ? dispManana.join(', ') : 'Sin disponibilidad';\n    const tardeTxt = dispTarde.length > 0 ? dispTarde.join(', ') : 'Sin disponibilidad';\n\n    reporteDisponibilidad.push(`- ${dateStr}: MAÑANA DISPONIBLE: [${mananaTxt}] | TARDE DISPONIBLE: [${tardeTxt}]`);\n}\n\nconst txt = reporteDisponibilidad.join('\\n');\n\nreturn {\n    agenda_disponible: txt,\n    agenda_ocupada: txt\n};\n"
+    },
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+      464,
+      64
+    ],
+    "id": "9d5ef635-9c04-433b-9a63-a4495b0dd7f9",
+    "name": "Formatear Agenda"
+  }
+]

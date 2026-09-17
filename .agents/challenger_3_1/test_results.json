@@ -1,0 +1,477 @@
+{
+  "timestamp": "2026-07-26T23:59:58.231Z",
+  "totalTests": 12,
+  "passedTests": 11,
+  "failedTests": 1,
+  "results": [
+    {
+      "id": "0.1",
+      "category": "Recursion Depth Failure",
+      "description": "Gemini API nested format at depth 6 (candidates[0].content.parts[0].text)",
+      "status": "FAIL",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?"
+          }
+        ],
+        "bot_reply": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?",
+        "delay": 5810,
+        "nombre": "Paciente Base",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "",
+        "hora_cita": "",
+        "requiere_asistencia_humana": "Respuesta de IA vacía - Fallback determinista activado"
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "findText reaches depth 6 text (Does NOT fail to empty fallback)",
+          "pass": false,
+          "actual": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?"
+        }
+      ]
+    },
+    {
+      "id": "1.1",
+      "category": "Half-hour hallucinations",
+      "description": "Cita para el lunes a las 8:30 am (valid hour 8:00 after sanitization)",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Claro, te confirmo tu cita para el lunes a las 8:00 am."
+          }
+        ],
+        "bot_reply": "Claro, te confirmo tu cita para el lunes a las 8:00 am.",
+        "delay": 3624,
+        "nombre": "Carlos Perez",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "2026-08-03",
+        "hora_cita": "08:00",
+        "requiere_asistencia_humana": ""
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "Text sanitized 8:30 am -> 8:00 am",
+          "pass": true,
+          "actual": "Claro, te confirmo tu cita para el lunes a las 8:00 am."
+        },
+        {
+          "name": "hora_cita normalized to 08:00",
+          "pass": true,
+          "actual": "08:00"
+        },
+        {
+          "name": "dia_cita kept 2026-08-03",
+          "pass": true,
+          "actual": "2026-08-03"
+        }
+      ]
+    },
+    {
+      "id": "1.2",
+      "category": "Half-hour hallucinations",
+      "description": "Te espero a las 14:30 (invalid hour 14:00 after sanitization)",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Te espero a las 14:00 para la consulta."
+          }
+        ],
+        "bot_reply": "Te espero a las 14:00 para la consulta.",
+        "delay": 7650,
+        "nombre": "Maria Lopez",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "",
+        "hora_cita": "",
+        "requiere_asistencia_humana": "Horario no permitido detectado (14:00). Cita anulada para verificación manual."
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "Text sanitized 14:30 -> 14:00",
+          "pass": true,
+          "actual": "Te espero a las 14:00 para la consulta."
+        },
+        {
+          "name": "hora_cita invalidated/cleared",
+          "pass": true,
+          "actual": ""
+        },
+        {
+          "name": "dia_cita invalidated/cleared",
+          "pass": true,
+          "actual": ""
+        },
+        {
+          "name": "Human assistance alert flagged for invalid hour",
+          "pass": true,
+          "actual": "Horario no permitido detectado (14:00). Cita anulada para verificación manual."
+        }
+      ]
+    },
+    {
+      "id": "1.3",
+      "category": "Half-hour hallucinations",
+      "description": "Verbal expression '8 y media' in response text and data block",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Te esperamos el lunes a las 8:00."
+          }
+        ],
+        "bot_reply": "Te esperamos el lunes a las 8:00.",
+        "delay": 7140,
+        "nombre": "Juan Gomez",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "2026-08-03",
+        "hora_cita": "08:00",
+        "requiere_asistencia_humana": ""
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "Verbal '8 y media' sanitized to 8:00",
+          "pass": true,
+          "actual": "Te esperamos el lunes a las 8:00."
+        },
+        {
+          "name": "hora_cita normalized to 08:00",
+          "pass": true,
+          "actual": "08:00"
+        }
+      ]
+    },
+    {
+      "id": "2.1",
+      "category": "Weekend requests",
+      "description": "Quiero cita el domingo a las 10:00 (Sunday 2026-08-02)",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Quiero cita el lunes a las 10:00 am."
+          }
+        ],
+        "bot_reply": "Quiero cita el lunes a las 10:00 am.",
+        "delay": 5285,
+        "nombre": "Pedro Picapiedra",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "",
+        "hora_cita": "",
+        "requiere_asistencia_humana": "Alucinación de IA: Intentó agendar en fin de semana (sábado/domingo)."
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "Text 'el domingo' replaced with 'el lunes'",
+          "pass": true,
+          "actual": "Quiero cita el lunes a las 10:00 am."
+        },
+        {
+          "name": "dia_cita cleared due to weekend hallucination",
+          "pass": true,
+          "actual": ""
+        },
+        {
+          "name": "hora_cita cleared due to weekend hallucination",
+          "pass": true,
+          "actual": ""
+        },
+        {
+          "name": "Human assistance alert flagged for weekend",
+          "pass": true,
+          "actual": "Alucinación de IA: Intentó agendar en fin de semana (sábado/domingo)."
+        }
+      ]
+    },
+    {
+      "id": "2.2",
+      "category": "Weekend requests",
+      "description": "Cita para este sábado a las 9:00 am (Saturday 2026-08-01)",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Te aparté cita el lunes a las 9:00 am."
+          }
+        ],
+        "bot_reply": "Te aparté cita el lunes a las 9:00 am.",
+        "delay": 3314,
+        "nombre": "Laura Ramos",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "",
+        "hora_cita": "",
+        "requiere_asistencia_humana": "Alucinación de IA: Intentó agendar en fin de semana (sábado/domingo)."
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "Text 'este sábado' replaced with 'el lunes'",
+          "pass": true,
+          "actual": "Te aparté cita el lunes a las 9:00 am."
+        },
+        {
+          "name": "dia_cita cleared for Saturday",
+          "pass": true,
+          "actual": ""
+        },
+        {
+          "name": "hora_cita cleared for Saturday",
+          "pass": true,
+          "actual": ""
+        }
+      ]
+    },
+    {
+      "id": "3.1",
+      "category": "Empty/null Gemini response",
+      "description": "Empty string response text",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?"
+          }
+        ],
+        "bot_reply": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?",
+        "delay": 4912,
+        "nombre": "Paciente Base",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "",
+        "hora_cita": "",
+        "requiere_asistencia_humana": "Respuesta de IA vacía - Fallback determinista activado"
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "Deterministic fallback reply returned",
+          "pass": true,
+          "actual": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?"
+        },
+        {
+          "name": "Human assistance alert flagged empty response",
+          "pass": true,
+          "actual": "Respuesta de IA vacía - Fallback determinista activado"
+        }
+      ]
+    },
+    {
+      "id": "3.2",
+      "category": "Empty/null Gemini response",
+      "description": "Null input object fields",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?"
+          }
+        ],
+        "bot_reply": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?",
+        "delay": 7704,
+        "nombre": "Paciente Base",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "",
+        "hora_cita": "",
+        "requiere_asistencia_humana": "Respuesta de IA vacía - Fallback determinista activado"
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "Fallback reply activated without crashing",
+          "pass": true,
+          "actual": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?"
+        }
+      ]
+    },
+    {
+      "id": "3.3",
+      "category": "Empty/null Gemini response",
+      "description": "Short string (< 15 chars) object input",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?"
+          }
+        ],
+        "bot_reply": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?",
+        "delay": 6001,
+        "nombre": "Paciente Base",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "",
+        "hora_cita": "",
+        "requiere_asistencia_humana": "Respuesta de IA vacía - Fallback determinista activado"
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "Fallback triggered for text < 15 chars",
+          "pass": true,
+          "actual": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?"
+        }
+      ]
+    },
+    {
+      "id": "4.1",
+      "category": "Malformed JSON block",
+      "description": "Unclosed JSON syntax with valid string keys",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Perfecto, agendado."
+          }
+        ],
+        "bot_reply": "Perfecto, agendado.",
+        "delay": 7320,
+        "nombre": "Ana",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Dolor de muela",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "2026-08-03",
+        "hora_cita": "10:00",
+        "requiere_asistencia_humana": ""
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "bot_reply stripped of |||DATOS||| block",
+          "pass": true,
+          "actual": "Perfecto, agendado."
+        },
+        {
+          "name": "Regex fallback extracted 'nombre'",
+          "pass": true,
+          "actual": "Ana"
+        },
+        {
+          "name": "Regex fallback extracted 'motivo_consulta'",
+          "pass": true,
+          "actual": "Dolor de muela"
+        },
+        {
+          "name": "Regex fallback extracted 'hora_cita' and validated to 10:00",
+          "pass": true,
+          "actual": "10:00"
+        }
+      ]
+    },
+    {
+      "id": "4.2",
+      "category": "Malformed JSON block",
+      "description": "Completely corrupted non-JSON string after |||DATOS|||",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Hola, ¿cómo estás?"
+          }
+        ],
+        "bot_reply": "Hola, ¿cómo estás?",
+        "delay": 4737,
+        "nombre": "Paciente Base",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "",
+        "hora_cita": "",
+        "requiere_asistencia_humana": ""
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "bot_reply cleanly extracted without garbage",
+          "pass": true,
+          "actual": "Hola, ¿cómo estás?"
+        },
+        {
+          "name": "Node executed safely without throwing exception",
+          "pass": true,
+          "actual": "No crash"
+        }
+      ]
+    },
+    {
+      "id": "4.3",
+      "category": "Malformed JSON block",
+      "description": "Double braces {{ }} and Markdown code block wrapping JSON",
+      "status": "PASS",
+      "output": {
+        "final_history": [
+          {
+            "role": "assistant",
+            "content": "Agendado con éxito."
+          }
+        ],
+        "bot_reply": "Agendado con éxito.",
+        "delay": 4562,
+        "nombre": "Luis Miguel",
+        "ciudad": "Caracas",
+        "motivo_consulta": "Consulta General",
+        "temperatura": "Tibio",
+        "resumen": "Cliente frecuente",
+        "dia_cita": "2026-08-03",
+        "hora_cita": "09:00",
+        "requiere_asistencia_humana": ""
+      },
+      "contractIssues": [],
+      "assertions": [
+        {
+          "name": "Parsed JSON wrapped in {{ }} and markdown block",
+          "pass": true,
+          "actual": "Luis Miguel"
+        },
+        {
+          "name": "Extracted hora_cita 09:00",
+          "pass": true,
+          "actual": "09:00"
+        }
+      ]
+    }
+  ]
+}

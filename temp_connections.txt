@@ -1,0 +1,219 @@
+{
+  "Recibir WhatsApp": {
+    "main": [
+      [
+        {
+          "node": "Obtener_Configuracion",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "¿Es mensaje válido?": {
+    "main": [
+      [
+        {
+          "node": "¿Lo envió el paciente?",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Buscar Paciente (Supabase)": {
+    "main": [
+      [
+        {
+          "node": "¿El Paciente Existe?",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "¿El Paciente Existe?": {
+    "main": [
+      [
+        {
+          "node": "Crear Nuevo Paciente",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Actualizar Última Interacción",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Crear Nuevo Paciente": {
+    "main": [
+      [
+        {
+          "node": "Pausa Anti-Spam",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Actualizar Última Interacción": {
+    "main": [
+      [
+        {
+          "node": "Pausa Anti-Spam",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Pausa Anti-Spam": {
+    "main": [
+      [
+        {
+          "node": "Refrescar Datos de Supabase",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Refrescar Datos de Supabase": {
+    "main": [
+      [
+        {
+          "node": "¿El Bot está Autorizado?",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Mostrar \"Escribiendo...\"": {
+    "main": [
+      [
+        {
+          "node": "Cerebro Inteligencia Artificial",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Cerebro Inteligencia Artificial": {
+    "main": [
+      [
+        {
+          "node": "Formatear Respuesta",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Formatear Respuesta": {
+    "main": [
+      [
+        {
+          "node": "Guardar Resumen en Supabase",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Respaldar en Google Sheets",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Guardar Resumen en Supabase": {
+    "main": [
+      [
+        {
+          "node": "Enviar Mensaje de WhatsApp",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Obtener_Configuracion": {
+    "main": [
+      [
+        {
+          "node": "¿Es mensaje válido?",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "¿Lo envió el paciente?": {
+    "main": [
+      [
+        {
+          "node": "Buscar Paciente (Supabase)",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Apagar Bot (Silenciador) ",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "¿El Bot está Autorizado?": {
+    "main": [
+      [
+        {
+          "node": "Bloquear Bot (Mutex)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Bloquear Bot (Mutex)": {
+    "main": [
+      [
+        {
+          "node": "Consultar Agenda Global",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Consultar Agenda Global": {
+    "main": [
+      [
+        {
+          "node": "Formatear Agenda",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Formatear Agenda": {
+    "main": [
+      [
+        {
+          "node": "Mostrar \"Escribiendo...\"",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+}

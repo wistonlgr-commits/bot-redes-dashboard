@@ -1,0 +1,111 @@
+[
+  {
+    "id": "SCENARIO_A_SUNDAY_SAME_DAY",
+    "name": "Patient messaging on Sunday requesting Sunday afternoon appointment",
+    "status": "PASS",
+    "details": {
+      "bot_reply": "Claro! Te puedo agendar para el lunes a las 4:00 pm.",
+      "tipo_incidencia": "ALUCINACION_FIN_DE_SEMANA",
+      "requiere_asistencia_humana": "Alucinación de IA: Intentó agendar en fin de semana (sábado/domingo).",
+      "dia_cita": "",
+      "hora_cita": ""
+    }
+  },
+  {
+    "id": "SCENARIO_A_SUNDAY_MONDAY_AFTERNOON",
+    "name": "Patient messaging on Sunday requesting Monday afternoon appointment (blocked)",
+    "status": "PASS",
+    "details": {
+      "bot_reply": "Te puedo agendar para el lunes a las 4:00 pm.",
+      "tipo_incidencia": "FECHA_NO_DISPONIBLE",
+      "requiere_asistencia_humana": "Hora 16:00 no disponible para el 2026-07-27.",
+      "dia_cita": "",
+      "hora_cita": ""
+    }
+  },
+  {
+    "id": "SCENARIO_A_SUNDAY_WEDNESDAY_AFTERNOON",
+    "name": "Patient messaging on Sunday scheduled for Wednesday 16:00 (first available afternoon)",
+    "status": "PASS",
+    "details": {
+      "bot_reply": "Listo Ana! Quedo anotada tu cita para el miercoles 2026-07-29 a las 4:00 pm. Te esperamos!",
+      "dia_cita": "2026-07-29",
+      "hora_cita": "16:00",
+      "requiere_asistencia_humana": ""
+    }
+  },
+  {
+    "id": "SCENARIO_B_TIME_1230",
+    "name": "Patient requesting appointment at 12:30 (half-hour & forbidden hour)",
+    "status": "PASS",
+    "details": {
+      "bot_reply": "Te puedo agendar para el miércoles a las 12:00 pm.",
+      "tipo_incidencia": "ALUCINACION_HORARIO",
+      "requiere_asistencia_humana": "Horario no permitido detectado (12:00). Cita anulada para verificación manual.",
+      "dia_cita": "",
+      "hora_cita": ""
+    }
+  },
+  {
+    "id": "SCENARIO_C_GOLD_RULE_EXISTING_APPOINTMENT",
+    "name": "Returning patient who already has a scheduled appointment confirming their time",
+    "status": "FAIL_WORKFLOW_BUG_DETECTED",
+    "details": {
+      "bug_detected": true,
+      "bug_explanation": "CRITICAL BUG: Formatear Agenda removed patient's own slot 09:00 from agenda_disponible, causing Formatear Respuesta Pre-send Validator to fail validation (FECHA_NO_DISPONIBLE) and ERASE the patient's existing appointment from Supabase!",
+      "bot_reply": "Hola Carlos! Si, tu cita es el 2026-07-29 a las 09:00. Te esperamos!",
+      "dia_cita": "",
+      "hora_cita": "",
+      "tipo_incidencia": "FECHA_NO_DISPONIBLE",
+      "requiere_asistencia_humana": "Hora 09:00 no disponible para el 2026-07-29."
+    }
+  },
+  {
+    "id": "EDGE_CASE_MISSING_NAME",
+    "name": "AI attempts to book appointment without patient name",
+    "status": "PASS",
+    "details": {
+      "bot_reply": "Listo! Quedo anotada tu cita para el miercoles a las 10:00 am.",
+      "tipo_incidencia": "AGENDAMIENTO_SIN_NOMBRE",
+      "requiere_asistencia_humana": "Intento de agendamiento sin nombre de paciente.",
+      "dia_cita": "",
+      "hora_cita": ""
+    }
+  },
+  {
+    "id": "EDGE_CASE_PAST_DATE",
+    "name": "AI attempts to book appointment in a past date",
+    "status": "PASS",
+    "details": {
+      "bot_reply": "Listo Pedro! Quedo anotada tu cita para el 2026-07-20 a las 10:00 am.",
+      "tipo_incidencia": "ALUCINACION_FECHA_PASADA",
+      "requiere_asistencia_humana": "Intento de agendamiento en fecha pasada.",
+      "dia_cita": "",
+      "hora_cita": ""
+    }
+  },
+  {
+    "id": "EDGE_CASE_FRIDAY_AFTERNOON",
+    "name": "Patient requests Friday afternoon (16:00) when Friday afternoon is non-working",
+    "status": "PASS",
+    "details": {
+      "bot_reply": "Listo Maria! Te puedo agendar el viernes a las 4:00 pm.",
+      "tipo_incidencia": "FECHA_NO_DISPONIBLE",
+      "requiere_asistencia_humana": "Hora 16:00 no disponible para el 2026-07-31.",
+      "dia_cita": "",
+      "hora_cita": ""
+    }
+  },
+  {
+    "id": "EDGE_CASE_EMPTY_AI_OUTPUT",
+    "name": "AI returns empty output string or null content",
+    "status": "PASS",
+    "details": {
+      "bot_reply": "Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?",
+      "tipo_incidencia": "RESPUESTA_VACIA_FALLBACK",
+      "requiere_asistencia_humana": "Respuesta de IA vacía - Fallback determinista activado",
+      "dia_cita": "",
+      "hora_cita": ""
+    }
+  }
+]

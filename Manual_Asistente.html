@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 40px; }
+  h1 { color: #2C3E50; border-bottom: 2px solid #3498DB; padding-bottom: 10px; }
+  h2 { color: #2980B9; margin-top: 30px; }
+  h3 { color: #16A085; }
+  p { margin-bottom: 15px; }
+  ul { margin-bottom: 20px; }
+  li { margin-bottom: 8px; }
+  .alert { background-color: #FEF9E7; border-left: 5px solid #F1C40F; padding: 15px; margin: 20px 0; }
+  .important { background-color: #FDEDEC; border-left: 5px solid #E74C3C; padding: 15px; margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<h1>Manual de Usuario: Asistente Virtual y Panel de Control</h1>
+<p><strong>Consultorio del Dr. Ángel Trejo</strong></p>
+
+<p>¡Hola, Laura! Este documento está diseñado para explicarte de forma sencilla cómo funciona el asistente virtual de WhatsApp y cómo debes utilizar el panel de control (Dashboard) para gestionar las citas y a los pacientes.</p>
+
+<p>El asistente virtual está diseñado para ayudarte a captar pacientes, responder sus dudas iniciales y agendar citas, quitándote la carga del trabajo repetitivo para que puedas enfocarte en la atención personalizada cuando realmente se necesite.</p>
+
+<hr>
+
+<h2>1. ¿Cómo funciona el Bot de WhatsApp?</h2>
+<p>El bot es como tu compañero de trabajo. Atiende a los pacientes que escriben por primera vez, las 24 horas del día.</p>
+
+<h3>A. Lo que hace el bot automáticamente:</h3>
+<ul>
+  <li><strong>Saluda y perfila:</strong> Cuando alguien escribe, el bot le da la bienvenida y le pregunta de qué ciudad escribe y cuál es su problema.</li>
+  <li><strong>Da precios correctos:</strong> 
+    <ul>
+      <li>Si el paciente es de Maracay o zonas cercanas, le ofrece la consulta presencial ($100).</li>
+      <li>Si el paciente está lejos (ej. otro estado o país), le ofrece la Asesoría Médica Online ($50).</li>
+      <li>Si el paciente pregunta por "arañitas", le indica el precio de la esclerosis ($120).</li>
+    </ul>
+  </li>
+  <li><strong>Agendamiento Inteligente:</strong> El bot NUNCA recita todo el horario. Siempre ofrece solo dos opciones específicas (ej: <em>"¿Te queda mejor el miércoles a las 9am o el jueves a las 10am?"</em>) para forzar una decisión rápida.</li>
+  <li><strong>Cierre de Cita:</strong> Cuando el paciente elige un horario, el bot le pide el nombre y confirma la cita.</li>
+</ul>
+
+<div class="alert">
+  <h3>B. El "Sexto Sentido" del bot (Pausa Anti-Spam)</h3>
+  <p>Si un paciente envía muchos mensajes cortos uno detrás de otro (ej: "Hola" ... "Doctor" ... "Tengo un dolor"), el bot no va a responderle a cada mensaje por separado. <strong>El bot espera unos segundos a que el paciente termine de escribir todo su pensamiento</strong> y luego le da una sola respuesta coherente.</p>
+</div>
+
+<div class="important">
+  <h3>C. Modo Silencioso (¡Muy Importante!)</h3>
+  <p>El bot sabe cuándo dar un paso atrás. <strong>Si tú agarras el teléfono o el WhatsApp Web y le respondes a un paciente, el bot detecta que un humano tomó el control y se "Apaga" automáticamente para esa persona.</strong></p>
+  <ul>
+    <li>Esto significa que el bot no se va a meter en tu conversación ni va a interrumpirte.</li>
+    <li>El bot permanecerá callado para ese paciente hasta que tú decidas volver a encenderlo (más abajo verás cómo).</li>
+  </ul>
+</div>
+
+<hr>
+
+<h2>2. El Panel de Control (Dashboard)</h2>
+<p>El Dashboard es tu centro de mando. Aquí verás a todos los pacientes organizados sin tener que revisar WhatsApp mensaje por mensaje.</p>
+
+<h3>A. La Bandeja de Entrada (Píldoras de Pacientes)</h3>
+<p>En la parte principal verás a los pacientes representados como pequeñas tarjetas o "píldoras".</p>
+<ul>
+  <li>Verás su nombre, motivo de consulta, ciudad y el día/hora de su cita.</li>
+  <li><strong>Temperatura:</strong> Verás si el paciente está <strong>Frío</strong> (dejó de responder), <strong>Tibio</strong> (está pidiendo info) o <strong>Caliente</strong> (quiere agendar o ya agendó).</li>
+  <li><strong>Fuente de llegada:</strong> Sabrás si el paciente vino orgánicamente, o si hizo clic en un anuncio pago de <strong>Instagram Ads</strong> o <strong>Facebook Ads</strong>.</li>
+</ul>
+
+<div class="important">
+  <h3>B. Las Alertas de Delegación (El Bot pide Ayuda) ⚠️</h3>
+  <p>Hay situaciones que el bot no está autorizado a resolver (por ejemplo, si un paciente insiste en una cita un sábado, o si un paciente ya agendado quiere reagendar o cancelar). Cuando esto pasa:</p>
+  <ol>
+    <li>El bot le dirá al paciente que aguarde un momento para que lo atiendas.</li>
+    <li>En tu Dashboard, <strong>la tarjeta de ese paciente se pondrá de primera en la lista</strong> y le aparecerá una etiqueta roja brillante que dice: <strong>"⚠️ Bot solicita ayuda"</strong>.</li>
+    <li>La campanita de alertas a la izquierda también se pondrá roja.</li>
+  </ol>
+</div>
+
+<h3>C. El Expediente del Paciente (Modal)</h3>
+<p>Si haces clic sobre la tarjeta de un paciente, se abrirá su expediente completo. Aquí puedes:</p>
+<ul>
+  <li>Leer el <strong>Resumen</strong> que el bot hizo de la conversación.</li>
+  <li>Leer las <strong>Notas</strong> internas (que tú puedes escribir y el paciente nunca verá).</li>
+  <li>Editar cualquier dato (teléfono, hora, día).</li>
+</ul>
+<p><strong>¿Cómo resolver una Alerta?</strong><br>
+Si el paciente tenía una alerta, al abrir su expediente verás un <strong>banner rojo gigante en la parte superior</strong> diciéndote exactamente por qué el bot te lo delegó (Ej: <em>"Paciente quiere cancelar la cita"</em>).</p>
+<ul>
+  <li>Tú vas a WhatsApp, le resuelves el problema al paciente.</li>
+  <li>Vuelves al Dashboard, le das al botón de <strong>"✅ Resolver"</strong> en el banner rojo.</li>
+  <li>Finalmente, le das al botón verde de abajo <strong>"Guardar Cambios"</strong>. ¡La alerta desaparecerá!</li>
+</ul>
+
+<h3>D. Pausar o Reactivar al Bot para un paciente</h3>
+<p>Dentro del expediente de un paciente, abajo hay un interruptor que dice <strong>"Asistente Pausada"</strong>.</p>
+<ul>
+  <li>Como dijimos antes, si tú le escribiste al paciente por WhatsApp, este botón se activa solo.</li>
+  <li>Si ya terminaste de hablar con él y quieres que el bot vuelva a responderle en el futuro, simplemente <strong>desmarca esa casilla</strong> y guarda los cambios. El bot volverá a atenderlo.</li>
+</ul>
+
+<h3>E. Bloquear Horarios y Días (El Botón Negro)</h3>
+<p>Arriba en el Dashboard hay un botón negro que dice <strong>"Bloquear"</strong>. Esto es fundamental si el doctor cambia su agenda.</p>
+<ul>
+  <li>Si el doctor se va de congreso, puedes bloquear una <strong>semana completa</strong>.</li>
+  <li>Si el doctor va a operar en una clínica externa, puedes bloquear un <strong>día completo</strong>.</li>
+  <li>Si el doctor tiene un compromiso personal, puedes bloquear <strong>ciertas horas</strong> de un día.</li>
+</ul>
+<p><strong>Al bloquear, el bot se entera instantáneamente y NUNCA le ofrecerá esos horarios a ningún paciente.</strong></p>
+
+<h3>F. El Botón "Apagar / Encender Asistente" Global</h3>
+<p>En la parte superior, verás un botón grande verde o gris que dice <strong>"Asistente Activa"</strong> o <strong>"Asistente Pausada"</strong>.</p>
+<ul>
+  <li>Este es tu interruptor principal o "Switch Global".</li>
+  <li>Si lo apagas, el bot se desactivará para <strong>todos</strong> los pacientes. Nadie recibirá respuestas automáticas.</li>
+  <li>Úsalo solo en casos de emergencia, mantenimiento o si el doctor decide pausar el sistema por completo.</li>
+</ul>
+
+<hr>
+
+<h2>Resumen de tus Tareas Diarias</h2>
+<ol>
+  <li><strong>Abrir el Dashboard</strong> todos los días.</li>
+  <li>Revisar si tienes <strong>Alertas rojas</strong> de pacientes que necesitan atención humana inmediata. (Resolverlas y marcarlas como resueltas en el sistema).</li>
+  <li>Revisar la lista de pacientes <strong>"Tibios"</strong> que quizás dejaron de responder, para hacerles seguimiento.</li>
+  <li><strong>Bloquear</strong> en el sistema cualquier compromiso o cambio de agenda del doctor para que el bot no cometa errores.</li>
+  <li>Exportar el reporte a Excel cuando necesites enviarle la agenda final al doctor.</li>
+</ol>
+
+<p style="text-align: center; margin-top: 40px; color: #7F8C8D;"><em>¡Con estas herramientas, tú y el asistente virtual formarán un equipo increíble!</em></p>
+
+</body>
+</html>

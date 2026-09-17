@@ -1,0 +1,122 @@
+{
+  "workflowPath": "c:/Users/Leor/Desktop/bot whatsapp/flujo asistente de whatsapp.json",
+  "workflowName": "DrTrejo ooptimizado que estaba en curso",
+  "totalNodes": 16,
+  "structuralFailures": [],
+  "nodesVerified": {
+    "Formatear Respuesta": "8fd94881-ca56-4855-8462-ef0109762964",
+    "¿Existe Incidencia de Calidad?": "c1f7a8b9-4d3e-4f2a-8b1c-9e0d1a2b3c4d",
+    "Registrar Incidencia (Supabase)": "f8a9b0c1-d2e3-4f5a-6b7c-8d9e0f1a2b3c"
+  },
+  "connectionsVerified": {
+    "Formatear_Respuesta_To_IfNode": true,
+    "IfNode_To_RegistrarIncidencia": true
+  },
+  "zeroTokenLoggingVerified": true,
+  "testSuiteSummary": {
+    "total": 14,
+    "passed": 14,
+    "failed": 0,
+    "passRate": "100%"
+  },
+  "testResults": [
+    {
+      "id": "TC-01",
+      "name": "Empty Gemini Response (null content)",
+      "status": "PASS",
+      "tipo_incidencia": "RESPUESTA_VACIA_FALLBACK",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-02",
+      "name": "Empty Gemini Response (whitespace only)",
+      "status": "PASS",
+      "tipo_incidencia": "RESPUESTA_VACIA_FALLBACK",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-03",
+      "name": "Hallucinated Off-Slot Hour (14:00 / 2:00 PM)",
+      "status": "PASS",
+      "tipo_incidencia": "ALUCINACION_HORARIO",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-04",
+      "name": "Hallucinated Invalid Minutes (08:42 AM)",
+      "status": "PASS",
+      "tipo_incidencia": "ALUCINACION_HORARIO",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-05",
+      "name": "Hallucinated Weekend Date - Saturday (2026-08-08)",
+      "status": "PASS",
+      "tipo_incidencia": "ALUCINACION_FIN_DE_SEMANA",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-06",
+      "name": "Hallucinated Weekend Date - Sunday (2026-08-09)",
+      "status": "PASS",
+      "tipo_incidencia": "ALUCINACION_FIN_DE_SEMANA",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-07",
+      "name": "Hallucinated Past Date (2026-01-01)",
+      "status": "PASS",
+      "tipo_incidencia": "ALUCINACION_FECHA_PASADA",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-08",
+      "name": "Scheduling Attempt Without Patient Name",
+      "status": "PASS",
+      "tipo_incidencia": "AGENDAMIENTO_SIN_NOMBRE",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-09",
+      "name": "Human Assistance Request - Rescheduling Policy (50%)",
+      "status": "PASS",
+      "tipo_incidencia": "REAGENDAMIENTO_POLITICA",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-10",
+      "name": "Human Assistance Request - No-Show",
+      "status": "PASS",
+      "tipo_incidencia": "INASISTENCIA_NOSHOW",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-11",
+      "name": "Human Assistance Request - Complex Medical Question",
+      "status": "PASS",
+      "tipo_incidencia": "ASISTENCIA_HUMANA_REQUERIDA",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-12",
+      "name": "Unavailable Date in Agenda",
+      "status": "PASS",
+      "tipo_incidencia": "FECHA_NO_DISPONIBLE",
+      "has_quality_incident": true
+    },
+    {
+      "id": "TC-13",
+      "name": "Malformed JSON in |||DATOS||| (RegExp Fallback Recovery)",
+      "status": "PASS",
+      "tipo_incidencia": "",
+      "has_quality_incident": false
+    },
+    {
+      "id": "TC-14",
+      "name": "Normal Successful Appointment Confirmation (No Incident)",
+      "status": "PASS",
+      "tipo_incidencia": "",
+      "has_quality_incident": false
+    }
+  ]
+}

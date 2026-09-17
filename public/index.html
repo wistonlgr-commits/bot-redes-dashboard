@@ -259,6 +259,10 @@
         
         /* Mobile Adjustments */
         @media (max-width: 768px) {
+            .app-actions .btn { padding: 8px 10px; font-size: 0.85rem; }
+            .calendar-wrapper { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+            .modal-content { max-width: 95% !important; width: 95% !important; margin: auto !important; max-height: 92vh !important; border-radius: 16px !important; align-self: center !important; }
+            .modal-body { padding: 16px !important; }
             .app-bar { padding: 0 12px; }
             .app-title { font-size: 0.95rem; margin-left: 10px; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .app-title span { display: none; } /* Ocultar el ' | Dashboard' */
@@ -388,6 +392,7 @@
                 </button>
             </div>
             <button class="btn btn-outline" style="background: #475569; color: white; border: none;" onclick="openBlockModal()"><i class="fa-solid fa-ban"></i> <span>Bloquear</span></button>
+            <button class="btn btn-outline" style="background: #334155; color: white; border: none;" onclick="openBlockHistoryModal()" title="Historial de Bloqueos"><i class="fa-solid fa-clock-rotate-left"></i> <span>Historial</span></button>
             <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Nuevo Paciente</button>
             <div class="sync-badge" id="sync-status"><i class="fa-solid fa-cloud"></i> Conectando...</div>
             <button class="btn btn-outline" style="padding: 8px; border-radius: 50%;" onclick="logout()" title="Cerrar Sesión"><i class="fa-solid fa-power-off"></i></button>
@@ -770,6 +775,41 @@
                 </div>
                 <div id="recovery-msg" style="font-size: 0.85rem; margin-bottom: 15px; display: none; padding: 10px; border-radius: 8px; font-weight: 500;"></div>
                 <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem;" onclick="saveRecoveredPassword()">Actualizar Contraseña</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL HISTORIAL DE BLOQUEOS -->
+    <div class="modal-overlay" id="block-history-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 750px; width: 95%;">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-clock-rotate-left" style="color: #475569;"></i> Historial de Bloqueos de Agenda</div>
+                <button class="close-btn" onclick="closeBlockHistoryModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Lista de bloqueos registrados en la base de datos.</p>
+                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;" onclick="loadBloqueosHistory()"><i class="fa-solid fa-rotate"></i> Actualizar</button>
+                </div>
+                <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 8px;">
+                    <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
+                        <thead>
+                            <tr style="background: #F8FAFC; border-bottom: 2px solid var(--border); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">
+                                <th style="padding: 10px;">Fecha / Período</th>
+                                <th style="padding: 10px;">Hora / Tipo</th>
+                                <th style="padding: 10px;">Motivo</th>
+                                <th style="padding: 10px;">Creado el</th>
+                                <th style="padding: 10px; text-align: center;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="block-history-table-body">
+                            <tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted);">Cargando historial...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 24px;">
+                <button class="btn btn-outline" onclick="closeBlockHistoryModal()">Cerrar</button>
             </div>
         </div>
     </div>
@@ -1262,6 +1302,10 @@
                 }
                 
                 localData = jsonRes;
+                try {
+                    const resB = await fetch('/api/bloqueos');
+                    if (resB.ok) window.bloqueosData = await resB.json();
+                } catch(eb) { console.error("Error cargando bloqueos:", eb); }
                 renderUI();
                 updateSync('Sincronizado', true);
             } catch (error) {
@@ -1293,6 +1337,29 @@
             socket.on('bot_status_changed', (status) => {
                 globalBotActive = status;
                 renderGlobalBotBtn();
+            });
+
+            socket.on('bloqueos_actualizados', (bData) => {
+                window.bloqueosData = bData;
+                renderUI();
+                renderBlockHistoryTable();
+            });
+
+            socket.on('bloqueo_creado', (bItem) => {
+                if (!window.bloqueosData) window.bloqueosData = [];
+                if (!window.bloqueosData.some(b => b.id == bItem.id)) {
+                    window.bloqueosData.unshift(bItem);
+                    renderUI();
+                    renderBlockHistoryTable();
+                }
+            });
+
+            socket.on('bloqueo_eliminado', (delId) => {
+                if (window.bloqueosData) {
+                    window.bloqueosData = window.bloqueosData.filter(b => b.id != delId);
+                    renderUI();
+                    renderBlockHistoryTable();
+                }
             });
         }
 
@@ -1879,6 +1946,22 @@
             if (upcominglist) upcominglist.innerHTML = upcominglistHTML;
             waitlist.innerHTML = waitlistHTML;
             
+            // Renderizar bloqueos dedicados de agenda_bloqueos
+            if (window.bloqueosData && window.bloqueosData.length > 0) {
+                window.bloqueosData.forEach(b => {
+                    const bRow = {
+                        id: b.id,
+                        is_agenda_bloqueo: true,
+                        Nombre: '[BLOQUEO] ' + (b.motivo || 'Bloqueado'),
+                        Temperatura: 'bloqueo',
+                        Dia_Cita: b.fecha,
+                        Hora_Cita: b.hora,
+                        Motivo_Consulta: b.motivo
+                    };
+                    renderCalendarEvent(bRow, '#94a3b8');
+                });
+            }
+
             // Inyectar calendario acumulado de golpe (en vez de innerHTML+= por cada evento)
             calDays.forEach(day => {
                 const col = document.getElementById(day);
@@ -1987,7 +2070,7 @@
                 if (!_calendarHTML[colId]) _calendarHTML[colId] = '';
                 if (isBlock) {
                     _calendarHTML[colId] += `
-                        <div class="cal-event" style="top: ${topPx}px; height: ${heightPx}px; ${blockStyle}" onclick="openModal('${row.id}')">
+                        <div class="cal-event" style="top: ${topPx}px; height: ${heightPx}px; ${blockStyle}" onclick="${row.is_agenda_bloqueo ? `deleteBlock('${row.id}')` : `openModal('${row.id}')`}" title="${row.is_agenda_bloqueo ? 'Clic para desbloquear este horario' : ''}">
                             <i class="fa-solid fa-ban" style="font-size: ${hora.includes('todo') ? '2rem' : '1.2rem'}; margin-bottom: 8px;"></i>
                             <div style="text-align: center; padding: 0 10px; font-size: ${hora.includes('todo') ? '1rem' : '0.8rem'}; line-height: 1.2;">
                                 ${row.Nombre.replace('[BLOQUEO]', '').trim()}
@@ -2201,9 +2284,84 @@
             }
         }
 
+        // --- GESTIÓN DE BLOQUEOS (TABLA DEDICADA agenda_bloqueos) ---
+        window.bloqueosData = [];
+
+        function openBlockHistoryModal() {
+            document.getElementById('block-history-modal').style.display = 'flex';
+            loadBloqueosHistory();
+        }
+
+        function closeBlockHistoryModal() {
+            document.getElementById('block-history-modal').style.display = 'none';
+        }
+
+        async function loadBloqueosHistory() {
+            const tbody = document.getElementById('block-history-table-body');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando historial...</td></tr>';
+            }
+            try {
+                const res = await fetch('/api/bloqueos');
+                if (res.ok) {
+                    window.bloqueosData = await res.json();
+                }
+                renderBlockHistoryTable();
+            } catch (err) {
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--danger);">Error al cargar historial</td></tr>';
+                }
+            }
+        }
+
+        function renderBlockHistoryTable() {
+            const tbody = document.getElementById('block-history-table-body');
+            if (!tbody) return;
+            const list = window.bloqueosData || [];
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 25px; color: var(--text-muted);">No hay bloqueos registrados.</td></tr>';
+                return;
+            }
+            let html = '';
+            list.forEach(b => {
+                const fCreated = b.created_at ? new Date(b.created_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : '-';
+                const tipoBadge = b.tipo === 'semana' ? '<span class="badge" style="background:#E2E8F0; color:#475569;">Semana</span>' : (b.tipo === 'dia' ? '<span class="badge" style="background:#FEF3C7; color:#B45309;">Día</span>' : '<span class="badge" style="background:#E0F2FE; color:#0369A1;">Hora</span>');
+                html += `
+                    <tr style="border-bottom: 1px solid var(--border); vertical-align: middle;">
+                        <td style="padding: 10px; font-weight: 600;">${b.fecha || '-'}</td>
+                        <td style="padding: 10px;">${tipoBadge} <span style="margin-left: 4px; font-weight: 500;">${b.hora || ''}</span></td>
+                        <td style="padding: 10px; color: var(--text-color);">${b.motivo || 'Agenda Bloqueada'}</td>
+                        <td style="padding: 10px; color: var(--text-muted); font-size: 0.8rem;">${fCreated}</td>
+                        <td style="padding: 10px; text-align: center;">
+                            <button class="btn btn-sm btn-outline" style="color: var(--danger); border-color: #FECACA; background: #FEF2F2; padding: 4px 8px; font-size: 0.75rem;" onclick="deleteBlock('${b.id}')" title="Desbloquear">
+                                <i class="fa-solid fa-trash"></i> Desbloquear
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function deleteBlock(id) {
+            if (!confirm("¿Seguro que deseas eliminar este bloqueo de la agenda?")) return;
+            try {
+                updateSync('Eliminando bloqueo...', true);
+                const res = await fetch(`/api/bloqueos/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("Error al eliminar el bloqueo");
+                window.bloqueosData = (window.bloqueosData || []).filter(b => b.id != id);
+                renderUI();
+                renderBlockHistoryTable();
+                updateSync('Bloqueo eliminado', true);
+            } catch (err) {
+                alert("Error al eliminar bloqueo: " + err.message);
+                updateSync('Error', false);
+            }
+        }
+
         async function saveBlock() {
             const tipo = document.getElementById('b-tipo').value;
-            const motivo = document.getElementById('b-motivo').value;
+            const motivo = (document.getElementById('b-motivo').value || '').trim();
             if (!motivo) return alert("Por favor ingresa el motivo del bloqueo");
 
             let blocksData = [];
@@ -2217,30 +2375,20 @@
                 
                 selectedPills.forEach(pill => {
                     blocksData.push({
-                        Nombre: `[BLOQUEO] ${motivo}`,
-                        Telefono: "000" + Math.floor(Math.random() * 100000000).toString(),
-                        Temperatura: "bloqueo",
-                        Fuente: "sistema",
-                        Dia_Cita: fecha,
-                        Hora_Cita: pill.innerText,
-                        Motivo_Consulta: motivo,
-                        Conversacion_Abierta: false,
-                        Ciudad: ""
+                        tipo: 'hora',
+                        fecha: fecha,
+                        hora: pill.innerText.trim(),
+                        motivo: motivo
                     });
                 });
             } else if (tipo === 'dia') {
                 const fecha = document.getElementById('b-fecha').value;
                 if (!fecha) return alert("Selecciona la fecha");
                 blocksData.push({
-                    Nombre: `[BLOQUEO] ${motivo}`,
-                    Telefono: "000" + Math.floor(Math.random() * 100000000).toString(),
-                    Temperatura: "bloqueo",
-                    Fuente: "sistema",
-                    Dia_Cita: fecha,
-                    Hora_Cita: "TODO EL DIA",
-                    Motivo_Consulta: motivo,
-                    Conversacion_Abierta: false,
-                    Ciudad: ""
+                    tipo: 'dia',
+                    fecha: fecha,
+                    hora: "TODO EL DIA",
+                    motivo: motivo
                 });
             } else if (tipo === 'semana') {
                 const sInit = document.getElementById('b-semana-inicio').value;
@@ -2252,15 +2400,10 @@
                 
                 for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                     blocksData.push({
-                        Nombre: `[BLOQUEO] ${motivo}`,
-                        Telefono: "000" + Math.floor(Math.random() * 100000000).toString(),
-                        Temperatura: "bloqueo",
-                        Fuente: "sistema",
-                        Dia_Cita: d.toISOString().split('T')[0],
-                        Hora_Cita: "TODA LA SEMANA",
-                        Motivo_Consulta: motivo,
-                        Conversacion_Abierta: false,
-                        Ciudad: ""
+                        tipo: 'semana',
+                        fecha: d.toISOString().split('T')[0],
+                        hora: "TODA LA SEMANA",
+                        motivo: motivo
                     });
                 }
             }
@@ -2271,19 +2414,25 @@
 
             try {
                 for (let data of blocksData) {
-                    const res = await fetch('/api/add', {
+                    const res = await fetch('/api/bloqueos', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
                     if (!res.ok) {
                         const errData = await res.json().catch(() => ({}));
-                        throw new Error(errData.error || "Fallo al guardar bloqueo en la base de datos");
+                        throw new Error(errData.error || "Fallo al guardar bloqueo");
                     }
                 }
                 closeBlockModal();
-                updateSync('Sincronizado', true);
-                loadDashboardData();
+                updateSync('Bloqueo guardado', true);
+                
+                // Refrescar bloqueos
+                const resB = await fetch('/api/bloqueos');
+                if (resB.ok) {
+                    window.bloqueosData = await resB.json();
+                }
+                renderUI();
             } catch (err) {
                 console.error(err);
                 alert("Error al guardar el bloqueo: " + err.message);

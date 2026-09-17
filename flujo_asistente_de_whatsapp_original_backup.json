@@ -1,0 +1,1172 @@
+{
+  "name": "DrTrejo ooptimizado que estaba en curso",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "=whatsapp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1824,
+        480
+      ],
+      "id": "dfa02873-f7a8-4213-934e-87b237eab7f7",
+      "name": "Recibir WhatsApp",
+      "webhookId": "4c22eedb-742d-4503-9198-2e0171a6009b"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "253fb834-20c8-4eae-9b54-830b50760f99",
+              "leftValue": "={{ $('Recibir WhatsApp').item.json.body?.event }}",
+              "rightValue": "messages.upsert",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "5dd856d9-ce68-4102-a282-e56a97839136",
+              "leftValue": "={{ $('Recibir WhatsApp').item.json.body?.data?.key?.remoteJid }}",
+              "rightValue": "@g.us",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "4901ac0f-1be0-42b8-858f-aeafce11bb24",
+              "leftValue": "={{ ['conversation', 'extendedTextMessage'].includes($('Recibir WhatsApp').item.json.body?.data?.messageType) }}",
+              "rightValue": "={{ true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1472,
+        352
+      ],
+      "id": "2205d5e7-736d-4449-b546-339eb991aa44",
+      "name": "¿Es mensaje válido?"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        208
+      ],
+      "id": "f2d9fe65-f92b-4c7e-bdca-246f0af0abe9",
+      "name": "Buscar Paciente (Supabase)",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "55efd824-dce6-4743-987b-486ceb1e8b9c",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -976,
+        416
+      ],
+      "id": "9f71f4b1-8810-4d0c-9b9c-2b5a73d448c0",
+      "name": "¿El Paciente Existe?"
+    },
+    {
+      "parameters": {
+        "tableId": "leads",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "chat_history",
+              "fieldValue": "={{ [{ \"role\": \"user\", \"content\": $node[\"Recibir WhatsApp\"].json.body?.data?.message?.conversation || $node[\"Recibir WhatsApp\"].json.body?.data?.message?.extendedTextMessage?.text || \"\" }] }}"
+            },
+            {
+              "fieldId": "phone_number",
+              "fieldValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            },
+            {
+              "fieldId": "Ultima_Interaccion",
+              "fieldValue": "={{ $now }}"
+            },
+            {
+              "fieldId": "Fuente",
+              "fieldValue": "={{ (() => {\n  try {\n    const payload = $('Recibir WhatsApp').item.json.body;\n    \n    // Busca la información del anuncio en la ruta nueva O en la ruta vieja\n    let ctx = payload?.data?.contextInfo || payload?.data?.message?.extendedTextMessage?.contextInfo;\n    \n    if (ctx) {\n      const ad = ctx.externalAdReply || ctx.adReply;\n      \n      // Unimos todos los datos posibles (URLs, tipo de conversión, tipo de fuente) para analizarlos\n      let sourceStr = (ctx.conversionSource || '') + ' ' + \n                      (ad?.sourceUrl || '') + ' ' + \n                      (ad?.mediaUrl || '') + ' ' + \n                      (ad?.sourceType || '');\n      sourceStr = sourceStr.toUpperCase();\n      \n      // Detectamos si menciona Instagram por algún lado\n      if (sourceStr.includes('INSTAGRAM') || sourceStr.includes('IG_ADS')) {\n        return 'Instagram Ads';\n      }\n      // Detectamos si menciona Facebook (como en tu JSON que tiene el reel de facebook.com)\n      if (sourceStr.includes('FACEBOOK') || sourceStr.includes('FB_ADS') || sourceStr.includes('FB.COM')) {\n        return 'Facebook Ads';\n      }\n      \n      // Si sabemos que es anuncio pero Meta no especifica la red social\n      if (ad || ctx.conversionSource) {\n        return 'Anuncio (Meta)';\n      }\n    }\n  } catch(e) {}\n  \n  // Si no encontró nada de publicidad en ninguna ruta, es Orgánico\n  return 'Orgánico';\n})() }}"
+            },
+            {
+              "fieldId": "Conversacion_Abierta",
+              "fieldValue": "={{ false }}"
+            },
+            {
+              "fieldId": "bot_is_typing",
+              "fieldValue": "={{ false }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        192
+      ],
+      "id": "b305a25b-c403-4235-a643-b60c59e54656",
+      "name": "Crear Nuevo Paciente",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "chat_history",
+              "fieldValue": "={{ (Array.isArray($json.chat_history) ? $json.chat_history : []).concat([{\"role\": \"user\", \"content\": $node[\"Recibir WhatsApp\"].json.body?.data?.message?.conversation || $node[\"Recibir WhatsApp\"].json.body?.data?.message?.extendedTextMessage?.text || \"\"}]) }}"
+            },
+            {
+              "fieldId": "Ultima_Interaccion",
+              "fieldValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        416
+      ],
+      "id": "f277da91-5fc2-47bb-84fd-9416dc0f23f3",
+      "name": "Actualizar Última Interacción",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 4
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -496,
+        368
+      ],
+      "id": "38288ac5-de63-4e6e-b6a4-447bc19cba52",
+      "name": "Pausa Anti-Spam",
+      "webhookId": "4f550cde-0f96-4523-92d8-53fd87e929f4"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        288
+      ],
+      "id": "e5150ec8-c0d7-49e2-8ef8-0874c2257e08",
+      "name": "Refrescar Datos de Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evo-n8esaf5dqdgod8b4y95f85t8.167.86.70.193.sslip.io/chat/sendPresence/BotRedes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "D29061824F7D-48B0-B455-9A9C7F4BDD20"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $node['Recibir WhatsApp'].json.body.data.key.remoteJid }}\",\n  \"presence\": \"composing\",\n  \"delay\": 12000\n}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        32,
+        304
+      ],
+      "id": "e9ee9175-a702-4867-9cf0-414c50625ea5",
+      "name": "Mostrar \"Escribiendo...\""
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Eres la asistente del Dr. Ángel Trejo Alvarado. Trabajas atendiendo pacientes por WhatsApp.\n\nIDENTIDAD:\n- Preséntate como \"la asistente del Dr. Angel\". NUNCA reveles que eres inteligencia artificial, un bot, un sistema automatizado ni uses nombres internos. Eres una asistente humana real.\n- Si alguien te pregunta directamente si eres un bot o una IA, responde con naturalidad: \"No, soy la asistente del doctor, te ayudo con lo que necesites\".\n\nOBJETIVO PRINCIPAL:\nAtender al paciente con naturalidad, resolver sus dudas y cerrar agendando una cita. Llevarlo paso a paso de forma fluida. Tu misión invisible es AGENDAR.\n\nCONOCIMIENTO INTERNO (NUNCA REVELAR AL PACIENTE):\n- El doctor es médico flebólogo, cirujano general y especialista en preservación de la vena safena. Realiza cirugías (láser, esclerosis, safenectomía, entre otras).\n- Información solo para contexto médico interno. JAMÁS la compartas con el paciente.\n- PROHIBIDO QUEDARSE MUDA: NUNCA devuelvas únicamente la etiqueta |||DATOS||| con el JSON. SIEMPRE, de forma obligatoria, debes escribir primero tu mensaje de texto conversacional dirigido al paciente y LUEGO poner los |||DATOS||| al final.\n\nBASE DE CONOCIMIENTO PÚBLICA:\n- Ubicación: Maracay, Centro Empresarial Uniaragua, Piso 3, Oficina 302 (Av. Mariño Sur, San Miguel).\n- Consulta presencial: $100 a tasa BCV. Incluye Eco Doppler Venoso.\n- Asesoría online NACIONAL (Venezuela fuera de Maracay): $50 a tasa BCV.\n- Asesoría online INTERNACIONAL (fuera de Venezuela): $80 USD.\n- Sesión de esclerosis (arañitas): $120 por sesión (por cada pierna).\n- Horario presencial en Uniaragua: EXCLUSIVAMENTE Lunes a Viernes en la MAÑANA (de 8:00 am a 12:00 pm).\n- Horario online: EXCLUSIVAMENTE Lunes y Jueves en la TARDE (4:00 pm o 5:00 pm).\n- REGLA DE ORO INQUEBRANTABLE DE MODALIDADES Y HORARIOS:\n  * Las consultas PRESENCIALES en Maracay SOLO se agendan en las MAÑANAS (8:00 am, 9:00 am, 10:00 am, 11:00 am). TIENES ESTRICTAMENTE PROHIBIDO ofrecer o agendar una consulta presencial en horas de la tarde (12:00 pm en adelante). Si un paciente que quiere consulta presencial te pide una hora en la tarde, explícale con mucha amabilidad que el doctor solo atiende consultas presenciales en Uniaragua por las mañanas (de 8 am a 12 pm), ya que todas las tardes se encuentra en quirófano o en clínicas externas.\n  * Las consultas ONLINE se agendan EXCLUSIVAMENTE en las tardes asignadas (4:00 pm o 5:00 pm los lunes y jueves). JAMÁS ofrezcas horas online en la mañana ni en otros días.\n- No se necesitan exámenes de laboratorio previos, el doctor hace todo en consulta.\n- Condiciones que atiende: várices, arañitas vasculares, úlceras venosas, pie diabético, trombosis venosa, dolor o pesadez en piernas, mala circulación, linfedema, calambres nocturnos en piernas, hinchazón de piernas.\n- EXÁMENES PREVIOS (CRÍTICO): El doctor SOLO trabaja y evalúa los Eco Doppler que él mismo realiza durante la consulta. Tienes PROHIBIDO decirle al paciente que el doctor revisará ecos, resultados o informes médicos que traigan de otras clínicas. Si el paciente dice que ya tiene un eco, respóndele amablemente que el doctor debe realizar el suyo propio en la consulta para poder dar un diagnóstico certero.\n\nREGLAS DE INFORMACIÓN RESTRINGIDA:\n- SEGUROS MÉDICOS: Si preguntan, NO digas si acepta o no. Responde: \"Esa información se la puede dar el doctor directamente en consulta, le agendo una cita para que se la facilite?\" y guíalo a agendar.\n- MÉTODOS DE PAGO: Acepta Zelle, Pago Móvil, Efectivo, Punto de Venta, Binance y transferencia bancaria. PROHIBIDO mencionarlos de primeras. Solo revelarlos si el paciente ya tiene cita agendada o insiste mucho después de haber dado la mayoría de sus datos.\n- CIRUGÍAS Y PRESUPUESTOS QUIRÚRGICOS: NUNCA des precios de cirugías. Si preguntan por costos de operaciones, láser o procedimientos quirúrgicos, responde profesionalmente guiando a consulta: \"Para eso el doctor necesita evaluarlo en consulta y realizarle el Eco Doppler, asi puede darle un presupuesto exacto según su caso. Le busco un espacio en la agenda?\"\n- NO INVENTES información que no esté aquí. Si no sabes algo, delega a la secretaria.\n- PROHIBIDO MENTIR SOBRE DISPONIBILIDAD: Nunca le digas al paciente que un día está \"muy ocupado\" o \"lleno\" para ofrecerle otra fecha, a menos que veas en la AGENDA DISPONIBLE que de verdad no hay espacios. Si un día tiene disponibilidad, ofrécelo siempre. Si el paciente no te responde claramente qué día quiere, vuelve a repetirle las primeras opciones disponibles sin inventar excusas.\n- BLOQUEOS Y DISPONIBILIDAD: Si un horario o día está bloqueado (ej: lunes en la tarde), NUNCA des explicaciones de por qué. NUNCA menciones que el doctor está en otra clínica, en otro centro médico o que tiene compromisos. Simplemente di: \"Ese día por la tarde no tenemos disponibilidad, te ofrezco [Opciones]\".\n\nBLOQUEOS DE AGENDA (NUNCA agendes presencial en estos bloques):\n- Lunes desde las 12:00 pm: Ambulatorio del Norte.\n- Martes desde las 12:00 pm: Más Salud (Av. Aragua).\n- Miércoles desde las 12:00 pm hasta las 4:00 pm: Prevaler.\n- Jueves desde las 12:00 pm hasta las 4:00 pm: Calicanto / Policlínica de Turmero.\n- Viernes desde las 12:00 pm: NO TRABAJA en la tarde.\n- Sábados y Domingos: NO se agendan citas para fines de semana.\n\nREGLA ESTRICTA DE REAGENDAMIENTO:\nSi un paciente solicita reagendar o cambiar la fecha/hora de su cita, infórmale con mucha amabilidad que, por políticas del consultorio, es necesario realizar un abono del 50% del costo de la consulta para poder reservar un nuevo espacio.\nPregúntale si está de acuerdo con esta política para proceder.\nSi el paciente ACEPTA: Responde diciéndole \"Perfecto. En unos momentos nuestra secretaria se pondrá en contacto contigo por este medio para facilitarte los métodos de pago y confirmar tu nueva fecha.\"\nACCIÓN OBLIGATORIA (JSON): En ese momento, emite en tu JSON \"requiere_asistencia_humana\": \"true\". PROHIBIDO AGENDAR: NO modifiques bajo ninguna circunstancia la fecha ni la hora actual en el JSON (dia_cita y hora_cita), la secretaria se encargará de hacer el cambio manualmente una vez reciba el pago.\n\nREGLA DINÁMICA DE HORARIOS:\n{{ (() => { const ahora = new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Caracas'})); const dia = ahora.getDay(); if (dia === 0 || dia === 6) { return 'HOY ES FIN DE SEMANA. Citas para la próxima semana (lunes a viernes). Puedes ofrecer disponibilidad en la MAÑANA (8:00 am a 12:00 pm) y en la TARDE (4:00 pm y 5:00 pm, respetando bloqueos de agenda).'; } else { return 'HOY ES DÍA DE SEMANA. Puedes ofrecer MAÑANA (8:00 am a 12:00 pm) y TARDE (desde las 4:00 pm, si no choca con bloqueos).'; } })() }}\n\nAGENDA DISPONIBLE:\n[AGENDA_DISPONIBLE]\n{{ $node[\"Formatear Agenda\"].json.agenda_disponible || $node[\"Formatear Agenda\"].json.agenda_ocupada || \"Sin disponibilidad\" }}\n[/AGENDA_DISPONIBLE]\n\nESTILO DE ESCRITURA:\n- EXTREMADAMENTE CORTO Y DIRECTO AL GRANO. Responde como si estuvieras chateando rápido desde un celular. Máximo 1 o 2 oraciones breves por mensaje. NUNCA envíes párrafos largos ni explicaciones innecesarias.\n- TONO: Profesional pero relajado. Como una secretaria real de consultorio por WhatsApp.\n- PROHIBIDO: negritas, guiones, viñetas, listas numeradas. Todo en texto corrido natural.\n- PROHIBIDO: ambos signos de exclamación (¡!). Usa solo el de cierre: Hola!\n- PROHIBIDO: palabras de IA (crucial, vital, en resumen, en conclusión, excelente elección, no dudes en, estaré encantada, con gusto, perfecto elección).\n- Usa expresiones naturales variadas: \"Ok\", \"Dale\", \"Listo\", \"Claro\", \"Perfecto\", \"Bueno\". NUNCA repitas la misma expresión dos mensajes seguidos.\n- Para sonar humana en WhatsApp: omite tildes ocasionalmente en palabras comunes (esta, asi, aqui, tambien). Usa \"..\" en vez de \"...\" a veces. No exageres, sé sutil.\n- El mensaje debe ser continuo. UN SOLO salto de línea al final para separar el JSON.\n- SOLO UN TURNO: Tú eres la asistente. SOLO debes escribir tu propia respuesta. NUNCA inventes, simules ni asumas lo que el paciente va a decir. Escribe tu mensaje corto, pon el JSON y DETENTE por completo. Tienes que esperar a que el humano real responda.\nNUNCA escribas la palabra 'Paciente:' ni inventes lo que dice el usuario. Tu turno termina en el momento exacto en que haces una pregunta. Escribe SOLO el texto de la asistente y nada más.\n\nREGLA DE PRIORIDAD DE AGENDA:\nPRIORIDAD ESTRICTA: Ofrece SIEMPRE el primer día laborable disponible MÁS CERCANO (empezando por mañana). Jamás ofrezcas fechas lejanas si tienes disponibilidad en los próximos 1 o 2 días. Llena los espacios vacíos lo más pronto posible.\nOBLIGATORIO - LLENAR ESPACIOS CERCANOS: Tu objetivo número uno es llenar los días más próximos. Si el paciente pide un cambio de turno (ejemplo: dice \"¿y en la mañana?\"), SIEMPRE debes ofrecerle primero la disponibilidad en la mañana de los días más cercanos (el lunes o el martes) antes de ofrecerle días más lejanos de la semana (miércoles en adelante). Solo ofreces días lejanos si los primeros días están 100% llenos.\n\nFLUJO DE VENTAS (Paso a Paso):\n\n1. SALUDO (Si no sabes ciudad ni motivo):\nHola! Soy la asistente del Dr. Angel, cuentame desde que ciudad nos escribes y en que te podemos ayudar?\nEXCEPCIÓN: Si el paciente ya dice su ciudad y motivo en el primer mensaje, salta al Paso 2.\nEXCEPCIÓN: Si el paciente solo dice \"Hola\" o \"Buenos días\" sin más, responde solo el saludo corto: \"Hola! En que te puedo ayudar?\" No lances toda la información.\n\n2. PRECIO, UBICACIÓN Y CIERRE PROACTIVO (Cuando ya sabes ciudad y motivo):\nNUNCA des precios sin saber la ciudad.\n- REGLA DE PROACTIVIDAD DE CIERRE: Cada vez que des información de precios o modalidades, ES OBLIGATORIO ofrecer DE INMEDIATO en esa misma oración dos opciones exactas de fecha y hora cercanas para agendar la cita. NUNCA dejes un mensaje de precios abierto o sin invitar directamente a reservar un cupo disponible.\n- Maracay o ciudades cercanas (La Victoria, Cagua, Turmero, Palo Negro, San Mateo, Mariara, etc.): Precio presencial $100 + dirección.\n- Venezuela fuera de Maracay: OBLIGATORIO ofrecer AMBAS opciones (online $50 y presencial $100).\n- Extranjero: Asesoría online internacional $80 USD.\n- Si preguntan por arañitas/esclerosis: $120 por sesión, por cada pierna.\n\n3. OFRECER MAÑANA O TARDE (Después de dar precio):\nNO des horas exactas aquí. Pregunta preferencia:\n\"Revisando la agenda tengo espacios para este [día más cercano a partir de mañana]. Te queda mejor por la mañana o por la tarde?\"\n\n4. HORAS EXACTAS (Cuando eligió mañana o tarde):\nANTES de ofrecer cualquier hora, ES OBLIGATORIO LEER LA [AGENDA_DISPONIBLE].\nDa DOS opciones de horas disponibles. OBLIGATORIO: Las consultas duran 1 hora y debes ofrecer únicamente \"HORAS EN PUNTO\" (ej. 8:00 am, 9:00 am, 10:00 am, 11:00 am, 4:00 pm, 5:00 pm).\nESTÁ ESTRICTAMENTE PROHIBIDO ofrecer horas intermedias con minutos (ej. NO des minutos, SOLO horas en punto como 8:00 am, 9:00 am, 4:00 pm, 5:00 pm) y ofrecer una hora si ya aparece ocupada en ese día o si el día dice \"TODO EL DIA\" bloqueado. Si el día está bloqueado o lleno, discúlpate y ofrece el siguiente día hábil.\n\"Para ese día me queda un espacio a las [Hora en punto 1] y otro a las [Hora en punto 2], cuál te queda mejor?\"\n\n5. RECOPILAR DATOS (Cuando eligió hora):\nCRÍTICO: Todavía NO emitas dia_cita ni hora_cita en el JSON. Debes tener los datos primero.\nFASE 1: \"Ok, le aparto la hora entonces? Me pasa su nombre y apellido para la confirmacion de la cita\"\nFASE 2 (cuando da el nombre): \"Perfecto. Y su número de cédula y edad por favor\"\nEXCEPCIÓN: Si ya dio varios datos antes, pide solo los que falten.\n\n6. CONFIRMACIÓN (Cuando tiene todos los datos):\n\"Listo [Nombre]! Quedo anotada tu cita para el [Día] a las [Hora]. Te esperamos en el Centro Empresarial Uniaragua, Piso 3, Oficina 302 (Av. Mariño Sur). Que tengas buen dia!\"\n\nPACIENTES ANTIGUOS:\n- Por defecto asume pacientes nuevos.\n- SI YA TIENE CITA AGENDADA y escribe para confirmar o dice que ya llegó: \"Hola! En un momento la secretaria te atiende personalmente, un saludo!\"\n- Si mencionan que ya fueron a consulta o se operaron: trato más cercano, indaga sutilmente. Incluir todo en el campo resumen del JSON.\n\nCANCELACIONES E INASISTENCIAS:\n- Cancelar o reagendar: responde amable, ofrece reagendar. Anota en resumen.\n- No-show (no asistió a cita previa) quiere reagendar: \"Entiendo, para reagendar luego de una inasistencia hay un proceso especial. Te voy a derivar con la secretaria para que te ayude con eso.\" Llena requiere_asistencia_humana: \"Paciente no asistió a cita previa. Aplicar protocolo de penalización.\"\n- Si CANCELA o RECHAZA cita: dia_cita y hora_cita DEBEN ir vacíos en el JSON.\n\nDELEGACIÓN HUMANA (requiere_asistencia_humana):\nResponde amable al paciente diciendo que la secretaria lo contactará pronto. Llena el campo con el motivo.\nCasos que REQUIEREN delegación obligatoria:\n- Reagendamiento de cita (tras aplicar política de 50%).\n- No-show que quiere reagendar.\n- Preguntas médicas complejas fuera de tu base de conocimiento.\n- Precios de procedimientos o cirugías que no conoces.\n- El paciente envía nota de voz o imagen (responde: \"Disculpa, no puedo abrir audios ni imagenes por aqui. Me escribes por texto lo que necesitas?\").\n- El paciente se queja del servicio, del doctor o de una experiencia pasada.\n- El paciente pregunta en un idioma que no es español.\n- El paciente quiere agendar para varios familiares en una misma cita.\n- El paciente describe una emergencia médica o síntomas graves urgentes (responde: \"Por lo que me describes, te recomiendo acudir a la emergencia más cercana lo antes posible. Si luego necesitas una consulta con el doctor, aqui estamos para ayudarte\").\n- Cualquier situación donde no tengas certeza de la respuesta.\n\nEXTRACCIÓN DE DATOS:\nFECHA ACTUAL: {{ $now.setZone('America/Caracas').toFormat('cccc, yyyy-MM-dd') }}.\nAl final de CADA respuesta, haz UN salto de línea y agrega |||DATOS||| seguido del JSON en texto plano. El bloque debe empezar con llaves dobles.\n\n|||DATOS|||\n{{ String.fromCharCode(123, 123) }}\"nombre\": \"\", \"ciudad\": \"\", \"motivo_consulta\": \"\", \"temperatura\": \"frio/tibio/caliente\", \"resumen\": \"\", \"dia_cita\": \"YYYY-MM-DD\", \"hora_cita\": \"\", \"requiere_asistencia_humana\": \"\"{{ String.fromCharCode(125, 125) }}\n\nREGLAS JSON:\n- dia_cita: YYYY-MM-DD. Solo cuando el paciente CONFIRME el día Y ya tengas su nombre, motivo y ciudad. NO LLENAR SI FALTAN DATOS.\n- hora_cita: Solo cuando elija la hora exacta Y ya tengas su nombre, motivo y ciudad. NO LLENAR SI FALTAN DATOS.\n- requiere_asistencia_humana: Vacío si todo va normal.\n- Si CANCELA: dia_cita y hora_cita vacíos.\n\nDATOS DEL PACIENTE ACTUAL:\nNombre: {{ $node[\"Refrescar Datos de Supabase\"].json.Nombre || \"Aún no lo ha dicho\" }}\nCita Programada: {{ $node[\"Refrescar Datos de Supabase\"].json.Dia_Cita ? ($node[\"Refrescar Datos de Supabase\"].json.Dia_Cita + \" a las \" + $node[\"Refrescar Datos de Supabase\"].json.Hora_Cita) : \"Ninguna\" }}\n\nREGLA DE ORO SI YA TIENE CITA:\nSi el paciente ya tiene Cita Programada (que no sea Ninguna), ESA HORA ES SUYA. No le digas que está ocupada. No le agendes una nueva. Si confirma: \"Hola [Nombre]! Si, tu cita es el [Día] a las [Hora]. Te esperamos!\"\n\nHISTORIAL DE LA CONVERSACIÓN:\n{{ (() => { const h = $node[\"Refrescar Datos de Supabase\"].json.chat_history || []; return h.map(m => (m.role === 'user' ? 'Paciente: ' : 'Asistente: ') + m.content).join('\\n'); })() }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        304
+      ],
+      "id": "8214de70-11ae-4afb-8049-f5527562c61b",
+      "name": "Cerebro Inteligencia Artificial",
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RbtGkF3BwVhe1MFw",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// =====================================================\n// ESCUDO VALIDADOR PRE-ENVÍO & PASO 4 QUALITY LOG PAYLOAD\n// Nodo: Formatear Respuesta (ID: 8fd94881-ca56-4855-8462-ef0109762964)\n// =====================================================\n\nfunction sanitizeTimes(text) {\n  if (!text || typeof text !== 'string') return text;\n  let cleaned = text;\n  cleaned = cleaned.replace(/(\\b(?:1[0-2]|0?[1-9])):(?:15|20|30|45)(\\s*(?:am|pm|a\\.m\\.|p\\.m\\.|AM|PM|A\\.M\\.|P\\.M\\.))/gi, '$1:00$2');\n  cleaned = cleaned.replace(/(?<![\\d\\-])(\\b(?:[01]?\\d|2[0-3])):(?:15|20|30|45)\\b(?![\\d:\\-])/g, '$1:00');\n  cleaned = cleaned.replace(/(\\b(?:1[0-2]|0?[1-9]))\\s+y\\s+(?:media|30)\\b/gi, '$1:00');\n  return cleaned;\n}\n\nfunction findText(obj, depth) {\n  if (depth > 10) return \"\";\n  if (typeof obj === 'string' && obj.trim().length > 0) return obj;\n  if (Array.isArray(obj)) {\n    for (const item of obj) {\n      const found = findText(item, depth + 1);\n      if (found) return found;\n    }\n  }\n  if (typeof obj === 'object' && obj !== null) {\n    for (const val of Object.values(obj)) {\n      const found = findText(val, depth + 1);\n      if (found) return found;\n    }\n  }\n  return \"\";\n}\n\n// Extracción de la entrada original del paciente\nlet pacienteEntrada = \"\";\ntry {\n  pacienteEntrada = $node[\"Recibir WhatsApp\"]?.json?.body?.data?.message?.conversation \n    || $node[\"Recibir WhatsApp\"]?.json?.body?.data?.message?.extendedTextMessage?.text \n    || \"\";\n} catch(e) {\n  pacienteEntrada = \"\";\n}\n\nlet history = [];\ntry {\n  history = Array.isArray($node[\"Refrescar Datos de Supabase\"]?.json?.chat_history) ? [...$node[\"Refrescar Datos de Supabase\"].json.chat_history] : [];\n} catch (e) {\n  history = [];\n}\n\nlet fullResponse = \"\";\nif (typeof $json?.content === 'string' && $json.content.trim().length > 0) {\n  fullResponse = $json.content;\n} else if (typeof $json?.text === 'string' && $json.text.trim().length > 0) {\n  fullResponse = $json.text;\n} else {\n  fullResponse = findText($json, 0);\n}\n\nlet wasEmptyResponse = false;\nif (!fullResponse || fullResponse.trim() === \"\") {\n  fullResponse = \"Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?\";\n  wasEmptyResponse = true;\n}\n\nlet rawAIOutput = fullResponse;\nfullResponse = fullResponse.replace(/\\\\\\\\n/g, '\\n').replace(/\\\\n/g, '\\n').replace(/[ \\t]+/g, ' ').trim();\n\nlet botMsg = fullResponse;\nlet datosExtraidos = {\n  nombre: undefined, ciudad: undefined, motivo_consulta: undefined,\n  temperatura: undefined, resumen: undefined, dia_cita: undefined,\n  hora_cita: undefined, requiere_asistencia_humana: undefined\n};\n\nlet detectedIncidentType = \"\";\n\nif (wasEmptyResponse) {\n  datosExtraidos.requiere_asistencia_humana = \"Respuesta de IA vacía - Fallback determinista activado\";\n  detectedIncidentType = \"RESPUESTA_VACIA_FALLBACK\";\n}\n\nif (fullResponse.includes('|||DATOS|||')) {\n  const partes = fullResponse.split('|||DATOS|||');\n  botMsg = partes[0].trim();\n  let jsonStr = partes[1].trim();\n  jsonStr = jsonStr.replace(/^\\{\\{/, '{').replace(/\\}\\}$/, '}');\n  jsonStr = jsonStr.replace(/\\{\\{/g, '{').replace(/\\}\\}/g, '}');\n  jsonStr = jsonStr.replace(/```json\\s*/gi, '').replace(/```\\s*/gi, '').trim();\n\n  let parseOk = false;\n  try {\n    const datos = JSON.parse(jsonStr);\n    parseOk = true;\n    if ('nombre' in datos) datosExtraidos.nombre = datos.nombre || \"\";\n    if ('ciudad' in datos) datosExtraidos.ciudad = datos.ciudad || \"\";\n    if ('motivo_consulta' in datos) datosExtraidos.motivo_consulta = datos.motivo_consulta || \"\";\n    if ('temperatura' in datos) datosExtraidos.temperatura = datos.temperatura || \"\";\n    if ('resumen' in datos) datosExtraidos.resumen = datos.resumen || \"\";\n    if ('dia_cita' in datos) datosExtraidos.dia_cita = typeof datos.dia_cita === 'string' ? datos.dia_cita : \"\";\n    if ('hora_cita' in datos) datosExtraidos.hora_cita = typeof datos.hora_cita === 'string' ? datos.hora_cita : \"\";\n    if ('requiere_asistencia_humana' in datos) datosExtraidos.requiere_asistencia_humana = datos.requiere_asistencia_humana || \"\";\n  } catch (e) {}\n\n  if (!parseOk) {\n    try {\n      const extraer = (campo) => {\n        const regex = new RegExp('\"' + campo + '\"\\\\s*:\\\\s*\"([^\"]*)\"');\n        const match = jsonStr.match(regex);\n        return match ? match[1] : undefined;\n      };\n      const nombre = extraer('nombre');\n      const ciudad = extraer('ciudad');\n      const motivo = extraer('motivo_consulta');\n      const temp = extraer('temperatura');\n      const resumen = extraer('resumen');\n      const dia = extraer('dia_cita');\n      const hora = extraer('hora_cita');\n      const alerta = extraer('requiere_asistencia_humana');\n      if (nombre !== undefined) datosExtraidos.nombre = nombre;\n      if (ciudad !== undefined) datosExtraidos.ciudad = ciudad;\n      if (motivo !== undefined) datosExtraidos.motivo_consulta = motivo;\n      if (temp !== undefined) datosExtraidos.temperatura = temp;\n      if (resumen !== undefined) datosExtraidos.resumen = resumen;\n      if (dia !== undefined) datosExtraidos.dia_cita = dia;\n      if (hora !== undefined) datosExtraidos.hora_cita = hora;\n      if (alerta !== undefined) datosExtraidos.requiere_asistencia_humana = alerta;\n    } catch (e2) {}\n  }\n}\n\nlet prevData = {};\ntry {\n  prevData = $node[\"Refrescar Datos de Supabase\"].json || {};\n} catch (e) {\n  prevData = {};\n}\n\nlet nombre_final = datosExtraidos.nombre !== undefined ? datosExtraidos.nombre : (prevData.Nombre || \"\");\nlet ciudad_final = datosExtraidos.ciudad !== undefined ? datosExtraidos.ciudad : (prevData.Ciudad || \"\");\nlet motivo_final = datosExtraidos.motivo_consulta !== undefined ? datosExtraidos.motivo_consulta : (prevData.Motivo_Consulta || \"\");\nlet temp_final = datosExtraidos.temperatura !== undefined ? datosExtraidos.temperatura : (prevData.Temperatura || \"\");\nlet resumen_final = datosExtraidos.resumen !== undefined ? datosExtraidos.resumen : (prevData.Resumen || \"\");\nlet dia_final = (datosExtraidos.dia_cita && datosExtraidos.dia_cita.trim() !== \"\") \n  ? datosExtraidos.dia_cita \n  : (prevData.Dia_Cita || \"\");\n\nlet hora_final = (datosExtraidos.hora_cita && datosExtraidos.hora_cita.trim() !== \"\") \n  ? datosExtraidos.hora_cita \n  : (prevData.Hora_Cita || \"\");\n\n// Si el paciente cancela explícitamente (detectado por el IA o resumen)\nif (datosExtraidos.resumen && datosExtraidos.resumen.toLowerCase().includes('cancela')) {\n  dia_final = \"\";\n  hora_final = \"\";\n}\nlet alerta_final = datosExtraidos.requiere_asistencia_humana !== undefined ? datosExtraidos.requiere_asistencia_humana : (prevData.requiere_asistencia_humana || \"\");\n\nif (alerta_final === 'false' || alerta_final === 'False' || alerta_final === 'no') {\n  alerta_final = \"\";\n}\n\n// MÓDULO 6: ESCUDO VALIDADOR PRE-ENVÍO\nbotMsg = sanitizeTimes(botMsg);\n\nif (hora_final) {\n  hora_final = sanitizeTimes(hora_final);\n}\n\nif (hora_final && hora_final.trim() !== \"\") {\n  let hRaw = hora_final.trim().toLowerCase();\n  let hour24 = null;\n  let minutesStr = \"00\";\n  const isPM = hRaw.includes('pm') || hRaw.includes('p.m.');\n  const isAM = hRaw.includes('am') || hRaw.includes('a.m.');\n  const clean = hRaw.replace(/(am|pm|a\\.m\\.|p\\.m\\.)/gi, '').trim();\n  const parts = clean.split(':');\n  if (parts.length >= 1) {\n    let h = parseInt(parts[0], 10);\n    if (!isNaN(h)) {\n      if (isPM && h < 12) h += 12;\n      if (isAM && h === 12) h = 0;\n      hour24 = h;\n    }\n  }\n  if (parts.length >= 2) {\n    minutesStr = parts[1].trim();\n  }\n  const validHours = [8, 9, 10, 11, 16, 17];\n  if (hour24 !== null && validHours.includes(hour24) && (minutesStr === \"00\" || minutesStr === \"0\" || minutesStr === \"\")) {\n    hora_final = hour24.toString().padStart(2, '0') + ':00';\n  } else {\n    if (!alerta_final) {\n      alerta_final = `Horario no permitido detectado (${hora_final}). Cita anulada para verificación manual.`;\n    }\n    if (!detectedIncidentType) detectedIncidentType = \"ALUCINACION_HORARIO\";\n    dia_final = \"\";\n    hora_final = \"\";\n  }\n}\n\nif ((dia_final || hora_final) && (!nombre_final || nombre_final.trim() === \"\")) {\n  if (!alerta_final) {\n    alerta_final = \"Intento de agendamiento sin nombre de paciente.\";\n  }\n  if (!detectedIncidentType) detectedIncidentType = \"AGENDAMIENTO_SIN_NOMBRE\";\n  dia_final = \"\";\n  hora_final = \"\";\n}\n\nif (dia_final && dia_final.trim() !== \"\") {\n  dia_final = dia_final.trim();\n  const dateMatch = dia_final.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);\n  if (!dateMatch) {\n    dia_final = \"\";\n    hora_final = \"\";\n  } else {\n    const year = parseInt(dateMatch[1], 10);\n    const month = parseInt(dateMatch[2], 10) - 1;\n    const day = parseInt(dateMatch[3], 10);\n    const dateObj = new Date(Date.UTC(year, month, day, 12, 0, 0));\n    const dayOfWeek = dateObj.getUTCDay();\n    const timezone = 'America/Caracas';\n    const now = new Date();\n    const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' });\n    const todayStr = dateFormatter.format(now);\n\n    if (dia_final < todayStr) {\n      if (!alerta_final) alerta_final = \"Intento de agendamiento en fecha pasada.\";\n      if (!detectedIncidentType) detectedIncidentType = \"ALUCINACION_FECHA_PASADA\";\n      dia_final = \"\";\n      hora_final = \"\";\n    } else if (dayOfWeek === 0 || dayOfWeek === 6) {\n      if (!alerta_final) alerta_final = \"Alucinación de IA: Intentó agendar en fin de semana (sábado/domingo).\";\n      if (!detectedIncidentType) detectedIncidentType = \"ALUCINACION_FIN_DE_SEMANA\";\n      dia_final = \"\";\n      hora_final = \"\";\n      botMsg = botMsg.replace(/\\b(este\\s+|el\\s+)?(sábado|sabado|domingo)\\b/gi, 'el lunes');\n    }\n  }\n}\n\ntry {\n  const agendaTxt = ($node[\"Formatear Agenda\"] && $node[\"Formatear Agenda\"].json && $node[\"Formatear Agenda\"].json.agenda_disponible) || \"\";\n  if (dia_final && hora_final && agendaTxt) {\n    const lines = agendaTxt.toString().split('\\n');\n    const dayLine = lines.find(l => l.includes(dia_final));\n    if (!dayLine) {\n      if (!alerta_final) alerta_final = `Fecha ${dia_final} no disponible en la agenda.`;\n      if (!detectedIncidentType) detectedIncidentType = \"FECHA_NO_DISPONIBLE\";\n      dia_final = \"\";\n      hora_final = \"\";\n    } else if (dayLine.toUpperCase().includes('NO LABORABLE')) {\n      if (!alerta_final) alerta_final = `Día ${dia_final} no laborable o sin cupo.`;\n      if (!detectedIncidentType) detectedIncidentType = \"FECHA_NO_DISPONIBLE\";\n      dia_final = \"\";\n      hora_final = \"\";\n    } else {\n      if (!dayLine.includes(hora_final)) {\n        if (!alerta_final) alerta_final = `Hora ${hora_final} no disponible para el ${dia_final}.`;\n        if (!detectedIncidentType) detectedIncidentType = \"FECHA_NO_DISPONIBLE\";\n        dia_final = \"\";\n        hora_final = \"\";\n      }\n    }\n  }\n} catch (eAgenda) {}\n\nbotMsg = botMsg.replace(/\\|\\|\\|DATOS\\|\\|\\|.*/gs, '').trim();\nbotMsg = botMsg.replace(/\\{\\{/g, '').replace(/\\}\\}/g, '').trim();\n\nif (!botMsg || botMsg.trim() === \"\") {\n  botMsg = \"Hola! Disculpa la demora, ¿en qué te podemos ayudar el día de hoy?\";\n  if (!alerta_final) {\n    alerta_final = \"Respuesta de IA vacía - Fallback determinista activado\";\n  }\n  if (!detectedIncidentType) detectedIncidentType = \"RESPUESTA_VACIA_FALLBACK\";\n}\n\nif (alerta_final && !detectedIncidentType) {\n  const alertLower = alerta_final.toLowerCase();\n  if (alertLower.includes('reagendar') || alertLower.includes('reagendamiento') || alertLower.includes('50%')) {\n    detectedIncidentType = \"REAGENDAMIENTO_POLITICA\";\n  } else if (alertLower.includes('inasistencia') || alertLower.includes('no asistió') || alertLower.includes('no-show')) {\n    detectedIncidentType = \"INASISTENCIA_NOSHOW\";\n  } else {\n    detectedIncidentType = \"ASISTENCIA_HUMANA_REQUERIDA\";\n  }\n}\n\nif (!Array.isArray(history)) {\n  history = [];\n}\nhistory.push({ role: \"assistant\", content: botMsg });\nif (history.length > 8) history = history.slice(history.length - 8);\nlet random_delay = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;\n\nconst metadata_log = {\n  nombre_paciente: nombre_final,\n  ciudad: ciudad_final,\n  motivo_consulta: motivo_final,\n  temperatura: temp_final,\n  dia_cita_intentado: datosExtraidos.dia_cita || \"\",\n  hora_cita_intentada: datosExtraidos.hora_cita || \"\",\n  alerta_detalle: alerta_final || \"\",\n  was_empty_response: wasEmptyResponse,\n  agenda_disponible: ($node[\"Formatear Agenda\"]?.json?.agenda_disponible) || \"\"\n};\n\nreturn {\n  final_history: history,\n  bot_reply: botMsg,\n  delay: random_delay,\n  nombre: nombre_final,\n  ciudad: ciudad_final,\n  motivo_consulta: motivo_final,\n  temperatura: temp_final,\n  resumen: resumen_final,\n  dia_cita: dia_final,\n  hora_cita: hora_final,\n  requiere_asistencia_humana: alerta_final,\n\n  // Campos para Paso 4: Autoaprendizaje Asincrónico\n  has_quality_incident: !!detectedIncidentType,\n  tipo_incidencia: detectedIncidentType || \"\",\n  respuesta_raw: rawAIOutput,\n  entrada_paciente: pacienteEntrada,\n  metadata_log: metadata_log\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        256
+      ],
+      "id": "8fd94881-ca56-4855-8462-ef0109762964",
+      "name": "Formatear Respuesta"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check-incident-flag",
+              "leftValue": "={{ $json.has_quality_incident }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1056,
+        616
+      ],
+      "id": "c1f7a8b9-4d3e-4f2a-8b1c-9e0d1a2b3c4d",
+      "name": "¿Existe Incidencia de Calidad?"
+    },
+    {
+      "parameters": {
+        "tableId": "bot_quality_logs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "telefono",
+              "fieldValue": "={{ $node[\"Recibir WhatsApp\"].json.body.data.key.remoteJid }}"
+            },
+            {
+              "fieldId": "tipo_incidencia",
+              "fieldValue": "={{ $json.tipo_incidencia }}"
+            },
+            {
+              "fieldId": "respuesta_raw",
+              "fieldValue": "={{ $json.respuesta_raw }}"
+            },
+            {
+              "fieldId": "respuesta_saneada",
+              "fieldValue": "={{ $json.bot_reply }}"
+            },
+            {
+              "fieldId": "entrada_paciente",
+              "fieldValue": "={{ $json.entrada_paciente }}"
+            },
+            {
+              "fieldId": "fecha_registro",
+              "fieldValue": "={{ $now }}"
+            },
+            {
+              "fieldId": "metadata",
+              "fieldValue": "={{ $json.metadata_log }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        616
+      ],
+      "id": "f8a9b0c1-d2e3-4f5a-6b7c-8d9e0f1a2b3c",
+      "name": "Registrar Incidencia (Supabase)",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1fUhIYYlhs4jAm6IxzRrDhlCAWVnICyLp5odm0VnRwro/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Hoja 1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Telefono": "={{ $node['Recibir WhatsApp'].json.body.data.key.remoteJid }}",
+            "Nombre": "={{ $json.nombre }}",
+            "Ciudad": "={{ $json.ciudad }}",
+            "Motivo_Consulta": "={{ $json.motivo_consulta }}",
+            "Temperatura": "={{ $json.temperatura }}",
+            "Ultima_Interaccion": "={{ $now }}",
+            "Resumen": "=\t{{ $json.resumen }}",
+            "Dia_Cita": "={{ $json.dia_cita }}",
+            "Hora_Cita": "={{ $json.hora_cita }}"
+          },
+          "matchingColumns": [
+            "Telefono"
+          ],
+          "schema": [
+            {
+              "id": "Telefono",
+              "displayName": "Telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ciudad",
+              "displayName": "Ciudad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Motivo_Consulta",
+              "displayName": "Motivo_Consulta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Temperatura",
+              "displayName": "Temperatura",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ultima_Interaccion",
+              "displayName": "Ultima_Interaccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resumen",
+              "displayName": "Resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Dia_Cita",
+              "displayName": "Dia_Cita",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hora_Cita",
+              "displayName": "Hora_Cita",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1056,
+        208
+      ],
+      "id": "db5cb0f9-2ed8-4ce7-af24-9fdb3e3474e5",
+      "name": "Respaldar en Google Sheets",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ICBlcz55sFQrShP5",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $node[\"Recibir WhatsApp\"].json.body.data.key.remoteJid }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "chat_history",
+              "fieldValue": "={{ $json.final_history }}"
+            },
+            {
+              "fieldId": "Nombre",
+              "fieldValue": "={{ $json.nombre }}"
+            },
+            {
+              "fieldId": "Ciudad",
+              "fieldValue": "={{ $json.ciudad }}"
+            },
+            {
+              "fieldId": "Motivo_Consulta",
+              "fieldValue": "={{ $json.motivo_consulta }}"
+            },
+            {
+              "fieldId": "Temperatura",
+              "fieldValue": "={{ $json.temperatura }}"
+            },
+            {
+              "fieldId": "Resumen",
+              "fieldValue": "={{ $json.resumen }}"
+            },
+            {
+              "fieldId": "Dia_Cita",
+              "fieldValue": "={{ $json.dia_cita }}"
+            },
+            {
+              "fieldId": "Hora_Cita",
+              "fieldValue": "={{ $json.hora_cita }}"
+            },
+            {
+              "fieldId": "Ultima_Interaccion",
+              "fieldValue": "={{ $now }}"
+            },
+            {
+              "fieldId": "bot_is_typing",
+              "fieldValue": "={{ false }}"
+            },
+            {
+              "fieldId": "requiere_asistencia_humana",
+              "fieldValue": "={{ $json.requiere_asistencia_humana }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        416
+      ],
+      "id": "ca9bf834-c7cd-4976-a364-c4148ffe2287",
+      "name": "Guardar Resumen en Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evo-n8esaf5dqdgod8b4y95f85t8.167.86.70.193.sslip.io/message/sendText/BotRedes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "D29061824F7D-48B0-B455-9A9C7F4BDD20"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $node['Recibir WhatsApp'].json.body.data.key.remoteJid.replace(/@s\\.whatsapp\\.net|@c\\.us/g, '') }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('Formatear Respuesta').item.json.bot_reply }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1264,
+        800
+      ],
+      "id": "5b0ad045-ac5b-4f19-a4a8-5e7e85412619",
+      "name": "Enviar Mensaje de WhatsApp"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "conv-abierta",
+              "leftValue": "={{ $json.Conversacion_Abierta }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bot-active",
+              "leftValue": "={{ $('Obtener_Configuracion').first().json.is_active }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bot-typing-con-timeout",
+              "leftValue": "={{ (() => { const isTyping = $json.bot_is_typing || false; if (!isTyping) return true; const ultima = $json.Ultima_Interaccion ? new Date($json.Ultima_Interaccion) : null; if (!ultima) return true; const ahora = new Date(); const diffMs = ahora.getTime() - ultima.getTime(); const diffMin = diffMs / 60000; return diffMin > 3; })() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -128,
+        48
+      ],
+      "id": "342873e4-e117-4cf6-b194-cbe045fcd7cf",
+      "name": "¿El Bot está Autorizado?"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "bot_config",
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1616,
+        448
+      ],
+      "id": "a3f4ab68-6fe3-4cc4-9869-ca9cfb31561f",
+      "name": "Obtener_Configuracion",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f49ea0f3-6f64-4b1a-bb62-2201ceca022e",
+              "leftValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.fromMe }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1296,
+        272
+      ],
+      "id": "8f3ecfc9-a24d-4e9d-ba7d-fee95101bb24",
+      "name": "¿Lo envió el paciente?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Conversacion_Abierta",
+              "fieldValue": "={{ true }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        512
+      ],
+      "id": "ba6d7c53-e990-4d6d-8e2d-f833c2d680c9",
+      "name": "Apagar Bot (Silenciador) ",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "bot_is_typing",
+              "fieldValue": "={{ true }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        48,
+        64
+      ],
+      "id": "2af5833b-a30b-4c8c-a0b9-c2ea3d737e1f",
+      "name": "Bloquear Bot (Mutex)",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Dia_Cita",
+              "condition": "neq"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        256,
+        64
+      ],
+      "id": "03537fbd-66e7-4a29-827e-cf36845dacc4",
+      "name": "Consultar Agenda Global",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// =====================================================\n// CÓDIGO CORREGIDO PARA EL NODO \"Formatear Agenda\" (Paso 2)\n// Separación Estricta: Presencial (Mañana) vs Online (Tarde)\n// =====================================================\n\nconst timezone = 'America/Caracas';\nconst now = new Date();\nconst dateFormatter = new Intl.DateTimeFormat('en-CA', {\n    timeZone: timezone,\n    year: 'numeric',\n    month: '2-digit',\n    day: '2-digit'\n});\nconst todayStr = dateFormatter.format(now);\nconst currentHourCaracas = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: timezone, hour: 'numeric', hour12: false }).format(now), 10);\n\n// Base date a mediodía Caracas para evitar desfasamiento\nconst baseDate = new Date(todayStr + 'T12:00:00-04:00');\n\n// Slots candidatos exactos (:00)\n// Presencial: Lunes a Viernes solo en la mañana (8 am a 11 am) en Uniaragua\nconst SLOTS_PRESENCIAL = [\"08:00\", \"09:00\", \"10:00\", \"11:00\"];\n// Online: Exclusivamente Lunes y Jueves en la tarde (4 pm y 5 pm)\nconst SLOTS_ONLINE = [\"16:00\", \"17:00\"];\n\nconst ocupacionSupabase = {};\nconst diasBloqueadosCompletos = new Set();\n\n// 1. RECOGER Y MAPEAR CITAS DE SUPABASE CON PARSER 12H/24H CORREGIDO\nfor (const lead of $input.all()) {\n    const json = lead.json || {};\n    const date = json.Dia_Cita;\n    const timeRaw = (json.Hora_Cita || '').toString().trim();\n\n    if (!date || date === '' || date < todayStr) continue;\n\n    const timeLower = timeRaw.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n\n    // Bloqueo explícito de día completo o semana completa\n    if (timeLower.includes('todo el dia') || timeLower.includes('toda la semana') || timeLower.includes('bloqueado') || timeLower.includes('vacaciones') || timeLower.includes('no laborable')) {\n        diasBloqueadosCompletos.add(date);\n        continue;\n    }\n\n    // Parsear hora 12h/24h a entero 0-23\n    const hour24 = parseTimeTo24hHour(timeRaw);\n    if (hour24 !== null) {\n        const slotStr = hour24.toString().padStart(2, '0') + ':00';\n        if (!ocupacionSupabase[date]) {\n            ocupacionSupabase[date] = new Set();\n        }\n        ocupacionSupabase[date].add(slotStr);\n    }\n}\n\nfunction parseTimeTo24hHour(raw) {\n    if (!raw) return null;\n    const str = raw.toString().toLowerCase().replace(/\\./g, '').trim();\n    if (!str) return null;\n\n    const isPM = str.includes('pm');\n    const isAM = str.includes('am');\n\n    const clean = str.replace(/(am|pm)/g, '').trim();\n    const parts = clean.split(':');\n    if (parts.length === 0) return null;\n\n    let h = parseInt(parts[0], 10);\n    if (isNaN(h)) return null;\n\n    if (isPM) {\n        if (h < 12) h += 12;\n    } else if (isAM) {\n        if (h === 12) h = 0;\n    }\n\n    if (h >= 0 && h <= 23) {\n        return h;\n    }\n    return null;\n}\n\n// 2. GENERAR DISPONIBILIDAD POSITIVA PARA PRÓXIMOS 14 DÍAS\nconst reporteDisponibilidad = [];\n\nfor (let i = 0; i < 14; i++) {\n    const d = new Date(baseDate.getTime() + i * 86400000);\n    const dateStr = dateFormatter.format(d);\n    const dayOfWeek = new Date(dateStr + 'T12:00:00Z').getUTCDay(); // 0=Dom, 1=Lun, ..., 6=Sáb\n\n    // Fines de semana: 100% Bloqueados\n    if (dayOfWeek === 0 || dayOfWeek === 6) {\n        reporteDisponibilidad.push(`- ${dateStr} (Fin de semana): NO LABORABLE`);\n        continue;\n    }\n\n    // Bloqueo explícito de día completo desde Supabase\n    if (diasBloqueadosCompletos.has(dateStr)) {\n        reporteDisponibilidad.push(`- ${dateStr}: PRESENCIAL (Uniaragua): [Sin disponibilidad] | ONLINE: [Sin disponibilidad] (Bloqueado)`);\n        continue;\n    }\n\n    // Reglas clínicas:\n    // Presencial Uniaragua: Lunes a Viernes 08:00, 09:00, 10:00, 11:00. (Las tardes están bloqueadas por clínicas externas como Turmero, Ambulatorio, Más Salud, Prevaler).\n    // Online: Solo Lunes (1) y Jueves (4) en la tarde: 16:00, 17:00.\n    const candPresencial = [...SLOTS_PRESENCIAL];\n    let candOnline = [];\n\n    if (dayOfWeek === 1 || dayOfWeek === 4) {\n        candOnline = [...SLOTS_ONLINE];\n    }\n\n    const ocupadas = ocupacionSupabase[dateStr] || new Set();\n    let dispPresencial = candPresencial.filter(h => !ocupadas.has(h));\n    let dispOnline = candOnline.filter(h => !ocupadas.has(h));\n\n    // Si es HOY (i === 0), filtrar estrictamente las horas que ya pasaron según el reloj de Caracas\n    if (i === 0) {\n        dispPresencial = dispPresencial.filter(h => parseInt(h.split(':')[0], 10) > currentHourCaracas);\n        dispOnline = dispOnline.filter(h => parseInt(h.split(':')[0], 10) > currentHourCaracas);\n    }\n\n    const presencialTxt = dispPresencial.length > 0 ? dispPresencial.join(', ') : 'Sin disponibilidad';\n    const onlineTxt = dispOnline.length > 0 ? dispOnline.join(', ') : 'Sin disponibilidad';\n\n    reporteDisponibilidad.push(`- ${dateStr}: PRESENCIAL (Mañanas en Uniaragua): [${presencialTxt}] | ONLINE (Tardes): [${onlineTxt}]`);\n}\n\nconst txt = reporteDisponibilidad.join('\\n');\n\nreturn {\n    agenda_disponible: txt,\n    agenda_ocupada: txt\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        64
+      ],
+      "id": "9d5ef635-9c04-433b-9a63-a4495b0dd7f9",
+      "name": "Formatear Agenda"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recibir WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Obtener_Configuracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es mensaje válido?": {
+      "main": [
+        [
+          {
+            "node": "¿Lo envió el paciente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Paciente (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "¿El Paciente Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿El Paciente Existe?": {
+      "main": [
+        [
+          {
+            "node": "Crear Nuevo Paciente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Actualizar Última Interacción",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Nuevo Paciente": {
+      "main": [
+        [
+          {
+            "node": "Pausa Anti-Spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Última Interacción": {
+      "main": [
+        [
+          {
+            "node": "Pausa Anti-Spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pausa Anti-Spam": {
+      "main": [
+        [
+          {
+            "node": "Refrescar Datos de Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refrescar Datos de Supabase": {
+      "main": [
+        [
+          {
+            "node": "¿El Bot está Autorizado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mostrar \"Escribiendo...\"": {
+      "main": [
+        [
+          {
+            "node": "Cerebro Inteligencia Artificial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cerebro Inteligencia Artificial": {
+      "main": [
+        [
+          {
+            "node": "Formatear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Guardar Resumen en Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respaldar en Google Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "¿Existe Incidencia de Calidad?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe Incidencia de Calidad?": {
+      "main": [
+        [
+          {
+            "node": "Registrar Incidencia (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Resumen en Supabase": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensaje de WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener_Configuracion": {
+      "main": [
+        [
+          {
+            "node": "¿Es mensaje válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Lo envió el paciente?": {
+      "main": [
+        [
+          {
+            "node": "Buscar Paciente (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Apagar Bot (Silenciador) ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿El Bot está Autorizado?": {
+      "main": [
+        [
+          {
+            "node": "Bloquear Bot (Mutex)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bloquear Bot (Mutex)": {
+      "main": [
+        [
+          {
+            "node": "Consultar Agenda Global",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Agenda Global": {
+      "main": [
+        [
+          {
+            "node": "Formatear Agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Agenda": {
+      "main": [
+        [
+          {
+            "node": "Mostrar \"Escribiendo...\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "America/Caracas",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "dcd8d5c8-a470-4c24-9d51-2ffe9d95157f",
+  "meta": {
+    "instanceId": "3eee2c5f8edefa6ced8d845098f5317aa081eb5e3b1a63d9120e26a5b465907e"
+  },
+  "id": "VV5YI2U2VAo4Tp3p",
+  "tags": []
+}

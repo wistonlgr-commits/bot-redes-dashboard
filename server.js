@@ -339,7 +339,7 @@ app.post('/api/bulk-action', async (req, res) => {
         }
 
         if (isDelete) {
-            const { error } = await supabase.from('leads').delete().in('id', ids);
+            const { error } = await supabase.from('leads').update({ Temperatura: 'eliminado', Estado_Alerta: 'ELIMINADO' }).in('id', ids);
             if (error) throw error;
         } else {
             const { error } = await supabase.from('leads').update(updatePayload).in('id', ids);
@@ -392,19 +392,89 @@ app.post('/api/add', async (req, res) => {
     }
 });
 
-// Endpoint para eliminar paciente
+// Endpoint para eliminar paciente (Soft Delete)
 app.post('/api/delete', async (req, res) => {
     try {
         const { id } = req.body;
         if (!id) return res.status(400).json({ error: "Falta ID" });
         
-        const { error } = await supabase.from('leads').delete().eq('id', id);
+        // Soft delete: Cambiamos Temperatura a 'eliminado' en vez de borrar de Supabase
+        const { error } = await supabase.from('leads').update({ Temperatura: 'eliminado', Estado_Alerta: 'ELIMINADO' }).eq('id', id);
         if (error) throw error;
 
         debouncedBroadcast();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// ==========================================
+// ENDPOINTS PARA AGENDA_BLOQUEOS
+// ==========================================
+
+// Obtener todos los bloqueos
+app.get('/api/bloqueos', async (req, res) => {
+    try {
+        if (!supabaseUrl) return res.json([]);
+        const { data, error } = await supabase
+            .from('agenda_bloqueos')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        res.json(data || []);
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Crear nuevo bloqueo
+app.post('/api/bloqueos', async (req, res) => {
+    try {
+        const { tipo, fecha, hora, motivo } = req.body;
+        if (!tipo || !fecha) {
+            return res.status(400).json({ success: false, error: "Faltan datos obligatorios (tipo, fecha)" });
+        }
+
+        const newBlock = {
+            tipo,
+            fecha,
+            hora: hora || (tipo === 'dia' ? 'TODO EL DIA' : (tipo === 'semana' ? 'TODA LA SEMANA' : '')),
+            motivo: motivo || 'Agenda Bloqueada'
+        };
+
+        const { data, error } = await supabase
+            .from('agenda_bloqueos')
+            .insert([newBlock])
+            .select();
+        
+        if (error) throw error;
+
+        const createdItem = data && data.length > 0 ? data[0] : newBlock;
+        io.emit('bloqueo_creado', createdItem);
+        res.json({ success: true, data: createdItem });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Eliminar bloqueo por ID
+app.delete('/api/bloqueos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) return res.status(400).json({ success: false, error: "Falta ID de bloqueo" });
+
+        const { error } = await supabase
+            .from('agenda_bloqueos')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        io.emit('bloqueo_eliminado', id);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
@@ -417,6 +487,9 @@ io.on('connection', async (socket) => {
         if (supabaseUrl) {
             const { data } = await supabase.from('leads').select('*').order('Ultima_Interaccion', { ascending: false });
             if (data) socket.emit('actualizacion_completa', data);
+
+            const { data: bData } = await supabase.from('agenda_bloqueos').select('*').order('created_at', { ascending: false });
+            if (bData) socket.emit('bloqueos_actualizados', bData);
         }
     } catch(e) {}
 
@@ -431,6 +504,12 @@ if (supabaseUrl) {
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, (payload) => {
           debouncedBroadcast(); // Notifica a los sockets
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'agenda_bloqueos' }, async (payload) => {
+          try {
+              const { data: bData } = await supabase.from('agenda_bloqueos').select('*').order('created_at', { ascending: false });
+              if (bData) io.emit('bloqueos_actualizados', bData);
+          } catch(e) {}
       })
       .subscribe();
 }

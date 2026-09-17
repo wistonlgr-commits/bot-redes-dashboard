@@ -1,0 +1,1084 @@
+{
+  "name": "DrTrejo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "=whatsapp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3952,
+        1824
+      ],
+      "id": "7fb93033-5e3f-4ac5-9e93-44bc31bda5fe",
+      "name": "Recibir WhatsApp",
+      "webhookId": "4c22eedb-742d-4503-9198-2e0171a6009b"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "253fb834-20c8-4eae-9b54-830b50760f99",
+              "leftValue": "={{ $('Recibir WhatsApp').item.json.body.event }}",
+              "rightValue": "messages.upsert",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "5dd856d9-ce68-4102-a282-e56a97839136",
+              "leftValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}",
+              "rightValue": "@g.us",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "4901ac0f-1be0-42b8-858f-aeafce11bb24",
+              "leftValue": "={{ ['conversation', 'extendedTextMessage'].includes($('Recibir WhatsApp').item.json.body.data.messageType) }}",
+              "rightValue": "={{ true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3600,
+        1696
+      ],
+      "id": "1c114f95-c547-4fe7-a80b-caec2a8b8f8c",
+      "name": "¿Es mensaje válido?"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -3216,
+        1552
+      ],
+      "id": "3cdbe77a-6084-41f4-97a6-0e3237fdc924",
+      "name": "Buscar Paciente (Supabase)",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "55efd824-dce6-4743-987b-486ceb1e8b9c",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3104,
+        1760
+      ],
+      "id": "929f5c9e-388e-4526-a782-8d31ac061e93",
+      "name": "¿El Paciente Existe?"
+    },
+    {
+      "parameters": {
+        "tableId": "leads",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "chat_history",
+              "fieldValue": "={{ [{ \"role\": \"user\", \"content\": $node[\"Recibir WhatsApp\"].json.body.data.message.conversation || $node[\"Recibir WhatsApp\"].json.body.data.message.extendedTextMessage.text || \"\" }] }}"
+            },
+            {
+              "fieldId": "phone_number",
+              "fieldValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            },
+            {
+              "fieldId": "Ultima_Interaccion",
+              "fieldValue": "={{ $now }}"
+            },
+            {
+              "fieldId": "Fuente",
+              "fieldValue": "=={{\n  (() => {\n    const data = $('Recibir WhatsApp').item.json.body.data;\n    \n    // 1. Extraemos el link del anuncio (ya sea por el método nuevo de Evolution o el tradicional)\n    const linkAnuncio = data.contextInfo?.externalAdReply?.mediaUrl || data.message?.extendedTextMessage?.contextInfo?.sourceUrl || '';\n    \n    // 2. Evaluamos si es Instagram\n    if (linkAnuncio.includes('instagram.com')) {\n      return 'Instagram Ads';\n    } \n    // 3. Evaluamos si es Facebook\n    else if (linkAnuncio.includes('facebook.com') || linkAnuncio.includes('fb.me') || data.contextInfo?.conversionSource === 'FB_Ads') {\n      return 'Facebook Ads';\n    }\n    \n    // 4. Si no tiene nada de lo anterior, es Orgánico\n    return 'Organico';\n  })()\n}}"
+            },
+            {
+              "fieldId": "Conversacion_Abierta",
+              "fieldValue": "={{ false }}"
+            },
+            {
+              "fieldId": "bot_is_typing",
+              "fieldValue": "={{ false }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2944,
+        1536
+      ],
+      "id": "2131b4cc-e3ff-4385-97a0-3178d5525ebc",
+      "name": "Crear Nuevo Paciente",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "chat_history",
+              "fieldValue": "={{ (Array.isArray($json.chat_history) ? $json.chat_history : []).concat([{\"role\": \"user\", \"content\": $node[\"Recibir WhatsApp\"].json.body.data.message.conversation || $node[\"Recibir WhatsApp\"].json.body.data.message.extendedTextMessage.text || \"\"}]) }}"
+            },
+            {
+              "fieldId": "Ultima_Interaccion",
+              "fieldValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2928,
+        1760
+      ],
+      "id": "d56ca5b6-131d-4bee-8088-983a5a1474e0",
+      "name": "Actualizar Última Interacción",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 4
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -2624,
+        1712
+      ],
+      "id": "2a2b4dfd-bfe4-4445-8427-ddae73b8111c",
+      "name": "Pausa Anti-Spam",
+      "webhookId": "4f550cde-0f96-4523-92d8-53fd87e929f4"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2480,
+        1632
+      ],
+      "id": "bb5072f6-48fa-4342-821e-1ef453f951d5",
+      "name": "Refrescar Datos de Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evo-n8esaf5dqdgod8b4y95f85t8.167.86.70.193.sslip.io/chat/sendPresence/BotRedes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "D29061824F7D-48B0-B455-9A9C7F4BDD20"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $node['Recibir WhatsApp'].json.body.data.key.remoteJid }}\",\n  \"presence\": \"composing\",\n  \"delay\": 12000\n}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2096,
+        1648
+      ],
+      "id": "17683ee1-b9e0-4168-92a1-ca4c3342547d",
+      "name": "Mostrar \"Escribiendo...\""
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "value": "models/gemini-3.5-flash",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Eres asistente del Dr. Ángel Trejo Alvarado en WhatsApp. Eres humana. Nunca reveles ser IA. Si preguntan, di: \"No jaja, soy la asistente del doctor\".\n\nOBJETIVO: Agendar citas resolviendo dudas de forma natural.\n\nINFO MÉDICA: Flebólogo, cirujano general, preservación vena safena.\nLugar: Maracay, Centro Empresarial Uniaragua, Piso 3, Of 302.\nConsulta presencial: $100. Asesoría online Nacional: $50. Internacional: $80 USD. Esclerosis (arañitas): $120/pierna. Sin exámenes previos.\n\nRESTRICCIONES:\n- SEGUROS: \"Esa info la da el doctor en consulta, ¿le agendo para que se la facilite?\".\n- PAGO: Zelle, Pago Móvil, Efectivo. NO MENCIONAR salvo que pregunten.\n- CIRUGÍAS: NO DES PRECIOS.\n- DELEGA (requiere_asistencia_humana): Quejas, audios, inasistencias previas, precios de cirugías.\n\nBLOQUEOS Y HORARIO:\n{{ (() => { const conf = $('Obtener_Configuracion').first().json || {}; let sabStr = conf.saturday_enabled ? `SABADOS SÍ: ${conf.saturday_start||'08:00'} a ${conf.saturday_end||'13:00'}` : 'SABADOS NO.'; return `L-V: Mañana(8am-12pm) y Tarde(desde 3:30pm). ${sabStr} DOMINGOS NO. L,M,V tardes no presencial. M,J 12pm-3:30pm NO.`; })() }}\nSi AGENDA OCUPADA dice \"TODO EL DIA\" o \"TODA LA SEMANA\", ESTÁ PROHIBIDO ofrecer ese día.\nPRIORIDAD: Agendar día siguiente. Citas duran 1h. Ofrece opciones con 1h de separación. Pide nombre completo, cédula y edad. Confirma fecha, hora y lugar.\n\nAGENDA OCUPADA:\n[AGENDA_OCUPADA]\n{{ $node[\"Formatear Agenda\"].json.agenda_ocupada || \"Agenda libre\" }}\n[/AGENDA_OCUPADA]\n\nESTILO: CORTO. 2-3 oraciones. Natural. Solo tu respuesta. 1 salto de línea antes del JSON.\n\nPACIENTE: Nombre: {{ $node[\"Refrescar Datos de Supabase\"].json.Nombre || \"Aún no lo ha dicho\" }}. Cita: {{ $node[\"Refrescar Datos de Supabase\"].json.Dia_Cita ? ($node[\"Refrescar Datos de Supabase\"].json.Dia_Cita + \" \" + $node[\"Refrescar Datos de Supabase\"].json.Hora_Cita) : \"Ninguna\" }}.\nSi confirma cita existente: \"Hola [Nombre]! Si, tu cita es el [Día] a las [Hora]. Te esperamos!\".\n\nEXTRACCIÓN: FECHA HOY: {{ $now.setZone('America/Caracas').format('cccc, yyyy-MM-dd') }}.\nAl final añade |||DATOS||| y el JSON. Temp: frio (precio), tibio (dudas), caliente (agenda).\n|||DATOS|||\n{{ String.fromCharCode(123, 123) }}\"nombre\":\"\", \"ciudad\":\"\", \"motivo_consulta\":\"\", \"temperatura\":\"frio/tibio/caliente\", \"resumen\":\"\", \"dia_cita\":\"YYYY-MM-DD\", \"hora_cita\":\"\", \"requiere_asistencia_humana\":\"\"{{ String.fromCharCode(125, 125) }}\n\nHISTORIAL:\n{{ (() => { const h = $node[\"Refrescar Datos de Supabase\"].json.chat_history || []; return h.map(m => (m.role==='user'?'Paciente: ':'Asistente: ')+m.content).join('\\n'); })() }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "kwargs": {
+            "fields": {
+              "values": [
+                {
+                  "name": "thinking_level",
+                  "value": "minimal"
+                },
+                {
+                  "name": "reasoning_effort",
+                  "value": "low"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -1632,
+        1648
+      ],
+      "id": "9000b447-55d4-4720-9dc2-feb2fcc3a90b",
+      "name": "Cerebro Inteligencia Artificial",
+      "retryOnFail": true,
+      "maxTries": 6,
+      "waitBetweenTries": 15000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RbtGkF3BwVhe1MFw",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Busca texto recursivamente en cualquier estructura JSON\nfunction findText(obj, depth) {\n  if (depth > 5) return \"\";\n  if (typeof obj === 'string' && obj.length > 20) return obj;\n  if (Array.isArray(obj)) {\n    for (const item of obj) {\n      const found = findText(item, depth + 1);\n      if (found) return found;\n    }\n  }\n  if (typeof obj === 'object' && obj !== null) {\n    for (const val of Object.values(obj)) {\n      const found = findText(val, depth + 1);\n      if (found) return found;\n    }\n  }\n  return \"\";\n}\n\n// Lista de frases que NUNCA deben llegar al paciente\nconst ERROR_PATTERNS = [\n  'service unavailable',\n  'status code 503',\n  'status code 500',\n  'status code 429',\n  'internal server error',\n  'NodeOperationError',\n  'ECONNREFUSED',\n  'ETIMEDOUT',\n  'socket hang up'\n];\n\nfunction isErrorMessage(text) {\n  if (!text) return true;\n  const lower = text.toLowerCase();\n  return ERROR_PATTERNS.some(p => lower.includes(p.toLowerCase()));\n}\n\nconst FALLBACK_MSG = \"Hola! Disculpa, estoy teniendo un inconveniente tecnico en este momento. Por favor escribeme de nuevo en unos minutos y te atiendo con gusto.\";\n\nlet history = $node[\"Refrescar Datos de Supabase\"].json.chat_history || [];\nlet fullResponse = \"\";\n\n// Intentar extraer la respuesta de Gemini\ntry {\n  fullResponse = findText($json, 0);\n} catch (e) {\n  fullResponse = \"\";\n}\n\n// NUEVA LÓGICA: Si contiene |||DATOS|||, es una respuesta VÁLIDA de Gemini\nlet gemini_failed = false;\nif (!fullResponse || fullResponse.length < 5) {\n  fullResponse = FALLBACK_MSG;\n  gemini_failed = true;\n} else if (fullResponse.includes('|||DATOS|||')) {\n  gemini_failed = false;\n} else if (isErrorMessage(fullResponse)) {\n  fullResponse = FALLBACK_MSG;\n  gemini_failed = true;\n}\n\nfullResponse = fullResponse.replace(/\\\\n/g, ' ').replace(/\\n/g, ' ').replace(/  +/g, ' ').trim();\n\n// Segundo chequeo despues de limpiar (ignorando si hay datos)\nif (!fullResponse.includes('|||DATOS|||') && isErrorMessage(fullResponse)) {\n  fullResponse = FALLBACK_MSG;\n  gemini_failed = true;\n}\n\nlet botMsg = fullResponse;\nlet datosExtraidos = {\n  nombre: undefined, ciudad: undefined, motivo_consulta: undefined, temperatura: undefined, resumen: undefined, dia_cita: undefined, hora_cita: undefined, requiere_asistencia_humana: undefined\n};\n\nif (!gemini_failed && fullResponse.includes('|||DATOS|||')) {\n  const partes = fullResponse.split('|||DATOS|||');\n  botMsg = partes[0].trim();\n  \n  try {\n    const jsonStr = partes[1].trim();\n    const datos = JSON.parse(jsonStr);\n    if ('nombre' in datos) datosExtraidos.nombre = datos.nombre || \"\";\n    if ('ciudad' in datos) datosExtraidos.ciudad = datos.ciudad || \"\";\n    if ('motivo_consulta' in datos) datosExtraidos.motivo_consulta = datos.motivo_consulta || \"\";\n    if ('temperatura' in datos) datosExtraidos.temperatura = datos.temperatura || \"\";\n    if ('resumen' in datos) datosExtraidos.resumen = datos.resumen || \"\";\n    if ('dia_cita' in datos) datosExtraidos.dia_cita = typeof datos.dia_cita === 'string' ? datos.dia_cita : \"\";\n    if ('hora_cita' in datos) datosExtraidos.hora_cita = typeof datos.hora_cita === 'string' ? datos.hora_cita : \"\";\n    if ('requiere_asistencia_humana' in datos) datosExtraidos.requiere_asistencia_humana = datos.requiere_asistencia_humana || \"\";\n  } catch (e) {\n    try {\n      const textoJson = partes[1].trim();\n      const matchDia = textoJson.match(/\"dia_cita\"\\s*:\\s*\"([^\"]*)\"/);\n      const matchHora = textoJson.match(/\"hora_cita\"\\s*:\\s*\"([^\"]*)\"/);\n      const matchAlerta = textoJson.match(/\"requiere_asistencia_humana\"\\s*:\\s*\"([^\"]*)\"/);\n      if (matchDia) datosExtraidos.dia_cita = matchDia[1];\n      if (matchHora) datosExtraidos.hora_cita = matchHora[1];\n      if (matchAlerta) datosExtraidos.requiere_asistencia_humana = matchAlerta[1];\n    } catch (e2) {}\n  }\n}\n\nconst prevData = $node[\"Refrescar Datos de Supabase\"].json || {};\nconst nombre_final = datosExtraidos.nombre !== undefined ? datosExtraidos.nombre : (prevData.Nombre || \"\");\nconst ciudad_final = datosExtraidos.ciudad !== undefined ? datosExtraidos.ciudad : (prevData.Ciudad || \"\");\nconst motivo_final = datosExtraidos.motivo_consulta !== undefined ? datosExtraidos.motivo_consulta : (prevData.Motivo_Consulta || \"\");\nconst temp_final = datosExtraidos.temperatura !== undefined ? datosExtraidos.temperatura : (prevData.Temperatura || \"\");\nconst resumen_final = datosExtraidos.resumen !== undefined ? datosExtraidos.resumen : (prevData.Resumen || \"\");\n\nconst dia_final = datosExtraidos.dia_cita !== undefined ? datosExtraidos.dia_cita : (prevData.Dia_Cita || \"\");\nconst hora_final = datosExtraidos.hora_cita !== undefined ? datosExtraidos.hora_cita : (prevData.Hora_Cita || \"\");\nconst alerta_final = datosExtraidos.requiere_asistencia_humana !== undefined ? datosExtraidos.requiere_asistencia_humana : (prevData.requiere_asistencia_humana || \"\");\n\n// Solo agregar al historial si Gemini respondio de verdad\nif (!gemini_failed) {\n  history.push({ role: \"assistant\", content: botMsg });\n}\nif (history.length > 8) history = history.slice(history.length - 8);\n\nlet random_delay = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;\n\nreturn {\n  final_history: history,\n  bot_reply: botMsg,\n  delay: random_delay,\n  nombre: nombre_final,\n  ciudad: ciudad_final,\n  motivo_consulta: motivo_final,\n  temperatura: temp_final,\n  resumen: resumen_final,\n  dia_cita: dia_final,\n  hora_cita: hora_final,\n  requiere_asistencia_humana: alerta_final\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1264,
+        1600
+      ],
+      "id": "cb1be4cb-456a-4f93-b0fc-d9f9cec03d10",
+      "name": "Formatear Respuesta"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1fUhIYYlhs4jAm6IxzRrDhlCAWVnICyLp5odm0VnRwro/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Hoja 1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Telefono": "={{ $node['Recibir WhatsApp'].json.body.data.key.remoteJid }}",
+            "Nombre": "={{ $json.nombre }}",
+            "Ciudad": "={{ $json.ciudad }}",
+            "Motivo_Consulta": "={{ $json.motivo_consulta }}",
+            "Temperatura": "={{ $json.temperatura }}",
+            "Ultima_Interaccion": "={{ $now }}",
+            "Resumen": "=\t{{ $json.resumen }}",
+            "Dia_Cita": "={{ $json.dia_cita }}",
+            "Hora_Cita": "={{ $json.hora_cita }}"
+          },
+          "matchingColumns": [
+            "Telefono"
+          ],
+          "schema": [
+            {
+              "id": "Telefono",
+              "displayName": "Telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ciudad",
+              "displayName": "Ciudad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Motivo_Consulta",
+              "displayName": "Motivo_Consulta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Temperatura",
+              "displayName": "Temperatura",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ultima_Interaccion",
+              "displayName": "Ultima_Interaccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resumen",
+              "displayName": "Resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Dia_Cita",
+              "displayName": "Dia_Cita",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hora_Cita",
+              "displayName": "Hora_Cita",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1072,
+        1552
+      ],
+      "id": "eb5d5c41-2f47-4373-92dd-610bd5dff88d",
+      "name": "Respaldar en Google Sheets",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ICBlcz55sFQrShP5",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $node[\"Recibir WhatsApp\"].json.body.data.key.remoteJid }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "chat_history",
+              "fieldValue": "={{ $json.final_history }}"
+            },
+            {
+              "fieldId": "Nombre",
+              "fieldValue": "={{ $json.nombre }}"
+            },
+            {
+              "fieldId": "Ciudad",
+              "fieldValue": "={{ $json.ciudad }}"
+            },
+            {
+              "fieldId": "Motivo_Consulta",
+              "fieldValue": "={{ $json.motivo_consulta }}"
+            },
+            {
+              "fieldId": "Temperatura",
+              "fieldValue": "={{ $json.temperatura }}"
+            },
+            {
+              "fieldId": "Resumen",
+              "fieldValue": "={{ $json.resumen }}"
+            },
+            {
+              "fieldId": "Dia_Cita",
+              "fieldValue": "={{ $json.dia_cita }}"
+            },
+            {
+              "fieldId": "Hora_Cita",
+              "fieldValue": "={{ $json.hora_cita }}"
+            },
+            {
+              "fieldId": "Ultima_Interaccion",
+              "fieldValue": "={{ $now }}"
+            },
+            {
+              "fieldId": "bot_is_typing",
+              "fieldValue": "={{ false }}"
+            },
+            {
+              "fieldId": "requiere_asistencia_humana",
+              "fieldValue": "={{ $json.requiere_asistencia_humana }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1072,
+        1760
+      ],
+      "id": "98ec4feb-bed1-4046-9c41-a6b90e554a4e",
+      "name": "Guardar Resumen en Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evo-n8esaf5dqdgod8b4y95f85t8.167.86.70.193.sslip.io/message/sendText/BotRedes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "D29061824F7D-48B0-B455-9A9C7F4BDD20"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $node['Recibir WhatsApp'].json.body.data.key.remoteJid.replace('@s.whatsapp.net', '') }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('Formatear Respuesta').item.json.bot_reply }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -864,
+        1952
+      ],
+      "id": "dcbcd975-9a62-41ff-935f-dbab3be017fd",
+      "name": "Enviar Mensaje de WhatsApp"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "conv-abierta",
+              "leftValue": "={{ $json.Conversacion_Abierta }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bot-active",
+              "leftValue": "={{ $('Obtener_Configuracion').first().json.is_active }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bot-typing-con-timeout",
+              "leftValue": "={{ (() => { const isTyping = $json.bot_is_typing || false; if (!isTyping) return true; const ultima = $json.Ultima_Interaccion ? new Date($json.Ultima_Interaccion) : null; if (!ultima) return true; const ahora = new Date(); const diffMs = ahora.getTime() - ultima.getTime(); const diffMin = diffMs / 60000; return diffMin > 3; })() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2256,
+        1392
+      ],
+      "id": "85439c2b-2793-4917-bf77-afbd50f103a8",
+      "name": "¿El Bot está Autorizado?"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "bot_config",
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -3744,
+        1792
+      ],
+      "id": "f2ad2098-d7d5-4035-b759-2532e1c612c6",
+      "name": "Obtener_Configuracion",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f49ea0f3-6f64-4b1a-bb62-2201ceca022e",
+              "leftValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.fromMe }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3424,
+        1616
+      ],
+      "id": "7657f34c-6303-4ae3-9460-e5d06b4653c1",
+      "name": "¿Lo envió el paciente?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Conversacion_Abierta",
+              "fieldValue": "={{ true }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -3296,
+        1856
+      ],
+      "id": "8435af07-5948-4a69-982e-0a25a88080c7",
+      "name": "Apagar Bot (Silenciador) ",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone_number",
+              "condition": "eq",
+              "keyValue": "={{ $('Recibir WhatsApp').item.json.body.data.key.remoteJid }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "bot_is_typing",
+              "fieldValue": "={{ true }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2080,
+        1408
+      ],
+      "id": "360a3834-a27c-4fb7-a47d-d203282769b0",
+      "name": "Bloquear Bot (Mutex)",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "limit": 100,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Dia_Cita",
+              "condition": "neq",
+              "keyValue": ""
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1872,
+        1408
+      ],
+      "id": "2a8040d0-b030-4a7a-ab69-66d9cce0b05a",
+      "name": "Consultar Agenda Global",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gidwrNK4lcuu0fQR",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let occupied = [];\nconst todayStr = new Date(new Date().toLocaleString(\"en-US\", {timeZone: \"America/Caracas\"})).toISOString().split('T')[0];\nfor (const lead of $input.all()) {\n  const date = lead.json.Dia_Cita;\n  const time = lead.json.Hora_Cita || 'Hora no especificada';\n  const nombre = lead.json.Nombre || '';\n  if (date && date >= todayStr && date !== '') {\n    if (nombre.includes('[BLOQUEO]') || time === 'TODO EL DIA' || time === 'TODA LA SEMANA') {\n      occupied.push('- ' + date + ' -> BLOQUEADO ' + time + ' (NO AGENDAR)');\n    } else {\n      occupied.push('- ' + date + ' a las ' + time);\n    }\n  }\n}\nlet txt = occupied.length > 0 ? occupied.join('\\n') : 'Agenda libre';\nreturn { agenda_ocupada: txt };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1664,
+        1408
+      ],
+      "id": "db04006c-b272-429b-882e-8c1eca9439e2",
+      "name": "Formatear Agenda"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recibir WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Obtener_Configuracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es mensaje válido?": {
+      "main": [
+        [
+          {
+            "node": "¿Lo envió el paciente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Paciente (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "¿El Paciente Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿El Paciente Existe?": {
+      "main": [
+        [
+          {
+            "node": "Crear Nuevo Paciente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Actualizar Última Interacción",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Nuevo Paciente": {
+      "main": [
+        [
+          {
+            "node": "Pausa Anti-Spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Última Interacción": {
+      "main": [
+        [
+          {
+            "node": "Pausa Anti-Spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pausa Anti-Spam": {
+      "main": [
+        [
+          {
+            "node": "Refrescar Datos de Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refrescar Datos de Supabase": {
+      "main": [
+        [
+          {
+            "node": "¿El Bot está Autorizado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mostrar \"Escribiendo...\"": {
+      "main": [
+        [
+          {
+            "node": "Cerebro Inteligencia Artificial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cerebro Inteligencia Artificial": {
+      "main": [
+        [
+          {
+            "node": "Formatear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Guardar Resumen en Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respaldar en Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Resumen en Supabase": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensaje de WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener_Configuracion": {
+      "main": [
+        [
+          {
+            "node": "¿Es mensaje válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Lo envió el paciente?": {
+      "main": [
+        [
+          {
+            "node": "Buscar Paciente (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Apagar Bot (Silenciador) ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿El Bot está Autorizado?": {
+      "main": [
+        [
+          {
+            "node": "Bloquear Bot (Mutex)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bloquear Bot (Mutex)": {
+      "main": [
+        [
+          {
+            "node": "Consultar Agenda Global",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Agenda Global": {
+      "main": [
+        [
+          {
+            "node": "Formatear Agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Agenda": {
+      "main": [
+        [
+          {
+            "node": "Mostrar \"Escribiendo...\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "America/Caracas",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "b9abf45f-369f-4a4f-9045-077e7329e290",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3eee2c5f8edefa6ced8d845098f5317aa081eb5e3b1a63d9120e26a5b465907e"
+  },
+  "id": "EaK2ob4anQAmuYND",
+  "tags": []
+}
