@@ -2400,9 +2400,9 @@
                 
                 for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                     blocksData.push({
-                        tipo: 'semana',
+                        tipo: 'dia',
                         fecha: d.toISOString().split('T')[0],
-                        hora: "TODA LA SEMANA",
+                        hora: "TODO EL DIA",
                         motivo: motivo
                     });
                 }
