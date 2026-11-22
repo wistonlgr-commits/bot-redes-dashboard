@@ -281,7 +281,7 @@
             
             .view-pane { padding: 12px; }
             .view-header { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
-            .search-box { width: 100%; }
+            .search-box { width: 100% !important; max-width: 100% !important; }
             
             table { min-width: 800px; } /* Permite scroll horizontal sin aplastar columnas */
             th, td { padding: 12px 10px; font-size: 0.85rem; }
@@ -341,6 +341,45 @@
         }
         .slider.round:before {
             border-radius: 50%;
+        }
+
+        /* === FUERA DE MARACAY (VALENCIA / CARACAS) === */
+        .outside-subtabs {
+            display: inline-flex; background: #E2E8F0; padding: 4px; border-radius: 12px; gap: 4px;
+        }
+        .outside-subtab-btn {
+            border: none; background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;
+            padding: 8px 16px; border-radius: 9px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
+        }
+        .outside-subtab-btn.active {
+            background: white; color: var(--primary-light); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+        }
+        .outside-kpi-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px;
+        }
+        .outside-kpi-card {
+            background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .outside-kpi-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+        .outside-kpi-val { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-top: 2px; }
+        .outside-kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .badge-valencia { background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE; }
+        .badge-caracas { background: #CCFBF1; color: #0F766E; border: 1px solid #99F6E4; }
+        .badge-otra-ciudad { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
+        .btn-wa-mini {
+            background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; padding: 6px 10px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;
+        }
+        .btn-wa-mini:hover { background: #BBF7D0; color: #166534; }
+        .outside-subpane { display: none; flex: 1; flex-direction: column; min-height: 0; }
+        .outside-subpane.active { display: flex; }
+        .cal-city-chip {
+            display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            background: rgba(255,255,255,0.22); padding: 1px 6px; border-radius: 6px; margin-top: 3px; letter-spacing: 0.3px;
+        }
+        @media (max-width: 900px) {
+            .outside-kpi-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -403,8 +442,9 @@
         
         <!-- Navbar lateral -->
         <div class="nav-sidebar glass">
-            <div class="nav-item active" onclick="switchView('view-calendar', this)" title="Agenda"><i class="fa-regular fa-calendar"></i></div>
-            <div class="nav-item" onclick="switchView('view-database', this)" title="Base de Datos"><i class="fa-solid fa-hospital-user"></i></div>
+            <div class="nav-item active" onclick="switchView('view-calendar', this)" title="Agenda Maracay"><i class="fa-regular fa-calendar"></i></div>
+            <div class="nav-item" onclick="switchView('view-database', this)" title="Base de Datos Maracay"><i class="fa-solid fa-hospital-user"></i></div>
+            <div class="nav-item" id="nav-outside" onclick="switchView('view-outside', this)" title="Fuera de Maracay (Valencia / Caracas)"><i class="fa-solid fa-map-location-dot"></i></div>
             <div class="nav-item" onclick="switchView('view-reports', this)" title="Reportes"><i class="fa-solid fa-chart-line"></i></div>
             <div class="nav-item" onclick="switchView('view-settings', this)" title="Ajustes"><i class="fa-solid fa-gear"></i></div>
         </div>
@@ -464,7 +504,7 @@
             <div id="view-calendar" class="view-pane active">
                 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="view-title">Agenda Semanal</div>
+                        <div class="view-title">Agenda Semanal <span class="badge badge-source" style="font-size: 0.72rem; vertical-align: middle; margin-left: 6px;">Maracay</span></div>
                         <div style="display: flex; gap: 8px;">
                             <button onclick="changeWeek(-1)" class="btn btn-outline" style="padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-chevron-left"></i></button>
                             <button onclick="changeWeek(0)" class="btn btn-outline" style="padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">Hoy</button>
@@ -498,19 +538,20 @@
             <!-- Vista 2: Base de Datos -->
             <div id="view-database" class="view-pane">
                 <div class="view-header">
-                    <div class="view-title">Directorio de Pacientes</div>
+                    <div class="view-title">Directorio de Pacientes <span class="badge badge-source" style="font-size: 0.72rem; vertical-align: middle; margin-left: 6px;">Maracay</span></div>
                     <div style="display: flex; gap: 12px; align-items: center;">
                         <select id="filter-select" class="input-control" style="width: auto; padding: 10px; border-radius: 20px; font-size: 0.9rem;" onchange="filterTable()">
                             <option value="all">Todos</option>
+                            <option value="maracay_ciudad">Solo ciudad Maracay</option>
                             <option value="cita">Agendados</option>
                             <option value="frio">Fríos</option>
                             <option value="tibio">Tibios</option>
                             <option value="caliente">Calientes</option>
                             <option value="bloqueo">Bloqueos de Agenda</option>
                         </select>
-                        <div class="search-box">
+                        <div class="search-box" style="width: 330px; max-width: 100%;">
                             <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="search-input" placeholder="Buscar por nombre o teléfono..." onkeyup="filterTable()">
+                            <input type="text" id="search-input" placeholder="Buscar por nombre, teléfono o ciudad (ej. Maracay)..." onkeyup="filterTable()">
                         </div>
                     </div>
                 </div>
@@ -542,6 +583,165 @@
                             <!-- Llenado por JS -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Vista 2B: Fuera de Maracay (Valencia, Caracas y otras ciudades) -->
+            <div id="view-outside" class="view-pane">
+                <div class="view-header" style="flex-wrap: wrap; gap: 14px; margin-bottom: 18px;">
+                    <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                        <div class="view-title"><i class="fa-solid fa-map-location-dot" style="color: var(--primary-light); margin-right: 8px;"></i>Fuera de Maracay</div>
+                        <div class="outside-subtabs">
+                            <button id="btn-outside-list" class="outside-subtab-btn active" onclick="switchOutsideSubView('list')">
+                                <i class="fa-solid fa-address-book"></i> Lista de Contactos
+                            </button>
+                            <button id="btn-outside-cal" class="outside-subtab-btn" onclick="switchOutsideSubView('calendar')">
+                                <i class="fa-regular fa-calendar-days"></i> Calendario Fuera de Maracay
+                            </button>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                        <button class="btn btn-outline" style="background: #ECFDF5; color: #059669; border-color: #A7F3D0;" onclick="exportOutsideToExcel()">
+                            <i class="fa-solid fa-file-excel"></i> Exportar Lista
+                        </button>
+                        <button class="btn btn-primary" onclick="openModal(null, 'JORNADA_VALENCIA')">
+                            <i class="fa-solid fa-plus"></i> Nuevo Fuera de Maracay
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPIs Fuera de Maracay -->
+                <div class="outside-kpi-grid">
+                    <div class="outside-kpi-card">
+                        <div>
+                            <div class="outside-kpi-label">Total Fuera</div>
+                            <div class="outside-kpi-val" id="outside-stat-total">0</div>
+                        </div>
+                        <div class="outside-kpi-icon" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-users"></i></div>
+                    </div>
+                    <div class="outside-kpi-card">
+                        <div>
+                            <div class="outside-kpi-label">Valencia</div>
+                            <div class="outside-kpi-val" id="outside-stat-valencia">0</div>
+                        </div>
+                        <div class="outside-kpi-icon" style="background: #EDE9FE; color: #6D28D9;"><i class="fa-solid fa-location-dot"></i></div>
+                    </div>
+                    <div class="outside-kpi-card">
+                        <div>
+                            <div class="outside-kpi-label">Caracas</div>
+                            <div class="outside-kpi-val" id="outside-stat-caracas">0</div>
+                        </div>
+                        <div class="outside-kpi-icon" style="background: #CCFBF1; color: #0F766E;"><i class="fa-solid fa-city"></i></div>
+                    </div>
+                    <div class="outside-kpi-card">
+                        <div>
+                            <div class="outside-kpi-label">Agendados (Online / Jornada)</div>
+                            <div class="outside-kpi-val" id="outside-stat-citas">0</div>
+                        </div>
+                        <div class="outside-kpi-icon" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-calendar-check"></i></div>
+                    </div>
+                </div>
+
+                <!-- Sub-vista 1: Lista de Contactos Fuera de Maracay -->
+                <div id="outside-pane-list" class="outside-subpane active">
+                    <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                            <select id="outside-city-filter" class="input-control" style="width: auto; padding: 9px 14px; border-radius: 12px; font-size: 0.88rem;" onchange="filterOutsideTable()">
+                                <option value="all">Todas (Fuera de Maracay)</option>
+                                <option value="valencia">Valencia (Carabobo)</option>
+                                <option value="caracas">Caracas (Capital / Miranda / La Guaira)</option>
+                                <option value="otra_fuera">Otras ciudades (Estados de Venezuela)</option>
+                                <optgroup label="Por Estado de Venezuela">
+                                    <option value="state:Amazonas">Amazonas</option>
+                                    <option value="state:Anzoátegui">Anzoátegui</option>
+                                    <option value="state:Apure">Apure</option>
+                                    <option value="state:Barinas">Barinas</option>
+                                    <option value="state:Bolívar">Bolívar</option>
+                                    <option value="state:Cojedes">Cojedes</option>
+                                    <option value="state:Delta Amacuro">Delta Amacuro</option>
+                                    <option value="state:Falcón">Falcón</option>
+                                    <option value="state:Guárico">Guárico</option>
+                                    <option value="state:Lara">Lara</option>
+                                    <option value="state:Mérida">Mérida</option>
+                                    <option value="state:Monagas">Monagas</option>
+                                    <option value="state:Nueva Esparta">Nueva Esparta</option>
+                                    <option value="state:Portuguesa">Portuguesa</option>
+                                    <option value="state:Sucre">Sucre</option>
+                                    <option value="state:Táchira">Táchira</option>
+                                    <option value="state:Trujillo">Trujillo</option>
+                                    <option value="state:Yaracuy">Yaracuy</option>
+                                    <option value="state:Zulia">Zulia</option>
+                                </optgroup>
+                            </select>
+                            <select id="outside-status-filter" class="input-control" style="width: auto; padding: 9px 14px; border-radius: 12px; font-size: 0.88rem;" onchange="filterOutsideTable()">
+                                <option value="all">Todos los estados</option>
+                                <option value="espera">Lista de Espera (Sin Cita)</option>
+                                <option value="agendado">Con Cita Agendada</option>
+                                <option value="campana">Solo Campañas Jornada</option>
+                            </select>
+                        </div>
+                        <div class="search-box" style="width: 320px; max-width: 100%;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="outside-search-input" placeholder="Buscar por nombre, teléfono, ciudad o estado..." onkeyup="filterOutsideTable()">
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>Teléfono</th>
+                                    <th>Ciudad / Lista</th>
+                                    <th>Fuente</th>
+                                    <th>Preferencia / Resumen</th>
+                                    <th>Cita</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="outside-table-body">
+                                <!-- Llenado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sub-vista 2: Calendario Fuera de Maracay -->
+                <div id="outside-pane-calendar" class="outside-subpane">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button onclick="changeOutsideWeek(-1)" class="btn btn-outline" style="padding: 5px 12px; border-radius: 8px;"><i class="fa-solid fa-chevron-left"></i></button>
+                            <button onclick="changeOutsideWeek(0)" class="btn btn-outline" style="padding: 5px 12px; border-radius: 8px; font-size: 0.82rem;">Hoy</button>
+                            <button onclick="changeOutsideWeek(1)" class="btn btn-outline" style="padding: 5px 12px; border-radius: 8px;"><i class="fa-solid fa-chevron-right"></i></button>
+                            <select id="outside-cal-city-filter" class="input-control" style="width: auto; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; margin-left: 6px;" onchange="renderOutsideCalendarOnly()">
+                                <option value="all">Todas (Fuera de Maracay)</option>
+                                <option value="valencia">Solo Valencia</option>
+                                <option value="caracas">Solo Caracas</option>
+                                <option value="otra_fuera">Solo Otras Ciudades</option>
+                            </select>
+                        </div>
+                        <div class="badge badge-source" style="font-size: 0.82rem;"><i class="fa-solid fa-video"></i> Asesorías Online (L/J 4-5pm) y Jornadas Valencia / Caracas</div>
+                    </div>
+
+                    <div class="calendar-wrapper">
+                        <div class="cal-grid" id="outside-calendar-grid" style="grid-template-columns: 60px repeat(6, 1fr);">
+                            <div class="cal-header" style="border-bottom: none;"></div>
+                            <div class="cal-header">LUNES <div id="outside-date-lunes" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                            <div class="cal-header">MARTES <div id="outside-date-martes" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                            <div class="cal-header">MIÉRCOLES <div id="outside-date-miercoles" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                            <div class="cal-header">JUEVES <div id="outside-date-jueves" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                            <div class="cal-header">VIERNES <div id="outside-date-viernes" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+                            <div class="cal-header" style="background-color: #f8fafc;">SÁBADO <div id="outside-date-sabado" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);"></div></div>
+
+                            <div class="cal-time-col" id="outside-time-labels"></div>
+                            <div class="cal-day-col" id="outside-col-lunes"></div>
+                            <div class="cal-day-col" id="outside-col-martes"></div>
+                            <div class="cal-day-col" id="outside-col-miercoles"></div>
+                            <div class="cal-day-col" id="outside-col-jueves"></div>
+                            <div class="cal-day-col" id="outside-col-viernes"></div>
+                            <div class="cal-day-col" id="outside-col-sabado" style="background-color: #fcfcfc;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -950,6 +1150,16 @@
                                 <option value="tiktok">TikTok Ads</option>
                             </select>
                         </div>
+                        <div class="input-group">
+                            <label>Sede / Lista</label>
+                            <select id="f-tipo-alerta" class="input-control">
+                                <option value="VENTA">Automático (según ciudad)</option>
+                                <option value="SEDE_MARACAY">Maracay (Consultorio Uniaragua)</option>
+                                <option value="JORNADA_VALENCIA">Fuera de Maracay — Jornada Valencia</option>
+                                <option value="JORNADA_CARACAS">Fuera de Maracay — Jornada Caracas</option>
+                                <option value="FUERA_MARACAY">Fuera de Maracay — Otra ciudad / Online</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -1264,6 +1474,33 @@
             element.classList.add('active');
             // Si cambiamos a reportes, regenerarlos (porque renderUI los omite si no están activos)
             if (viewId === 'view-reports') generateReports();
+            if (viewId === 'view-outside') {
+                updateOutsideCalendarHeaders();
+                renderOutsideCalendarOnly();
+                filterOutsideTable();
+            }
+        }
+
+        function switchOutsideSubView(sub) {
+            const listPane = document.getElementById('outside-pane-list');
+            const calPane = document.getElementById('outside-pane-calendar');
+            const btnList = document.getElementById('btn-outside-list');
+            const btnCal = document.getElementById('btn-outside-cal');
+            if (!listPane || !calPane) return;
+            if (sub === 'calendar') {
+                listPane.classList.remove('active');
+                calPane.classList.add('active');
+                btnList.classList.remove('active');
+                btnCal.classList.add('active');
+                updateOutsideCalendarHeaders();
+                renderOutsideCalendarOnly();
+            } else {
+                calPane.classList.remove('active');
+                listPane.classList.add('active');
+                btnCal.classList.remove('active');
+                btnList.classList.add('active');
+                filterOutsideTable();
+            }
         }
 
         // --- CARGA DE DATOS Y RENDERIZADO ---
@@ -1482,14 +1719,15 @@
                     if (tieneCita) adsTibioCalienteCitas++;
                 }
 
-                // Bot metrics
-                const hasChat = l.chat_history && Array.isArray(l.chat_history) && l.chat_history.length > 0;
+                // Bot metrics (soporta payload compacto _chat_len / _chat_user_len o chat_history completo)
+                const chatLen = (typeof l._chat_len === 'number') ? l._chat_len : (Array.isArray(l.chat_history) ? l.chat_history.length : 0);
+                const hasChat = chatLen > 0;
                 
                 if (hasChat) {
                     botAtendidos++;
-                    totalMensajesBot += l.chat_history.length;
+                    totalMensajesBot += chatLen;
                     
-                    const userMsgs = l.chat_history.filter(m => m.role === 'user').length;
+                    const userMsgs = (typeof l._chat_user_len === 'number') ? l._chat_user_len : (Array.isArray(l.chat_history) ? l.chat_history.filter(m => m && m.role === 'user').length : 0);
                     if (userMsgs >= 2) {
                         botCualificados++;
                     }
@@ -1767,11 +2005,133 @@
             return num;
         }
 
+        // --- SEPARACIÓN ESTRICTA POR ESTADOS DE VENEZUELA: MARACAY VS FUERA DE MARACAY ---
+        const MARACAY_ARAGUA_CITIES = [
+            'maracay', 'aragua', 'turmero', 'cagua', 'palo negro', 'la victoria',
+            'villa de cura', 'la villa', 'santa cruz', 'el limon', 'san mateo', 'las tejerias',
+            'choroni', 'ocumare de la costa', 'san vicente', 'girardot', 'marino',
+            'san francisco de asis', 'colonia tovar', 'bella vista',
+            'san joaquin', 'san sebastian', 'barbacoas', 'camatagua', 'magdaleno'
+        ];
+        const VALENCIA_CITIES = [
+            'valencia', 'carabobo', 'naguanagua', 'san diego', 'guacara',
+            'tocuyito', 'los guayos', 'puerto cabello', 'mariara', 'moron', 'bejuma', 'guigue'
+        ];
+        const CARACAS_CITIES = [
+            'caracas', 'ccs', 'distrito capital', 'miranda', 'chacao', 'baruta',
+            'el hatillo', 'petare', 'los teques', 'guarenas', 'guatire', 'el junquito',
+            'la guaira', 'vargas', 'maiquetia', 'catia la mar', 'carrizal',
+            'san antonio de los altos', 'valles del tuy', 'santa teresa del tuy', 'charallave', 'cua', 'ocumare del tuy', 'higuerote', 'caucagua'
+        ];
+        const OTHER_VE_STATES = [
+            { state: 'Amazonas', keys: ['amazonas', 'puerto ayacucho'] },
+            { state: 'Anzoátegui', keys: ['anzoategui', 'barcelona', 'puerto la cruz', 'lecheria', 'el tigre', 'anaco', 'guanta', 'cantaura'] },
+            { state: 'Apure', keys: ['apure', 'san fernando de apure', 'san fernando', 'achaguas', 'guasdualito', 'biruaca'] },
+            { state: 'Barinas', keys: ['barinas', 'socopo', 'barinitas', 'sabaneta', 'santa barbara de barinas'] },
+            { state: 'Bolívar', keys: ['bolivar', 'ciudad bolivar', 'puerto ordaz', 'ciudad guayana', 'san felix', 'upata', 'el palmar', 'santa elena', 'guasipati', 'tumeremo'] },
+            { state: 'Cojedes', keys: ['cojedes', 'san carlos', 'tinaquillo', 'tinaco'] },
+            { state: 'Delta Amacuro', keys: ['delta amacuro', 'tucupita'] },
+            { state: 'Falcón', keys: ['falcon', 'coro', 'punto fijo', 'paraguana', 'tucacas', 'chichiriviche', 'churuguara', 'dabajuro'] },
+            { state: 'Guárico', keys: ['guarico', 'san juan de los morros', 'calabozo', 'valle de la pascua', 'zaraza', 'altagracia de orituco', 'tucupido', 'ortiz'] },
+            { state: 'Lara', keys: ['lara', 'barquisimeto', 'cabudare', 'carora', 'el tocuyo', 'quibor'] },
+            { state: 'Mérida', keys: ['merida', 'el vigia', 'ejido', 'tovar', 'mucuchies'] },
+            { state: 'Monagas', keys: ['monagas', 'maturin', 'temblador', 'punta de mata', 'caripe'] },
+            { state: 'Nueva Esparta', keys: ['nueva esparta', 'margarita', 'porlamar', 'pampatar', 'la asuncion', 'juan griego'] },
+            { state: 'Portuguesa', keys: ['portuguesa', 'acarigua', 'araure', 'guanare', 'turen'] },
+            { state: 'Sucre', keys: ['estado sucre', 'cumana', 'carupano', 'guiria', 'cumanacoa'] },
+            { state: 'Táchira', keys: ['tachira', 'san cristobal', 'san antonio del tachira', 'san antonio, tachira', 'tariba', 'rubio', 'la fria'] },
+            { state: 'Trujillo', keys: ['trujillo', 'valera', 'bocono', 'betijoque'] },
+            { state: 'Yaracuy', keys: ['yaracuy', 'san felipe', 'yaritagua', 'chivacoa', 'nirgua'] },
+            { state: 'Zulia', keys: ['zulia', 'maracaibo', 'cabimas', 'ciudad ojeda', 'santa barbara de zulia', 'santa barbara del zulia', 'machiques', 'lagunillas'] }
+        ];
+
+        function normalizeTextSimple(str) {
+            return (str || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        }
+
+        function escapeHtmlSafe(str) {
+            return (str || '').toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function hasLocationTerm(textNorm, term) {
+            if (!textNorm || !term) return false;
+            const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return new RegExp('(^|[^a-z0-9])' + esc + '([^a-z0-9]|$)').test(textNorm);
+        }
+
+        function detectOtherVeState(ciudadNorm) {
+            if (!ciudadNorm) return '';
+            if (hasLocationTerm(ciudadNorm, 'aragua de barcelona')) return 'Anzoátegui';
+            if (ciudadNorm === 'sucre') return 'Sucre';
+            for (const entry of OTHER_VE_STATES) {
+                if (entry.keys.some(k => hasLocationTerm(ciudadNorm, k))) return entry.state;
+            }
+            return '';
+        }
+
+        function getLeadVenezuelaState(row) {
+            if (!row) return '';
+            const reg = getLeadRegion(row);
+            if (reg === 'maracay') return 'Aragua';
+            if (reg === 'valencia') return 'Carabobo';
+            if (reg === 'caracas') return 'Distrito Capital / Miranda';
+            const ciudadNorm = normalizeTextSimple(row.Ciudad);
+            return detectOtherVeState(ciudadNorm) || 'Otro Estado VE';
+        }
+
+        function getLeadRegion(row) {
+            if (!row) return 'maracay';
+            const temp = (row.Temperatura || '').toLowerCase().trim();
+            if (temp === 'bloqueo') return 'maracay';
+
+            const tipo = (row.Tipo_Alerta || '').toUpperCase().trim();
+            if (tipo === 'SEDE_MARACAY') return 'maracay';
+            if (tipo === 'JORNADA_VALENCIA') return 'valencia';
+            if (tipo === 'JORNADA_CARACAS') return 'caracas';
+            if (tipo === 'FUERA_MARACAY') return 'otra_fuera';
+
+            const fuenteNorm = normalizeTextSimple(row.Fuente);
+            if (hasLocationTerm(fuenteNorm, 'valencia')) return 'valencia';
+            if (hasLocationTerm(fuenteNorm, 'caracas')) return 'caracas';
+
+            const ciudadNorm = normalizeTextSimple(row.Ciudad);
+            if (!ciudadNorm || ciudadNorm === 'no registrada' || ciudadNorm === 'desconocida' || ciudadNorm === 'n/a' || ciudadNorm === 'venezuela') {
+                return 'maracay';
+            }
+            if (hasLocationTerm(ciudadNorm, 'aragua de barcelona')) return 'otra_fuera';
+            if (MARACAY_ARAGUA_CITIES.some(c => hasLocationTerm(ciudadNorm, c))) return 'maracay';
+            if (VALENCIA_CITIES.some(c => hasLocationTerm(ciudadNorm, c))) return 'valencia';
+            if (CARACAS_CITIES.some(c => hasLocationTerm(ciudadNorm, c))) return 'caracas';
+            if (hasLocationTerm(ciudadNorm, 'fuera de maracay') || detectOtherVeState(ciudadNorm)) return 'otra_fuera';
+            return 'maracay';
+        }
+
+        function isOutsideMaracay(row) {
+            return getLeadRegion(row) !== 'maracay';
+        }
+
+        function getCleanWaDigits(phone) {
+            if (!phone || String(phone).includes('@lid') || String(phone).includes('@g.us')) return '';
+            let num = String(phone).replace(/[^0-9]/g, '');
+            if (num.startsWith('0') && num.length === 11) num = '58' + num.substring(1);
+            if (num.startsWith('580') && num.length === 13) num = '58' + num.substring(3);
+            return num.length >= 10 ? num : '';
+        }
+
+        let outsideLeadsCache = [];
+
         function renderUI() {
             leadsData = localData;
-            _calendarHTML = {}; // Reset calendario acumulado
+            _calendarHTML = {}; // Reset calendario acumulado Maracay
+            outsideLeadsCache = [];
             
-            updateCalendarHeaders(); // Inicializar fechas del calendario
+            updateCalendarHeaders(); // Inicializar fechas del calendario Maracay
+            updateOutsideCalendarHeaders(); // Inicializar fechas del calendario Fuera de Maracay
             
             // Solo actualizar reportes si esa pestaña está activa (evita cálculos innecesarios)
             const reportPane = document.getElementById('view-reports');
@@ -1812,6 +2172,8 @@
             let waitlistHTML = '';
             let alertlistHTML = '';
             let upcominglistHTML = '';
+            let outsideTbodyHTML = '';
+            let outTotal = 0; let outValencia = 0; let outCaracas = 0; let outCitas = 0;
             
             // Cache para números formateados para no llamar a libphonenumber en cada render
             if (!window.phoneCache) window.phoneCache = {};
@@ -1819,7 +2181,9 @@
             localData.forEach(row => {
                 const id = row.id;
                 const nombre = row.Nombre || 'Sin Nombre';
-                const temp = (row.Temperatura || 'frio').toLowerCase();
+                const temp = (row.Temperatura || 'frio').toLowerCase().trim();
+                const estAlertCheck = (row.Estado_Alerta || '').toUpperCase().trim();
+                if (temp === 'eliminado' || estAlertCheck === 'ELIMINADO') return;
                 const dia = (row.Dia_Cita || '').toLowerCase().trim();
                 const hora = (row.Hora_Cita || '').toLowerCase().trim();
                 let fuente = (row.Fuente || 'organico').toLowerCase().replace(/=/g, '').trim();
@@ -1835,6 +2199,69 @@
                     window.phoneCache[row.phone_number] = formatPhone(row.phone_number);
                 }
                 fPhone = window.phoneCache[row.phone_number];
+
+                // Separación estricta: si es Fuera de Maracay va SOLO a su vista y calendario propio
+                const region = getLeadRegion(row);
+                if (region !== 'maracay') {
+                    const veState = getLeadVenezuelaState(row);
+                    outsideLeadsCache.push({ row, region, veState, fPhone, fuente, tColor, init, dia, hora });
+                    outTotal++;
+                    if (region === 'valencia') outValencia++;
+                    else if (region === 'caracas') outCaracas++;
+                    const hasCitaOut = Boolean(dia && hora && dia !== 'no');
+                    if (hasCitaOut) outCitas++;
+
+                    let outSourceIcon = '<i class="fa-brands fa-whatsapp"></i>';
+                    if (fuente === 'facebook') outSourceIcon = '<i class="fa-brands fa-facebook" style="color:#1877F2"></i>';
+                    if (fuente === 'instagram') outSourceIcon = '<i class="fa-brands fa-instagram" style="color:#E1306C"></i>';
+
+                    const tipoUpper = (row.Tipo_Alerta || '').toUpperCase().trim();
+                    const isCampana = tipoUpper === 'JORNADA_VALENCIA' || tipoUpper === 'JORNADA_CARACAS';
+                    const regionBadgeClass = region === 'valencia' ? 'badge-valencia' : (region === 'caracas' ? 'badge-caracas' : 'badge-otra-ciudad');
+                    const ciudadLabel = row.Ciudad ? escapeHtmlSafe(row.Ciudad) : (region === 'valencia' ? 'Valencia' : (region === 'caracas' ? 'Caracas' : veState));
+                    const stateSubTag = (region === 'otra_fuera' && veState && normalizeTextSimple(row.Ciudad) !== normalizeTextSimple(veState))
+                        ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px;">Estado ${escapeHtmlSafe(veState)}</div>`
+                        : '';
+                    const campTag = isCampana ? '<div style="font-size:0.7rem; color:#6D28D9; font-weight:600; margin-top:3px;"><i class="fa-solid fa-bullhorn"></i> Campaña Jornada</div>' : '';
+                    const prefTextRaw = (row.Resumen || row.Motivo_Consulta || '').trim();
+                    const prefShort = prefTextRaw.length > 85 ? prefTextRaw.substring(0, 85) + '...' : (prefTextRaw || 'Sin notas aún');
+                    const outDateTxt = hasCitaOut
+                        ? `<span class="badge badge-caliente" style="text-transform:none;">${escapeHtmlSafe(dia.toUpperCase())} ${escapeHtmlSafe(hora)}</span>`
+                        : '<span style="color:var(--text-muted); font-size:0.82rem;">Lista de espera</span>';
+                    const waDigits = getCleanWaDigits(row.phone_number);
+                    const waBtnHtml = waDigits
+                        ? `<a class="btn-wa-mini" href="https://wa.me/${waDigits}" target="_blank" rel="noopener" title="Escribir por WhatsApp"><i class="fa-brands fa-whatsapp"></i> Chat</a>`
+                        : '';
+                    const reqHum = row.requiere_asistencia_humana && row.requiere_asistencia_humana.trim() !== '';
+                    const outSearchBlob = escapeHtmlSafe(normalizeTextSimple(`${nombre} ${fPhone} ${row.phone_number || ''} ${row.Ciudad || ''} ${veState} ${region} ${fuente} ${prefTextRaw}`));
+
+                    outsideTbodyHTML += `
+                        <tr class="outside-row" data-region="${region}" data-state="${escapeHtmlSafe(veState)}" data-search="${outSearchBlob}" data-has-cita="${hasCitaOut ? '1' : '0'}" data-is-campana="${isCampana ? '1' : '0'}">
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openModal('${id}')">
+                                    <div class="pill-avatar" style="background:${tColor}; width:32px; height:32px; font-size:0.75rem;">${escapeHtmlSafe(init)}</div>
+                                    <div style="font-weight:600;">${escapeHtmlSafe(nombre)} ${row.Conversacion_Abierta ? '<i class="fa-solid fa-headset" style="color:var(--primary-light); font-size:0.8rem; margin-left:4px;" title="Bot Pausado"></i>' : ''} ${reqHum ? '<i class="fa-solid fa-triangle-exclamation alert-indicator" style="font-size:0.8rem; margin-left:4px;"></i>' : ''}</div>
+                                </div>
+                            </td>
+                            <td style="white-space:nowrap;">${escapeHtmlSafe(fPhone)}</td>
+                            <td>
+                                <span class="badge ${regionBadgeClass}">${ciudadLabel}</span>
+                                ${stateSubTag}
+                                ${campTag}
+                            </td>
+                            <td><div class="badge badge-source">${outSourceIcon} <span style="text-transform:capitalize; margin-left:4px;">${escapeHtmlSafe(fuente)}</span></div></td>
+                            <td style="max-width:260px; font-size:0.83rem; color:var(--text-muted);" title="${escapeHtmlSafe(prefTextRaw)}">${escapeHtmlSafe(prefShort)}</td>
+                            <td>${outDateTxt}</td>
+                            <td>
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    ${waBtnHtml}
+                                    <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="openModal('${id}')">Gestionar</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return; // NO se mezcla con Maracay
+                }
 
                 // Logica Alerta Quincena
                 let isAlertHoy = false;
@@ -1857,7 +2284,8 @@
 
                 // Lógica de Atendidos por Bot
                 // Si la conversacion NO está abierta por un humano (es decir, la maneja el bot) y hay historial, cuenta como atendido por el bot.
-                if (row.Conversacion_Abierta === false && row.chat_history && row.chat_history.length > 0) {
+                const rowChatLen = (typeof row._chat_len === 'number') ? row._chat_len : (Array.isArray(row.chat_history) ? row.chat_history.length : 0);
+                if (row.Conversacion_Abierta === false && rowChatLen > 0) {
                     botCount++;
                 }
 
@@ -1910,12 +2338,16 @@
                     }
                 }
 
-                // Llenar tabla general
+                // Llenar tabla general (Maracay / Aragua)
                 let badgeClass = `badge badge-${temp}`;
                 let dateTxt = (dia && hora && dia !== 'no') ? `${dia.toUpperCase()} ${hora}` : '<span style="color:var(--text-muted)">Pendiente</span>';
+                const mcyCityRaw = (row.Ciudad || '').trim();
+                const mcyCitySub = mcyCityRaw ? `<div style="font-size:0.74rem; color:var(--text-muted); margin-top:2px;"><i class="fa-solid fa-location-dot" style="font-size:0.65rem; margin-right:3px;"></i>${escapeHtmlSafe(mcyCityRaw)}</div>` : '';
+                const mcySearchBlob = escapeHtmlSafe(normalizeTextSimple(`${nombre} ${fPhone} ${row.phone_number || ''} ${mcyCityRaw} ${fuente} ${row.Resumen || ''}`));
+                const isExplicitMaracay = normalizeTextSimple(mcyCityRaw).includes('maracay') ? '1' : '0';
                 
                 tbodyHTML += `
-                    <tr class="t-row">
+                    <tr class="t-row" data-search="${mcySearchBlob}" data-maracay="${isExplicitMaracay}">
                         <td style="text-align: center;">
                             <input type="checkbox" class="row-checkbox" value="${id}" onclick="updateBulkBar()" style="transform: scale(1.2); cursor: pointer;">
                         </td>
@@ -1924,6 +2356,7 @@
                                 <div class="pill-avatar" style="background:${tColor}; width:32px; height:32px; font-size:0.75rem;">${init}</div>
                                 <div>
                                     <div style="font-weight:600;">${nombre} ${row.Conversacion_Abierta ? '<i class="fa-solid fa-headset" style="color:var(--primary-light); font-size:0.8rem; margin-left:4px;" title="Bot Pausado"></i>' : ''} ${(isAlertHoy || isAlertProxima || requiresHuman) ? '<i class="fa-solid ' + (requiresHuman ? 'fa-triangle-exclamation' : 'fa-bell') + ' alert-indicator" style="color: ' + (requiresHuman ? 'var(--danger)' : 'var(--danger)') + '; font-size:0.8rem; margin-left:4px;"></i>' : ''}</div>
+                                    ${mcyCitySub}
                                 </div>
                             </div>
                         </td>
@@ -1976,9 +2409,27 @@
             
             if(alertlist.innerHTML === '') alertlist.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 20px;">Todo al día</p>';
             if(waitlist.innerHTML === '') waitlist.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 20px;">Bandeja limpia</p>';
+
+            // Actualizar vista Fuera de Maracay (tabla, KPIs y calendario propio)
+            const outTbody = document.getElementById('outside-table-body');
+            if (outTbody) {
+                outTbody.innerHTML = outsideTbodyHTML || '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No hay contactos registrados fuera de Maracay todavía.</td></tr>';
+            }
+            const elOutTotal = document.getElementById('outside-stat-total');
+            if (elOutTotal) elOutTotal.innerText = outTotal;
+            const elOutVal = document.getElementById('outside-stat-valencia');
+            if (elOutVal) elOutVal.innerText = outValencia;
+            const elOutCcs = document.getElementById('outside-stat-caracas');
+            if (elOutCcs) elOutCcs.innerText = outCaracas;
+            const elOutCitas = document.getElementById('outside-stat-citas');
+            if (elOutCitas) elOutCitas.innerText = outCitas;
+
+            filterTable();
+            filterOutsideTable();
+            renderOutsideCalendarOnly();
         }
 
-        // Generar grilla de calendario
+        // Generar grilla de calendario (Maracay)
         const times = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
         const timeLabels = document.getElementById('time-labels');
         times.forEach(t => timeLabels.innerHTML += `<div class="cal-time-slot">${t}</div>`);
@@ -1986,6 +2437,226 @@
             const col = document.getElementById(day);
             times.forEach(() => col.innerHTML += `<div class="cal-cell"></div>`);
         });
+
+        // Generar grilla de calendario independiente (Fuera de Maracay)
+        const outTimeLabels = document.getElementById('outside-time-labels');
+        if (outTimeLabels) {
+            times.forEach(t => outTimeLabels.innerHTML += `<div class="cal-time-slot">${t}</div>`);
+        }
+        ['outside-col-lunes', 'outside-col-martes', 'outside-col-miercoles', 'outside-col-jueves', 'outside-col-viernes', 'outside-col-sabado'].forEach(day => {
+            const col = document.getElementById(day);
+            if (col) times.forEach(() => col.innerHTML += `<div class="cal-cell"></div>`);
+        });
+
+        let outsideWeekOffset = 0;
+        let outsideWeekMonday = null;
+        let _outsideCalendarHTML = {};
+
+        function updateOutsideCalendarHeaders() {
+            const tempDate = new Date();
+            const dayOfWeek = tempDate.getDay();
+            const diffToMonday = tempDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const monday = new Date(tempDate.setDate(diffToMonday));
+            monday.setDate(monday.getDate() + (outsideWeekOffset * 7));
+            outsideWeekMonday = new Date(monday);
+
+            const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+            days.forEach((day, index) => {
+                const dateHeader = new Date(monday);
+                dateHeader.setDate(monday.getDate() + index);
+                const dayStr = String(dateHeader.getDate()).padStart(2, '0');
+                const monthStr = String(dateHeader.getMonth() + 1).padStart(2, '0');
+                const el = document.getElementById(`outside-date-${day}`);
+                if (el) el.innerText = `${dayStr}/${monthStr}`;
+            });
+        }
+
+        function changeOutsideWeek(offset) {
+            if (offset === 0) outsideWeekOffset = 0;
+            else outsideWeekOffset += offset;
+            updateOutsideCalendarHeaders();
+            renderOutsideCalendarOnly();
+        }
+
+        function renderOutsideCalendarOnly() {
+            _outsideCalendarHTML = {};
+            const outDays = ['outside-col-lunes', 'outside-col-martes', 'outside-col-miercoles', 'outside-col-jueves', 'outside-col-viernes', 'outside-col-sabado'];
+            outDays.forEach(day => {
+                const col = document.getElementById(day);
+                if (col) col.innerHTML = '<div class="cal-cell"></div>'.repeat(times.length);
+            });
+            if (!outsideWeekMonday) updateOutsideCalendarHeaders();
+
+            const cityFilter = document.getElementById('outside-cal-city-filter') ? document.getElementById('outside-cal-city-filter').value : 'all';
+
+            outsideLeadsCache.forEach(item => {
+                if (cityFilter !== 'all' && item.region !== cityFilter) return;
+                if (!item.dia || !item.hora || item.dia === 'no') return;
+                renderOutsideCalendarEvent(item.row, item.region);
+            });
+
+            outDays.forEach(day => {
+                const col = document.getElementById(day);
+                if (col && _outsideCalendarHTML[day]) {
+                    col.innerHTML += _outsideCalendarHTML[day];
+                }
+            });
+        }
+
+        function renderOutsideCalendarEvent(row, region) {
+            const diaStr = (row.Dia_Cita || '').toLowerCase().trim().replace('é', 'e');
+            const hora = (row.Hora_Cita || '').toLowerCase().trim();
+            let colIds = [];
+
+            let eventDate = null;
+            if (/^\d{4}-\d{2}-\d{2}/.test(diaStr)) {
+                const match = diaStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                eventDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+            }
+
+            if (eventDate && outsideWeekMonday) {
+                const startOfWeek = new Date(outsideWeekMonday);
+                startOfWeek.setHours(0, 0, 0, 0);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 5);
+                endOfWeek.setHours(23, 59, 59, 999);
+
+                if (eventDate >= startOfWeek && eventDate <= endOfWeek) {
+                    const dayIndex = eventDate.getDay();
+                    if (dayIndex === 1) colIds.push('outside-col-lunes');
+                    else if (dayIndex === 2) colIds.push('outside-col-martes');
+                    else if (dayIndex === 3) colIds.push('outside-col-miercoles');
+                    else if (dayIndex === 4) colIds.push('outside-col-jueves');
+                    else if (dayIndex === 5) colIds.push('outside-col-viernes');
+                    else if (dayIndex === 6) colIds.push('outside-col-sabado');
+                }
+            }
+            if (colIds.length === 0) return;
+
+            let hourNum = 8; let minNum = 0;
+            const timeMatch = hora.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+            if (timeMatch) {
+                hourNum = parseInt(timeMatch[1], 10);
+                minNum = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+                if ((hora.includes('pm') || hora.includes('tarde')) && hourNum < 12) hourNum += 12;
+                if ((hora.includes('am') || hora.includes('mañana')) && hourNum === 12) hourNum = 0;
+            }
+            const topPx = Math.max(0, ((hourNum - 8) * 80) + (minNum * (80 / 60)));
+            const cardBg = region === 'valencia' ? '#6D28D9' : (region === 'caracas' ? '#0F766E' : '#B45309');
+            const cityChip = escapeHtmlSafe(row.Ciudad || (region === 'valencia' ? 'Valencia' : (region === 'caracas' ? 'Caracas' : 'Fuera')));
+
+            colIds.forEach(colId => {
+                if (!_outsideCalendarHTML[colId]) _outsideCalendarHTML[colId] = '';
+                _outsideCalendarHTML[colId] += `
+                    <div class="cal-event" style="top: ${topPx}px; height: 74px; background-color: ${cardBg};" onclick="openModal('${row.id}')">
+                        <div class="cal-event-time">${escapeHtmlSafe(hora.toUpperCase())}</div>
+                        <div class="cal-event-title">${escapeHtmlSafe(row.Nombre || 'Sin Nombre')}</div>
+                        <div class="cal-city-chip">${cityChip}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterOutsideTable() {
+            const input = document.getElementById('outside-search-input') ? normalizeTextSimple(document.getElementById('outside-search-input').value) : '';
+            const cityVal = document.getElementById('outside-city-filter') ? document.getElementById('outside-city-filter').value : 'all';
+            const statusVal = document.getElementById('outside-status-filter') ? document.getElementById('outside-status-filter').value : 'all';
+
+            document.querySelectorAll('.outside-row').forEach(tr => {
+                const searchData = tr.getAttribute('data-search') || normalizeTextSimple(tr.innerText);
+                const rRegion = tr.getAttribute('data-region');
+                const rState = tr.getAttribute('data-state') || '';
+                const hasCita = tr.getAttribute('data-has-cita') === '1';
+                const isCamp = tr.getAttribute('data-is-campana') === '1';
+
+                let ok = true;
+                if (input && !searchData.includes(input)) ok = false;
+                if (cityVal.startsWith('state:')) {
+                    if (rState !== cityVal.slice(6)) ok = false;
+                } else if (cityVal !== 'all' && rRegion !== cityVal) {
+                    ok = false;
+                }
+                if (statusVal === 'espera' && hasCita) ok = false;
+                if (statusVal === 'agendado' && !hasCita) ok = false;
+                if (statusVal === 'campana' && !isCamp) ok = false;
+
+                tr.style.display = ok ? '' : 'none';
+            });
+        }
+
+        async function exportOutsideToExcel() {
+            try {
+                const cityVal = document.getElementById('outside-city-filter') ? document.getElementById('outside-city-filter').value : 'all';
+                const statusVal = document.getElementById('outside-status-filter') ? document.getElementById('outside-status-filter').value : 'all';
+                const searchVal = document.getElementById('outside-search-input') ? normalizeTextSimple(document.getElementById('outside-search-input').value) : '';
+
+                const rowsToExport = outsideLeadsCache.filter(item => {
+                    const hasCita = Boolean(item.dia && item.hora && item.dia !== 'no');
+                    const tipoUpper = (item.row.Tipo_Alerta || '').toUpperCase().trim();
+                    const isCamp = tipoUpper === 'JORNADA_VALENCIA' || tipoUpper === 'JORNADA_CARACAS';
+                    if (cityVal.startsWith('state:')) {
+                        if ((item.veState || '') !== cityVal.slice(6)) return false;
+                    } else if (cityVal !== 'all' && item.region !== cityVal) {
+                        return false;
+                    }
+                    if (statusVal === 'espera' && hasCita) return false;
+                    if (statusVal === 'agendado' && !hasCita) return false;
+                    if (statusVal === 'campana' && !isCamp) return false;
+                    if (searchVal) {
+                        const hay = normalizeTextSimple(`${item.row.Nombre || ''} ${item.fPhone} ${item.row.phone_number || ''} ${item.row.Ciudad || ''} ${item.veState || ''} ${item.region} ${item.row.Resumen || ''}`);
+                        if (!hay.includes(searchVal)) return false;
+                    }
+                    return true;
+                });
+
+                if (rowsToExport.length === 0) {
+                    alert('No hay contactos fuera de Maracay para exportar con el filtro actual.');
+                    return;
+                }
+
+                const workbook = new ExcelJS.Workbook();
+                const sheet = workbook.addWorksheet('Fuera de Maracay');
+                sheet.columns = [
+                    { header: 'Nombre', key: 'nombre', width: 26 },
+                    { header: 'Teléfono', key: 'telefono', width: 20 },
+                    { header: 'Ciudad', key: 'ciudad', width: 18 },
+                    { header: 'Lista / Campaña', key: 'lista', width: 20 },
+                    { header: 'Fuente', key: 'fuente', width: 22 },
+                    { header: 'Temperatura', key: 'temp', width: 14 },
+                    { header: 'Preferencia / Resumen', key: 'resumen', width: 42 },
+                    { header: 'Fecha Cita', key: 'dia', width: 14 },
+                    { header: 'Hora Cita', key: 'hora', width: 12 },
+                    { header: 'Notas', key: 'notas', width: 30 }
+                ];
+                sheet.getRow(1).font = { bold: true };
+
+                rowsToExport.forEach(({ row, region, fPhone }) => {
+                    const listaLabel = (row.Tipo_Alerta === 'JORNADA_VALENCIA') ? 'Jornada Valencia'
+                        : (row.Tipo_Alerta === 'JORNADA_CARACAS') ? 'Jornada Caracas'
+                        : (region === 'valencia' ? 'Valencia' : (region === 'caracas' ? 'Caracas' : 'Fuera de Maracay'));
+                    sheet.addRow({
+                        nombre: row.Nombre || 'Sin Nombre',
+                        telefono: fPhone,
+                        ciudad: row.Ciudad || listaLabel,
+                        lista: listaLabel,
+                        fuente: row.Fuente || 'Orgánico',
+                        temp: row.Temperatura || 'frio',
+                        resumen: row.Resumen || row.Motivo_Consulta || '',
+                        dia: row.Dia_Cita || '',
+                        hora: row.Hora_Cita || '',
+                        notas: row.Notas || ''
+                    });
+                });
+
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const suffix = cityVal === 'all' ? 'Todas' : cityVal.toUpperCase();
+                saveAs(blob, `Fuera_de_Maracay_${suffix}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            } catch (e) {
+                console.error('Error exportando Fuera de Maracay:', e);
+                alert('Error al exportar la lista Fuera de Maracay.');
+            }
+        }
 
         // Acumula HTML del calendario en un objeto, luego se inyecta todo de golpe en renderUI
         let _calendarHTML = {};
@@ -2133,15 +2804,17 @@
         }
 
         function filterTable() {
-            let input = document.getElementById("search-input").value.toLowerCase();
+            let input = normalizeTextSimple(document.getElementById("search-input").value);
             let filterType = document.getElementById("filter-select") ? document.getElementById("filter-select").value : "all";
             
             document.querySelectorAll(".t-row").forEach(tr => {
-                const text = tr.innerText.toLowerCase();
-                let matchesSearch = text.includes(input);
+                const searchData = tr.getAttribute("data-search") || normalizeTextSimple(tr.innerText);
+                let matchesSearch = !input || searchData.includes(input);
                 let matchesFilter = true;
                 
-                if (filterType === 'cita') {
+                if (filterType === 'maracay_ciudad') {
+                    matchesFilter = tr.getAttribute("data-maracay") === "1";
+                } else if (filterType === 'cita') {
                     const dateCol = tr.children[5].innerText.toLowerCase();
                     matchesFilter = !dateCol.includes('pendiente');
                 } else if (filterType === 'frio' || filterType === 'tibio' || filterType === 'caliente' || filterType === 'bloqueo') {
@@ -2177,7 +2850,7 @@
         }
 
         // --- GESTIÓN DE MODAL Y CRUD ---
-        function openModal(id = null) {
+        function openModal(id = null, defaultTipoAlerta = 'VENTA') {
             document.getElementById('patient-modal').style.display = 'flex';
             
             // Reseteo de alerta humana
@@ -2191,9 +2864,14 @@
                 document.getElementById('f-nombre').value = "";
                 document.getElementById('f-telefono').value = "";
                 document.getElementById('f-telefono').removeAttribute('disabled');
-                document.getElementById('f-ciudad').value = "";
+                document.getElementById('f-ciudad').value = defaultTipoAlerta === 'JORNADA_VALENCIA' ? 'Valencia' : (defaultTipoAlerta === 'JORNADA_CARACAS' ? 'Caracas' : '');
                 document.getElementById('f-temperatura').value = "frio";
-                document.getElementById('f-fuente').value = "organico";
+                const elFuenteNew = document.getElementById('f-fuente');
+                elFuenteNew.value = "organico";
+                elFuenteNew.dataset.origFuente = "";
+                elFuenteNew.dataset.origFuenteNorm = "organico";
+                const elTipo = document.getElementById('f-tipo-alerta');
+                if (elTipo) elTipo.value = defaultTipoAlerta || 'VENTA';
                 document.getElementById('f-dia').value = "";
                 document.getElementById('f-hora').value = "";
                 document.getElementById('f-motivo').value = "";
@@ -2218,13 +2896,23 @@
             document.getElementById('f-telefono').setAttribute('disabled', 'true'); // No editar ID
             document.getElementById('f-ciudad').value = row.Ciudad || "";
             document.getElementById('f-temperatura').value = (row.Temperatura || "frio").toLowerCase();
-            let fuenteVal = (row.Fuente || "organico").toLowerCase().replace(/=/g, '').trim();
-            if (fuenteVal.includes('whatsapp') || fuenteVal.includes('organico')) fuenteVal = 'organico';
-            else if (fuenteVal.includes('instagram')) fuenteVal = 'instagram';
+            const rawFuenteOrig = (row.Fuente || "organico").toString().replace(/^=/, '').trim();
+            let fuenteVal = rawFuenteOrig.toLowerCase();
+            if (fuenteVal.includes('instagram')) fuenteVal = 'instagram';
             else if (fuenteVal.includes('facebook')) fuenteVal = 'facebook';
             else if (fuenteVal.includes('tiktok')) fuenteVal = 'tiktok';
+            else fuenteVal = 'organico';
             
-            document.getElementById('f-fuente').value = fuenteVal;
+            const elFuenteEdit = document.getElementById('f-fuente');
+            elFuenteEdit.value = fuenteVal;
+            elFuenteEdit.dataset.origFuente = rawFuenteOrig;
+            elFuenteEdit.dataset.origFuenteNorm = fuenteVal;
+            const elTipoEdit = document.getElementById('f-tipo-alerta');
+            if (elTipoEdit) {
+                const validTipos = ['VENTA', 'SEDE_MARACAY', 'JORNADA_VALENCIA', 'JORNADA_CARACAS', 'FUERA_MARACAY'];
+                const rowTipo = (row.Tipo_Alerta || 'VENTA').toUpperCase().trim();
+                elTipoEdit.value = validTipos.includes(rowTipo) ? rowTipo : 'VENTA';
+            }
             
             document.getElementById('f-dia').value = row.Dia_Cita || "";
             let fHora = document.getElementById('f-hora');
@@ -2591,7 +3279,15 @@
                 Telefono: document.getElementById('f-telefono').value, // Solo para 'add'
                 Ciudad: document.getElementById('f-ciudad').value,
                 Temperatura: document.getElementById('f-temperatura').value,
-                Fuente: document.getElementById('f-fuente').value,
+                Fuente: (() => {
+                    const elF = document.getElementById('f-fuente');
+                    const cur = elF.value;
+                    if (document.getElementById('f-id').value && elF.dataset.origFuente && cur === elF.dataset.origFuenteNorm) {
+                        return elF.dataset.origFuente;
+                    }
+                    return cur;
+                })(),
+                Tipo_Alerta: document.getElementById('f-tipo-alerta') ? document.getElementById('f-tipo-alerta').value : 'VENTA',
                 Dia_Cita: document.getElementById('f-dia').value,
                 Hora_Cita: document.getElementById('f-hora').value,
                 Motivo_Consulta: document.getElementById('f-motivo').value,

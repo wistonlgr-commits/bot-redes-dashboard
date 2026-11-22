@@ -36,14 +36,42 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
     }
 });
 
+// Helper paginado para cargar TODOS los leads activos (evita el límite de 1000 de PostgREST, oculta eliminados y compacta chat_history)
+async function fetchAllActiveLeads() {
+    const allRows = [];
+    const pageSize = 1000;
+    let from = 0;
+    while (true) {
+        const { data, error } = await supabase
+            .from('leads')
+            .select('id,phone_number,status,created_at,updated_at,Ultima_Interaccion,Alerta_Quincena,Fuente,Conversacion_Abierta,Nombre,Ciudad,Motivo_Consulta,Temperatura,Resumen,Dia_Cita,Hora_Cita,Notas,Fecha_Seguimiento,Tipo_Alerta,Estado_Alerta,bot_is_typing,requiere_asistencia_humana,chat_history')
+            .order('Ultima_Interaccion', { ascending: false })
+            .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        for (const r of data) {
+            const tempLow = (r.Temperatura || '').toLowerCase().trim();
+            const alertUp = (r.Estado_Alerta || '').toUpperCase().trim();
+            if (tempLow === 'eliminado' || alertUp === 'ELIMINADO') continue;
+            let hist = r.chat_history;
+            if (typeof hist === 'string') { try { hist = JSON.parse(hist); } catch (e) { hist = []; } }
+            const arr = Array.isArray(hist) ? hist : [];
+            const compact = { ...r, _chat_len: arr.length, _chat_user_len: arr.filter(m => m && m.role === 'user').length };
+            delete compact.chat_history;
+            allRows.push(compact);
+        }
+        if (data.length < pageSize) break;
+        from += pageSize;
+    }
+    return allRows;
+}
+
 // Helper para emitir a todos los clientes actualizando sus datos
 async function broadcastData() {
     if (!supabaseUrl) return;
     try {
-        const { data, error } = await supabase.from('leads').select('*').order('Ultima_Interaccion', { ascending: false });
-        if (!error && data) {
-            io.emit('actualizacion_completa', data);
-        }
+        const data = await fetchAllActiveLeads();
+        io.emit('actualizacion_completa', data);
     } catch (error) {
         console.error("Error broadcasting data:", error);
     }
@@ -186,8 +214,7 @@ app.post('/api/bot-config', async (req, res) => {
 // Endpoint para que el Frontend obtenga los datos
 app.get('/api/data', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('leads').select('*').order('Ultima_Interaccion', { ascending: false });
-        if (error) throw error;
+        const data = await fetchAllActiveLeads();
         res.json(data);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -485,7 +512,7 @@ io.on('connection', async (socket) => {
     // Enviar datos actuales al conectar
     try {
         if (supabaseUrl) {
-            const { data } = await supabase.from('leads').select('*').order('Ultima_Interaccion', { ascending: false });
+            const data = await fetchAllActiveLeads();
             if (data) socket.emit('actualizacion_completa', data);
 
             const { data: bData } = await supabase.from('agenda_bloqueos').select('*').order('created_at', { ascending: false });
