@@ -675,10 +675,18 @@
                             </select>
                             <select id="outside-status-filter" class="input-control" style="width: auto; padding: 9px 14px; border-radius: 12px; font-size: 0.88rem;" onchange="filterOutsideTable()">
                                 <option value="all">Todos los estados</option>
-                                <option value="espera">Lista de Espera (Sin Cita)</option>
-                                <option value="agendado">Con Cita Agendada</option>
                                 <option value="campana">Solo Campañas Jornada</option>
+                                <option value="espera">Lista de Espera (Sin Cita)</option>
+                                <option value="agendado">Con Cita (Online / Jornada)</option>
+                                <option value="presencial_mcy">Atendidos en Maracay</option>
                             </select>
+                            <select id="outside-date-filter" class="input-control" style="width: auto; padding: 9px 14px; border-radius: 12px; font-size: 0.88rem;" onchange="filterOutsideTable()">
+                                <option value="all">Todas las fechas (Histórico)</option>
+                                <option value="today">Hoy</option>
+                                <option value="7d">Últimos 7 días</option>
+                                <option value="30d">Últimos 30 días</option>
+                            </select>
+                            <span id="outside-visible-count" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;"></span>
                         </div>
                         <div class="search-box" style="width: 320px; max-width: 100%;">
                             <i class="fa-solid fa-magnifying-glass"></i>
@@ -2115,6 +2123,48 @@
             return getLeadRegion(row) !== 'maracay';
         }
 
+        function parseAppointmentHour24(horaStr) {
+            const h = (horaStr || '').toLowerCase().trim();
+            if (!h) return null;
+            const m = h.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+            if (!m) return null;
+            let hr = parseInt(m[1], 10);
+            if ((h.includes('pm') || h.includes('tarde')) && hr < 12) hr += 12;
+            if ((h.includes('am') || h.includes('mañana')) && hr === 12) hr = 0;
+            return isNaN(hr) ? null : hr;
+        }
+
+        function isPresencialMaracayAppointment(row) {
+            if (!row) return false;
+            const dia = (row.Dia_Cita || '').toLowerCase().trim();
+            const hora = (row.Hora_Cita || '').toLowerCase().trim();
+            if (!dia || !hora || dia === 'no') return false;
+            const tipo = (row.Tipo_Alerta || '').toUpperCase().trim();
+            if (tipo === 'JORNADA_VALENCIA' || tipo === 'JORNADA_CARACAS') return false;
+            const hr = parseAppointmentHour24(hora);
+            return hr !== null && hr >= 8 && hr < 12;
+        }
+
+        function getCaracasDateKey(val) {
+            if (!val) return '';
+            const d = new Date(val);
+            if (isNaN(d.getTime())) return '';
+            return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Caracas', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+        }
+
+        function formatShortCaracasDate(val) {
+            if (!val) return '';
+            const d = new Date(val);
+            if (isNaN(d.getTime())) return '';
+            const todayKey = getCaracasDateKey(new Date());
+            const yestKey = getCaracasDateKey(new Date(Date.now() - 86400000));
+            const dKey = getCaracasDateKey(d);
+            const timeStr = new Intl.DateTimeFormat('es-VE', { timeZone: 'America/Caracas', hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
+            if (dKey === todayKey) return `<span style="color:#059669; font-weight:600;">Hoy · ${timeStr}</span>`;
+            if (dKey === yestKey) return `<span style="color:#0284C7; font-weight:600;">Ayer · ${timeStr}</span>`;
+            return new Intl.DateTimeFormat('es-VE', { timeZone: 'America/Caracas', day: '2-digit', month: 'short', year: 'numeric' }).format(d);
+        }
+
         function getCleanWaDigits(phone) {
             if (!phone || String(phone).includes('@lid') || String(phone).includes('@g.us')) return '';
             let num = String(phone).replace(/[^0-9]/g, '');
@@ -2200,16 +2250,29 @@
                 }
                 fPhone = window.phoneCache[row.phone_number];
 
-                // Separación estricta: si es Fuera de Maracay va SOLO a su vista y calendario propio
+                // Separación limpia: contactos Fuera de Maracay van a su vista propia;
+                // si tienen cita presencial de mañana en Maracay (08:00-11:00), esa cita se muestra en el Calendario de Maracay
+                // y en la lista de su ciudad queda con la nota "Atendido en Maracay".
                 const region = getLeadRegion(row);
                 if (region !== 'maracay') {
                     const veState = getLeadVenezuelaState(row);
-                    outsideLeadsCache.push({ row, region, veState, fPhone, fuente, tColor, init, dia, hora });
+                    const hasCitaOut = Boolean(dia && hora && dia !== 'no');
+                    const isPresencialMcy = isPresencialMaracayAppointment(row);
+                    const hasOnlineOrJornadaCita = hasCitaOut && !isPresencialMcy;
+                    const contactDateRaw = row.Ultima_Interaccion || row.Fecha_Primer_Contacto || row.created_at || '';
+                    const contactDateKey = getCaracasDateKey(contactDateRaw);
+                    const contactDateHtml = formatShortCaracasDate(contactDateRaw);
+
+                    outsideLeadsCache.push({ row, region, veState, fPhone, fuente, tColor, init, dia, hora, isPresencialMcy, contactDateKey });
                     outTotal++;
                     if (region === 'valencia') outValencia++;
                     else if (region === 'caracas') outCaracas++;
-                    const hasCitaOut = Boolean(dia && hora && dia !== 'no');
-                    if (hasCitaOut) outCitas++;
+                    if (hasOnlineOrJornadaCita) outCitas++;
+
+                    if (isPresencialMcy) {
+                        if (temp !== 'bloqueo') citasCount++;
+                        renderCalendarEvent(row, tColor);
+                    }
 
                     let outSourceIcon = '<i class="fa-brands fa-whatsapp"></i>';
                     if (fuente === 'facebook') outSourceIcon = '<i class="fa-brands fa-facebook" style="color:#1877F2"></i>';
@@ -2225,22 +2288,27 @@
                     const campTag = isCampana ? '<div style="font-size:0.7rem; color:#6D28D9; font-weight:600; margin-top:3px;"><i class="fa-solid fa-bullhorn"></i> Campaña Jornada</div>' : '';
                     const prefTextRaw = (row.Resumen || row.Motivo_Consulta || '').trim();
                     const prefShort = prefTextRaw.length > 85 ? prefTextRaw.substring(0, 85) + '...' : (prefTextRaw || 'Sin notas aún');
-                    const outDateTxt = hasCitaOut
-                        ? `<span class="badge badge-caliente" style="text-transform:none;">${escapeHtmlSafe(dia.toUpperCase())} ${escapeHtmlSafe(hora)}</span>`
-                        : '<span style="color:var(--text-muted); font-size:0.82rem;">Lista de espera</span>';
+                    const outDateTxt = isPresencialMcy
+                        ? `<span class="badge" style="background:#E0F2FE; color:#0369A1; text-transform:none;">${escapeHtmlSafe(dia.toUpperCase())} ${escapeHtmlSafe(hora)}</span><div style="font-size:0.7rem; color:#0369A1; font-weight:600; margin-top:3px;"><i class="fa-solid fa-hospital"></i> Atendido en Maracay</div>`
+                        : (hasOnlineOrJornadaCita
+                            ? `<span class="badge badge-caliente" style="text-transform:none;">${escapeHtmlSafe(dia.toUpperCase())} ${escapeHtmlSafe(hora)}</span><div style="font-size:0.7rem; color:#0F766E; font-weight:600; margin-top:3px;"><i class="fa-solid fa-video"></i> ${isCampana ? 'Jornada / Online' : 'Asesoría Online'}</div>`
+                            : '<span style="color:var(--text-muted); font-size:0.82rem;">Lista de espera</span>');
                     const waDigits = getCleanWaDigits(row.phone_number);
                     const waBtnHtml = waDigits
                         ? `<a class="btn-wa-mini" href="https://wa.me/${waDigits}" target="_blank" rel="noopener" title="Escribir por WhatsApp"><i class="fa-brands fa-whatsapp"></i> Chat</a>`
                         : '';
                     const reqHum = row.requiere_asistencia_humana && row.requiere_asistencia_humana.trim() !== '';
-                    const outSearchBlob = escapeHtmlSafe(normalizeTextSimple(`${nombre} ${fPhone} ${row.phone_number || ''} ${row.Ciudad || ''} ${veState} ${region} ${fuente} ${prefTextRaw}`));
+                    const outSearchBlob = escapeHtmlSafe(normalizeTextSimple(`${nombre} ${fPhone} ${row.phone_number || ''} ${row.Ciudad || ''} ${veState} ${region} ${fuente} ${prefTextRaw} ${isPresencialMcy ? 'atendido en maracay presencial' : ''} ${contactDateKey}`));
 
                     outsideTbodyHTML += `
-                        <tr class="outside-row" data-region="${region}" data-state="${escapeHtmlSafe(veState)}" data-search="${outSearchBlob}" data-has-cita="${hasCitaOut ? '1' : '0'}" data-is-campana="${isCampana ? '1' : '0'}">
+                        <tr class="outside-row" data-region="${region}" data-state="${escapeHtmlSafe(veState)}" data-search="${outSearchBlob}" data-has-cita="${hasOnlineOrJornadaCita ? '1' : '0'}" data-presencial-mcy="${isPresencialMcy ? '1' : '0'}" data-is-campana="${isCampana ? '1' : '0'}" data-date-key="${escapeHtmlSafe(contactDateKey)}">
                             <td>
                                 <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openModal('${id}')">
                                     <div class="pill-avatar" style="background:${tColor}; width:32px; height:32px; font-size:0.75rem;">${escapeHtmlSafe(init)}</div>
-                                    <div style="font-weight:600;">${escapeHtmlSafe(nombre)} ${row.Conversacion_Abierta ? '<i class="fa-solid fa-headset" style="color:var(--primary-light); font-size:0.8rem; margin-left:4px;" title="Bot Pausado"></i>' : ''} ${reqHum ? '<i class="fa-solid fa-triangle-exclamation alert-indicator" style="font-size:0.8rem; margin-left:4px;"></i>' : ''}</div>
+                                    <div>
+                                        <div style="font-weight:600;">${escapeHtmlSafe(nombre)} ${row.Conversacion_Abierta ? '<i class="fa-solid fa-headset" style="color:var(--primary-light); font-size:0.8rem; margin-left:4px;" title="Bot Pausado"></i>' : ''} ${reqHum ? '<i class="fa-solid fa-triangle-exclamation alert-indicator" style="font-size:0.8rem; margin-left:4px;"></i>' : ''}</div>
+                                        ${contactDateHtml ? `<div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">${contactDateHtml}</div>` : ''}
+                                    </div>
                                 </div>
                             </td>
                             <td style="white-space:nowrap;">${escapeHtmlSafe(fPhone)}</td>
@@ -2260,7 +2328,7 @@
                             </td>
                         </tr>
                     `;
-                    return; // NO se mezcla con Maracay
+                    return; // NO se duplica en el Directorio de Maracay
                 }
 
                 // Logica Alerta Quincena
@@ -2492,6 +2560,7 @@
             outsideLeadsCache.forEach(item => {
                 if (cityFilter !== 'all' && item.region !== cityFilter) return;
                 if (!item.dia || !item.hora || item.dia === 'no') return;
+                if (item.isPresencialMcy) return;
                 renderOutsideCalendarEvent(item.row, item.region);
             });
 
@@ -2557,17 +2626,32 @@
             });
         }
 
+        function matchesOutsideDateFilter(dateKey, dateVal) {
+            if (!dateVal || dateVal === 'all') return true;
+            if (!dateKey) return false;
+            const todayKey = getCaracasDateKey(new Date());
+            if (dateVal === 'today') return dateKey === todayKey;
+            const daysBack = dateVal === '7d' ? 6 : (dateVal === '30d' ? 29 : 0);
+            const cutoffKey = getCaracasDateKey(new Date(Date.now() - daysBack * 86400000));
+            return dateKey >= cutoffKey;
+        }
+
         function filterOutsideTable() {
             const input = document.getElementById('outside-search-input') ? normalizeTextSimple(document.getElementById('outside-search-input').value) : '';
             const cityVal = document.getElementById('outside-city-filter') ? document.getElementById('outside-city-filter').value : 'all';
             const statusVal = document.getElementById('outside-status-filter') ? document.getElementById('outside-status-filter').value : 'all';
+            const dateVal = document.getElementById('outside-date-filter') ? document.getElementById('outside-date-filter').value : 'all';
 
-            document.querySelectorAll('.outside-row').forEach(tr => {
+            let shown = 0;
+            const rows = document.querySelectorAll('.outside-row');
+            rows.forEach(tr => {
                 const searchData = tr.getAttribute('data-search') || normalizeTextSimple(tr.innerText);
                 const rRegion = tr.getAttribute('data-region');
                 const rState = tr.getAttribute('data-state') || '';
                 const hasCita = tr.getAttribute('data-has-cita') === '1';
+                const isPresMcy = tr.getAttribute('data-presencial-mcy') === '1';
                 const isCamp = tr.getAttribute('data-is-campana') === '1';
+                const rDateKey = tr.getAttribute('data-date-key') || '';
 
                 let ok = true;
                 if (input && !searchData.includes(input)) ok = false;
@@ -2576,22 +2660,32 @@
                 } else if (cityVal !== 'all' && rRegion !== cityVal) {
                     ok = false;
                 }
-                if (statusVal === 'espera' && hasCita) ok = false;
+                if (statusVal === 'espera' && (hasCita || isPresMcy)) ok = false;
                 if (statusVal === 'agendado' && !hasCita) ok = false;
+                if (statusVal === 'presencial_mcy' && !isPresMcy) ok = false;
                 if (statusVal === 'campana' && !isCamp) ok = false;
+                if (!matchesOutsideDateFilter(rDateKey, dateVal)) ok = false;
 
                 tr.style.display = ok ? '' : 'none';
+                if (ok) shown++;
             });
+
+            const cntEl = document.getElementById('outside-visible-count');
+            if (cntEl) {
+                cntEl.innerText = rows.length > 0 ? `Mostrando ${shown} de ${rows.length}` : '';
+            }
         }
 
         async function exportOutsideToExcel() {
             try {
                 const cityVal = document.getElementById('outside-city-filter') ? document.getElementById('outside-city-filter').value : 'all';
                 const statusVal = document.getElementById('outside-status-filter') ? document.getElementById('outside-status-filter').value : 'all';
+                const dateVal = document.getElementById('outside-date-filter') ? document.getElementById('outside-date-filter').value : 'all';
                 const searchVal = document.getElementById('outside-search-input') ? normalizeTextSimple(document.getElementById('outside-search-input').value) : '';
 
                 const rowsToExport = outsideLeadsCache.filter(item => {
-                    const hasCita = Boolean(item.dia && item.hora && item.dia !== 'no');
+                    const hasAnyCita = Boolean(item.dia && item.hora && item.dia !== 'no');
+                    const hasOnlineOrJornada = hasAnyCita && !item.isPresencialMcy;
                     const tipoUpper = (item.row.Tipo_Alerta || '').toUpperCase().trim();
                     const isCamp = tipoUpper === 'JORNADA_VALENCIA' || tipoUpper === 'JORNADA_CARACAS';
                     if (cityVal.startsWith('state:')) {
@@ -2599,11 +2693,13 @@
                     } else if (cityVal !== 'all' && item.region !== cityVal) {
                         return false;
                     }
-                    if (statusVal === 'espera' && hasCita) return false;
-                    if (statusVal === 'agendado' && !hasCita) return false;
+                    if (statusVal === 'espera' && hasAnyCita) return false;
+                    if (statusVal === 'agendado' && !hasOnlineOrJornada) return false;
+                    if (statusVal === 'presencial_mcy' && !item.isPresencialMcy) return false;
                     if (statusVal === 'campana' && !isCamp) return false;
+                    if (!matchesOutsideDateFilter(item.contactDateKey, dateVal)) return false;
                     if (searchVal) {
-                        const hay = normalizeTextSimple(`${item.row.Nombre || ''} ${item.fPhone} ${item.row.phone_number || ''} ${item.row.Ciudad || ''} ${item.veState || ''} ${item.region} ${item.row.Resumen || ''}`);
+                        const hay = normalizeTextSimple(`${item.row.Nombre || ''} ${item.fPhone} ${item.row.phone_number || ''} ${item.row.Ciudad || ''} ${item.veState || ''} ${item.region} ${item.row.Resumen || ''} ${item.isPresencialMcy ? 'atendido en maracay presencial' : ''} ${item.contactDateKey || ''}`);
                         if (!hay.includes(searchVal)) return false;
                     }
                     return true;
@@ -2620,8 +2716,9 @@
                     { header: 'Nombre', key: 'nombre', width: 26 },
                     { header: 'Teléfono', key: 'telefono', width: 20 },
                     { header: 'Ciudad', key: 'ciudad', width: 18 },
-                    { header: 'Lista / Campaña', key: 'lista', width: 20 },
+                    { header: 'Lista / Campaña', key: 'lista', width: 24 },
                     { header: 'Fuente', key: 'fuente', width: 22 },
+                    { header: 'Último Contacto', key: 'contacto', width: 16 },
                     { header: 'Temperatura', key: 'temp', width: 14 },
                     { header: 'Preferencia / Resumen', key: 'resumen', width: 42 },
                     { header: 'Fecha Cita', key: 'dia', width: 14 },
@@ -2630,16 +2727,18 @@
                 ];
                 sheet.getRow(1).font = { bold: true };
 
-                rowsToExport.forEach(({ row, region, fPhone }) => {
-                    const listaLabel = (row.Tipo_Alerta === 'JORNADA_VALENCIA') ? 'Jornada Valencia'
+                rowsToExport.forEach(({ row, region, fPhone, isPresencialMcy, contactDateKey }) => {
+                    const listaBase = (row.Tipo_Alerta === 'JORNADA_VALENCIA') ? 'Jornada Valencia'
                         : (row.Tipo_Alerta === 'JORNADA_CARACAS') ? 'Jornada Caracas'
                         : (region === 'valencia' ? 'Valencia' : (region === 'caracas' ? 'Caracas' : 'Fuera de Maracay'));
+                    const listaLabel = isPresencialMcy ? `${listaBase} (Atendido en Maracay)` : listaBase;
                     sheet.addRow({
                         nombre: row.Nombre || 'Sin Nombre',
                         telefono: fPhone,
-                        ciudad: row.Ciudad || listaLabel,
+                        ciudad: row.Ciudad || listaBase,
                         lista: listaLabel,
                         fuente: row.Fuente || 'Orgánico',
+                        contacto: contactDateKey || '',
                         temp: row.Temperatura || 'frio',
                         resumen: row.Resumen || row.Motivo_Consulta || '',
                         dia: row.Dia_Cita || '',
@@ -2749,10 +2848,14 @@
                         </div>
                     `;
                 } else {
+                    const calOutsideChip = (getLeadRegion(row) !== 'maracay' && row.Ciudad)
+                        ? `<div class="cal-city-chip">${escapeHtmlSafe(row.Ciudad)} · Presencial</div>`
+                        : '';
                     _calendarHTML[colId] += `
                         <div class="cal-event" style="top: ${topPx}px; height: 74px; background-color: ${color};" onclick="openModal('${row.id}')">
                             <div class="cal-event-time">${hora.toUpperCase()}</div>
-                            <div class="cal-event-title">${row.Nombre}</div>
+                            <div class="cal-event-title">${escapeHtmlSafe(row.Nombre || 'Sin Nombre')}</div>
+                            ${calOutsideChip}
                         </div>
                     `;
                 }
