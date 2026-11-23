@@ -378,6 +378,58 @@
             display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
             background: rgba(255,255,255,0.22); padding: 1px 6px; border-radius: 6px; margin-top: 3px; letter-spacing: 0.3px;
         }
+        .outrep-toolbar {
+            display: flex; gap: 10px; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; margin-bottom: 14px; background: white; padding: 12px 14px;
+            border: 1px solid var(--border); border-radius: 14px;
+        }
+        .outrep-insight {
+            background: white; color: var(--text-dark); border: 1px solid var(--border);
+            border-left: 4px solid var(--secondary); border-radius: 12px; padding: 14px 18px;
+            margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px;
+        }
+        .outrep-insight-icon {
+            width: 36px; height: 36px; border-radius: 9px; background: #EFF6FF; color: var(--secondary);
+            display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+        }
+        .outrep-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+        .outrep-kpi-card {
+            background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+        }
+        .outrep-kpi-sub { font-size: 0.76rem; color: var(--text-muted); margin-top: 4px; }
+        .outrep-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+        .outrep-card {
+            background: white; border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px;
+            display: flex; flex-direction: column;
+        }
+        .outrep-card-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .outrep-card-title { font-size: 0.94rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .outrep-card-sub { font-size: 0.76rem; color: var(--text-muted); }
+        .outrep-state-list { display: flex; flex-direction: column; gap: 7px; max-height: 295px; overflow-y: auto; padding-right: 4px; }
+        .outrep-state-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 8px 10px; border-radius: 10px; border: 1px solid #F1F5F9; background: #F8FAFC;
+            cursor: pointer; transition: all 0.16s;
+        }
+        .outrep-state-row:hover { background: #EFF6FF; border-color: #BFDBFE; transform: translateX(2px); }
+        .outrep-bar-track { height: 7px; background: #E2E8F0; border-radius: 99px; overflow: hidden; margin-top: 5px; }
+        .outrep-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #0EA5E9, #2563EB); }
+        .outrep-topic-list { display: flex; flex-direction: column; gap: 10px; }
+        .outrep-topic-row { display: flex; flex-direction: column; gap: 4px; }
+        .outrep-topic-meta { display: flex; justify-content: space-between; font-size: 0.83rem; font-weight: 600; color: var(--text-dark); }
+        .outrep-date-pill {
+            display: inline-block; padding: 3px 8px; border-radius: 99px; font-size: 0.74rem; font-weight: 600;
+            background: #EDE9FE; color: #6D28D9;
+        }
+        .outrep-date-pill.flex { background: #DCFCE7; color: #15803D; }
+        .outrep-date-pill.pending { background: #F1F5F9; color: #64748B; }
+        @media (max-width: 1024px) {
+            .outrep-grid { grid-template-columns: 1fr; }
+            .outrep-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+        }
         @media (max-width: 900px) {
             .outside-kpi-grid { grid-template-columns: repeat(2, 1fr); }
         }
@@ -598,6 +650,9 @@
                             <button id="btn-outside-cal" class="outside-subtab-btn" onclick="switchOutsideSubView('calendar')">
                                 <i class="fa-regular fa-calendar-days"></i> Calendario Fuera de Maracay
                             </button>
+                            <button id="btn-outside-report" class="outside-subtab-btn" onclick="switchOutsideSubView('report')">
+                                <i class="fa-solid fa-chart-column"></i> Informes
+                            </button>
                         </div>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
@@ -748,6 +803,150 @@
                             <div class="cal-day-col" id="outside-col-jueves"></div>
                             <div class="cal-day-col" id="outside-col-viernes"></div>
                             <div class="cal-day-col" id="outside-col-sabado" style="background-color: #fcfcfc;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-vista 3: Informe y Métricas (General + Por Estado) -->
+                <div id="outside-pane-report" class="outside-subpane" style="overflow-y: auto; padding-right: 4px;">
+                    <div class="outrep-toolbar">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                            <select id="outrep-scope" class="input-control" style="width: auto; padding: 8px 13px; border-radius: 10px; font-size: 0.86rem; font-weight: 600;" onchange="renderOutsideReport()">
+                                <option value="all">Informe General (Todos los estados)</option>
+                                <option value="valencia">Valencia (Carabobo)</option>
+                                <option value="caracas">Caracas (Capital / Miranda / La Guaira)</option>
+                                <option value="otra_fuera">Demás Estados de Venezuela (19 estados)</option>
+                                <optgroup label="Informe Individual por Estado">
+                                    <option value="state:Amazonas">Amazonas</option>
+                                    <option value="state:Anzoátegui">Anzoátegui</option>
+                                    <option value="state:Apure">Apure</option>
+                                    <option value="state:Barinas">Barinas</option>
+                                    <option value="state:Bolívar">Bolívar</option>
+                                    <option value="state:Cojedes">Cojedes</option>
+                                    <option value="state:Delta Amacuro">Delta Amacuro</option>
+                                    <option value="state:Falcón">Falcón</option>
+                                    <option value="state:Guárico">Guárico</option>
+                                    <option value="state:Lara">Lara</option>
+                                    <option value="state:Mérida">Mérida</option>
+                                    <option value="state:Monagas">Monagas</option>
+                                    <option value="state:Nueva Esparta">Nueva Esparta</option>
+                                    <option value="state:Portuguesa">Portuguesa</option>
+                                    <option value="state:Sucre">Sucre</option>
+                                    <option value="state:Táchira">Táchira</option>
+                                    <option value="state:Trujillo">Trujillo</option>
+                                    <option value="state:Yaracuy">Yaracuy</option>
+                                    <option value="state:Zulia">Zulia</option>
+                                </optgroup>
+                            </select>
+                            <select id="outrep-origin" class="input-control" style="width: auto; padding: 8px 13px; border-radius: 10px; font-size: 0.86rem;" onchange="renderOutsideReport()">
+                                <option value="all">Campañas + Histórico completo</option>
+                                <option value="campana">Solo Campañas Jornada (Activas)</option>
+                            </select>
+                            <select id="outrep-period" class="input-control" style="width: auto; padding: 8px 13px; border-radius: 10px; font-size: 0.86rem;" onchange="renderOutsideReport()">
+                                <option value="all">Todas las fechas</option>
+                                <option value="today">Hoy</option>
+                                <option value="7d">Últimos 7 días</option>
+                                <option value="30d">Últimos 30 días</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                            <button id="btn-outrep-pdf" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="printOutsideReportPDF()">
+                                <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Síntesis del Informe -->
+                    <div class="outrep-insight">
+                        <div class="outrep-insight-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700;" id="outrep-insight-title">Resumen General</div>
+                            <div style="font-size: 0.92rem; line-height: 1.45; margin-top: 3px; color: var(--text-dark);" id="outrep-insight-text">Cargando datos...</div>
+                        </div>
+                    </div>
+
+                    <!-- KPIs del Informe -->
+                    <div class="outrep-kpi-grid">
+                        <div class="outrep-kpi-card">
+                            <div class="outside-kpi-label">Total Interesados</div>
+                            <div class="outside-kpi-val" id="outrep-kpi-total">0</div>
+                            <div class="outrep-kpi-sub" id="outrep-kpi-camp-sub">0 de campaña activa</div>
+                        </div>
+                        <div class="outrep-kpi-card">
+                            <div class="outside-kpi-label">Calientes (Prioridad)</div>
+                            <div class="outside-kpi-val" style="color: #DC2626;" id="outrep-kpi-hot">0</div>
+                            <div class="outrep-kpi-sub" id="outrep-kpi-hot-pct">0% del alcance</div>
+                        </div>
+                        <div class="outrep-kpi-card">
+                            <div class="outside-kpi-label">Listos para Avisar</div>
+                            <div class="outside-kpi-val" style="color: #059669;" id="outrep-kpi-named">0</div>
+                            <div class="outrep-kpi-sub" id="outrep-kpi-online-sub">Con nombre registrado</div>
+                        </div>
+                        <div class="outrep-kpi-card">
+                            <div class="outside-kpi-label">Fecha Más Pedida</div>
+                            <div class="outside-kpi-val" style="font-size: 1.15rem; color: #6D28D9; line-height: 1.25; margin-top: 4px;" id="outrep-kpi-topdate">Sin datos</div>
+                            <div class="outrep-kpi-sub" id="outrep-kpi-topdate-sub">—</div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficos y Desgloses -->
+                    <div class="outrep-grid">
+                        <div class="outrep-card">
+                            <div class="outrep-card-head">
+                                <div class="outrep-card-title"><i class="fa-solid fa-calendar-week" style="color:#6D28D9;"></i> Fechas y Semanas Más Solicitadas</div>
+                                <div class="outrep-card-sub" id="outrep-dates-sub">0 con preferencia</div>
+                            </div>
+                            <div style="position: relative; height: 270px; flex: 1;">
+                                <canvas id="chart-outrep-dates"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="outrep-card">
+                            <div class="outrep-card-head">
+                                <div class="outrep-card-title" id="outrep-states-title"><i class="fa-solid fa-map-location-dot" style="color:#0284C7;"></i> Demanda por Estado de Venezuela</div>
+                                <div class="outrep-card-sub" id="outrep-states-sub">Clic en un estado para ver su informe</div>
+                            </div>
+                            <div class="outrep-state-list" id="outrep-states-list"></div>
+                        </div>
+
+                        <div class="outrep-card">
+                            <div class="outrep-card-head">
+                                <div class="outrep-card-title"><i class="fa-solid fa-chart-line" style="color:#0F766E;"></i> Evolución Diaria (Últimos 14 días)</div>
+                                <div class="outrep-card-sub">Interesados por fecha de contacto</div>
+                            </div>
+                            <div style="position: relative; height: 240px;">
+                                <canvas id="chart-outrep-daily"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="outrep-card">
+                            <div class="outrep-card-head">
+                                <div class="outrep-card-title"><i class="fa-solid fa-stethoscope" style="color:#D97706;"></i> Motivos, Síntomas y Dudas Frecuentes</div>
+                                <div class="outrep-card-sub">Temas y consultas más repetidas</div>
+                            </div>
+                            <div class="outrep-topic-list" id="outrep-topics-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Lista Ejecutiva de Pacientes Prioritarios -->
+                    <div class="outrep-card" style="margin-bottom: 18px;">
+                        <div class="outrep-card-head">
+                            <div class="outrep-card-title"><i class="fa-solid fa-fire" style="color:#DC2626;"></i> Pacientes Prioritarios Listos para Contactar</div>
+                            <div class="outrep-card-sub" id="outrep-priority-sub">Mostrando los más recientes con nombre o fecha definida</div>
+                        </div>
+                        <div class="table-container" style="max-height: 360px; overflow-y: auto; box-shadow: none; border: 1px solid #F1F5F9;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Paciente</th>
+                                        <th>Ubicación</th>
+                                        <th>Fecha Preferida</th>
+                                        <th>Resumen</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="outrep-priority-tbody"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -1486,27 +1685,33 @@
                 updateOutsideCalendarHeaders();
                 renderOutsideCalendarOnly();
                 filterOutsideTable();
+                const repPane = document.getElementById('outside-pane-report');
+                if (repPane && repPane.classList.contains('active')) renderOutsideReport();
             }
         }
 
         function switchOutsideSubView(sub) {
             const listPane = document.getElementById('outside-pane-list');
             const calPane = document.getElementById('outside-pane-calendar');
+            const repPane = document.getElementById('outside-pane-report');
             const btnList = document.getElementById('btn-outside-list');
             const btnCal = document.getElementById('btn-outside-cal');
+            const btnRep = document.getElementById('btn-outside-report');
             if (!listPane || !calPane) return;
+            [listPane, calPane, repPane].forEach(el => { if (el) el.classList.remove('active'); });
+            [btnList, btnCal, btnRep].forEach(el => { if (el) el.classList.remove('active'); });
             if (sub === 'calendar') {
-                listPane.classList.remove('active');
                 calPane.classList.add('active');
-                btnList.classList.remove('active');
-                btnCal.classList.add('active');
+                if (btnCal) btnCal.classList.add('active');
                 updateOutsideCalendarHeaders();
                 renderOutsideCalendarOnly();
+            } else if (sub === 'report') {
+                if (repPane) repPane.classList.add('active');
+                if (btnRep) btnRep.classList.add('active');
+                renderOutsideReport();
             } else {
-                calPane.classList.remove('active');
                 listPane.classList.add('active');
-                btnCal.classList.remove('active');
-                btnList.classList.add('active');
+                if (btnList) btnList.classList.add('active');
                 filterOutsideTable();
             }
         }
@@ -2495,6 +2700,11 @@
             filterTable();
             filterOutsideTable();
             renderOutsideCalendarOnly();
+            const outViewEl = document.getElementById('view-outside');
+            const outRepPaneEl = document.getElementById('outside-pane-report');
+            if (outViewEl && outViewEl.classList.contains('active') && outRepPaneEl && outRepPaneEl.classList.contains('active')) {
+                renderOutsideReport();
+            }
         }
 
         // Generar grilla de calendario (Maracay)
@@ -2755,6 +2965,656 @@
                 console.error('Error exportando Fuera de Maracay:', e);
                 alert('Error al exportar la lista Fuera de Maracay.');
             }
+        }
+
+        // =====================================================
+        // INFORME EJECUTIVO FUERA DE MARACAY (GENERAL + POR ESTADO)
+        // =====================================================
+        let outrepDatesChart = null;
+        let outrepDailyChart = null;
+
+        function extractPreferredDateBucket(row) {
+            const txt = normalizeTextSimple(`${row?.Resumen || ''} ${row?.Notas || ''}`);
+            if (!txt) return 'Pendiente por definir fecha';
+
+            const months = [
+                'noviembre', 'diciembre', 'enero', 'febrero', 'marzo', 'abril',
+                'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre'
+            ];
+            for (const m of months) {
+                if (new RegExp(`\\b${m}\\b`).test(txt)) {
+                    const mCap = m.charAt(0).toUpperCase() + m.slice(1);
+                    if (new RegExp(`(finales?|fin|ultima semana|despues del 2[0-9]|segunda quincena|\\b(2[1-9]|3[01])\\s+de)\\s*[^\\n.,;]{0,16}\\b${m}\\b|\\b${m}\\b[^\\n.,;]{0,20}(finales?|despues del 2[0-9])`).test(txt)) {
+                        return `Finales de ${m}`;
+                    }
+                    if (new RegExp(`(mediados?|mitad|segunda semana|tercera semana|quincena|\\b(1[1-9]|20)\\s+de)\\s*[^\\n.,;]{0,16}\\b${m}\\b`).test(txt)) {
+                        return `Mediados de ${m}`;
+                    }
+                    if (new RegExp(`(principios?|primeros?|inicios?|comienzos?|primera[s]? semana[s]?|primera quincena|\\b([1-9]|10)\\s+de)\\s*[^\\n.,;]{0,16}\\b${m}\\b`).test(txt)) {
+                        return `Principios de ${m}`;
+                    }
+                    return `${mCap} (mes completo)`;
+                }
+            }
+
+            if (/(cualquier (fecha|semana|dia)|total disponibilidad|disponibilidad (abierta|total|cualquier|amplia)|sin fecha especifica|cuando (asignen|vengan|confirmen|abran))/.test(txt)) {
+                return 'Cualquier fecha (Flexible)';
+            }
+            if (/(lo antes posible|esta semana|proxima semana|semana que viene|lo mas pronto)/.test(txt)) {
+                return 'Lo antes posible / Próxima semana';
+            }
+            if (/(evaluando asesoria online|prefiere online|interesad[oa] en asesoria online|consulta online confirmada|asesoria online confirmada)/.test(txt)) {
+                return 'Prefiere Asesoría Online';
+            }
+            return 'Pendiente por definir fecha';
+        }
+
+        function getOutrepScopeLabel(scopeVal) {
+            if (!scopeVal || scopeVal === 'all') return 'Informe General (Todos los estados)';
+            if (scopeVal === 'valencia') return 'Valencia (Carabobo)';
+            if (scopeVal === 'caracas') return 'Caracas (Capital / Miranda / La Guaira)';
+            if (scopeVal === 'otra_fuera') return 'Demás Estados de Venezuela';
+            if (scopeVal.startsWith('state:')) return `Estado ${scopeVal.slice(6)}`;
+            return scopeVal;
+        }
+
+        function getOutrepShortName(scopeVal) {
+            if (!scopeVal || scopeVal === 'all') return 'General';
+            if (scopeVal === 'valencia') return 'Valencia';
+            if (scopeVal === 'caracas') return 'Caracas';
+            if (scopeVal === 'otra_fuera') return 'Otros Estados';
+            if (scopeVal.startsWith('state:')) return scopeVal.slice(6);
+            return scopeVal;
+        }
+
+        function getFilteredOutsideReportItems() {
+            const scopeVal = document.getElementById('outrep-scope') ? document.getElementById('outrep-scope').value : 'all';
+            const originVal = document.getElementById('outrep-origin') ? document.getElementById('outrep-origin').value : 'all';
+            const periodVal = document.getElementById('outrep-period') ? document.getElementById('outrep-period').value : 'all';
+
+            const items = outsideLeadsCache.filter(item => {
+                const tipoUpper = (item.row.Tipo_Alerta || '').toUpperCase().trim();
+                const isCamp = tipoUpper === 'JORNADA_VALENCIA' || tipoUpper === 'JORNADA_CARACAS' || tipoUpper === 'FUERA_MARACAY';
+                if (originVal === 'campana' && !isCamp) return false;
+                if (!matchesOutsideDateFilter(item.contactDateKey, periodVal)) return false;
+
+                if (scopeVal === 'valencia' && item.region !== 'valencia') return false;
+                else if (scopeVal === 'caracas' && item.region !== 'caracas') return false;
+                else if (scopeVal === 'otra_fuera' && item.region !== 'otra_fuera') return false;
+                else if (scopeVal.startsWith('state:') && (item.veState || '') !== scopeVal.slice(6)) return false;
+                return true;
+            });
+
+            return { items, scopeVal, originVal, periodVal };
+        }
+
+        function computeOutsideReportStats(items) {
+            const total = items.length;
+            let campCount = 0, hotCount = 0, namedCount = 0, onlineIntCount = 0;
+            const dateBucketsAll = {};
+            const dateBucketsExpressed = {};
+            const stateMap = {};
+            const localCityMap = {};
+            const topicDefs = [
+                { key: 'varices', label: 'Várices / Arañitas', color: '#2563EB', re: /(varic|aranit|venas|esclero)/ },
+                { key: 'ulcera', label: 'Úlceras / Heridas / Pie diabético', color: '#DC2626', re: /(ulcera|herida|pie diabet|llaga|curacion)/ },
+                { key: 'dolor', label: 'Dolor / Hinchazón / Circulación', color: '#D97706', re: /(dolor|hinchaz|inflama|calambre|pesadez|circulac)/ },
+                { key: 'trombo', label: 'Trombosis / Tromboflebitis / Insuficiencia', color: '#7C3AED', re: /(trombo|flebit|insuficiencia venosa|safena)/ },
+                { key: 'precio', label: 'Consulta de Precio / Presupuesto', color: '#059669', re: /(precio|costo|100|presupuesto|tarifa|cuanto)/ },
+                { key: 'eco', label: 'Eco Doppler / Estudios / Récipes', color: '#0284C7', re: /(doppler|eco |ecos|informe|estudio|recipe)/ },
+                { key: 'online', label: 'Interés / Evaluación Asesoría Online', color: '#0F766E', re: /(evaluando asesoria online|prefiere online|consulta online|asesoria online)/ },
+                { key: 'seguros', label: 'Seguros Médicos', color: '#64748B', re: /(seguro|poliza)/ }
+            ];
+            const topicCounts = Object.fromEntries(topicDefs.map(t => [t.key, 0]));
+
+            items.forEach(item => {
+                const r = item.row;
+                const tipoUpper = (r.Tipo_Alerta || '').toUpperCase().trim();
+                const isCamp = tipoUpper === 'JORNADA_VALENCIA' || tipoUpper === 'JORNADA_CARACAS' || tipoUpper === 'FUERA_MARACAY';
+                if (isCamp) campCount++;
+
+                const temp = (r.Temperatura || 'frio').toLowerCase().trim();
+                if (temp === 'caliente') hotCount++;
+
+                const cleanNom = (r.Nombre || '').trim();
+                const hasName = Boolean(cleanNom && cleanNom.toLowerCase() !== 'sin nombre' && cleanNom.toLowerCase() !== 'no registrado');
+                if (hasName) namedCount++;
+
+                const bucket = extractPreferredDateBucket(r);
+                item._dateBucket = bucket;
+                dateBucketsAll[bucket] = (dateBucketsAll[bucket] || 0) + 1;
+                if (bucket !== 'Pendiente por definir fecha') {
+                    dateBucketsExpressed[bucket] = (dateBucketsExpressed[bucket] || 0) + 1;
+                }
+
+                const txtNorm = normalizeTextSimple(`${r.Resumen || ''} ${r.Motivo_Consulta || ''} ${r.Notas || ''}`);
+                if (/(evaluando asesoria online|prefiere online|interesad[oa] en asesoria online|consulta online confirmada|asesoria online confirmada)/.test(txtNorm)) {
+                    onlineIntCount++;
+                }
+                topicDefs.forEach(t => {
+                    if (t.re.test(txtNorm)) topicCounts[t.key]++;
+                });
+
+                const stKey = item.veState || 'Otro Estado VE';
+                if (!stateMap[stKey]) {
+                    stateMap[stKey] = { state: stKey, region: item.region, total: 0, hot: 0, named: 0, camp: 0, buckets: {} };
+                }
+                const sm = stateMap[stKey];
+                sm.total++;
+                if (temp === 'caliente') sm.hot++;
+                if (hasName) sm.named++;
+                if (isCamp) sm.camp++;
+                if (bucket !== 'Pendiente por definir fecha') {
+                    sm.buckets[bucket] = (sm.buckets[bucket] || 0) + 1;
+                }
+
+                const cityDisplay = (r.Ciudad || stKey).trim();
+                localCityMap[cityDisplay] = (localCityMap[cityDisplay] || 0) + 1;
+            });
+
+            const expressedSorted = Object.entries(dateBucketsExpressed).sort((a, b) => b[1] - a[1]);
+            const expressedTotal = expressedSorted.reduce((acc, [, v]) => acc + v, 0);
+            const pendingDateCount = dateBucketsAll['Pendiente por definir fecha'] || 0;
+
+            const statesSorted = Object.values(stateMap).map(s => {
+                const topB = Object.entries(s.buckets).sort((a, b) => b[1] - a[1])[0];
+                return { ...s, topDate: topB ? `${topB[0]} (${topB[1]})` : 'Por definir' };
+            }).sort((a, b) => b.total - a.total);
+
+            const localCitiesSorted = Object.entries(localCityMap).sort((a, b) => b[1] - a[1]);
+            const topicsSorted = topicDefs
+                .map(t => ({ ...t, count: topicCounts[t.key] }))
+                .filter(t => t.count > 0)
+                .sort((a, b) => b.count - a.count);
+
+            // Daily trend (last 14 Caracas days)
+            const dailyLabels = [];
+            const dailyKeys = [];
+            const dailyVal = [];
+            const dailyCcs = [];
+            const dailyOther = [];
+            for (let d = 13; d >= 0; d--) {
+                const dt = new Date(Date.now() - d * 86400000);
+                const key = getCaracasDateKey(dt);
+                dailyKeys.push(key);
+                dailyLabels.push(key.slice(8, 10) + '/' + key.slice(5, 7));
+                dailyVal.push(0); dailyCcs.push(0); dailyOther.push(0);
+            }
+            const dayIdxMap = Object.fromEntries(dailyKeys.map((k, i) => [k, i]));
+            items.forEach(item => {
+                const idx = dayIdxMap[item.contactDateKey];
+                if (idx === undefined) return;
+                if (item.region === 'valencia') dailyVal[idx]++;
+                else if (item.region === 'caracas') dailyCcs[idx]++;
+                else dailyOther[idx]++;
+            });
+
+            // Priority leads: hot or expressed date or named, sorted by hot -> expressed -> most recent
+            const priorityLeads = [...items].sort((a, b) => {
+                const score = (it) => {
+                    let s = 0;
+                    if ((it.row.Temperatura || '').toLowerCase() === 'caliente') s += 4;
+                    const nm = (it.row.Nombre || '').trim().toLowerCase();
+                    if (nm && nm !== 'sin nombre' && nm !== 'no registrado') s += 3;
+                    if (it._dateBucket && it._dateBucket !== 'Pendiente por definir fecha') s += 2;
+                    return s;
+                };
+                const diff = score(b) - score(a);
+                if (diff !== 0) return diff;
+                return (b.contactDateKey || '').localeCompare(a.contactDateKey || '');
+            });
+
+            return {
+                total, campCount, hotCount, namedCount, onlineIntCount,
+                expressedSorted, expressedTotal, pendingDateCount,
+                statesSorted, localCitiesSorted, topicsSorted,
+                daily: { labels: dailyLabels, val: dailyVal, ccs: dailyCcs, other: dailyOther },
+                priorityLeads
+            };
+        }
+
+        function drillIntoOutsideStateReport(stateName, region) {
+            const sel = document.getElementById('outrep-scope');
+            if (!sel) return;
+            if (region === 'valencia') sel.value = 'valencia';
+            else if (region === 'caracas') sel.value = 'caracas';
+            else sel.value = `state:${stateName}`;
+            renderOutsideReport();
+        }
+
+        function renderOutsideReport() {
+            const { items, scopeVal, originVal, periodVal } = getFilteredOutsideReportItems();
+            const stats = computeOutsideReportStats(items);
+            const scopeLabel = getOutrepScopeLabel(scopeVal);
+            const shortName = getOutrepShortName(scopeVal);
+
+            // Etiqueta clara del botón PDF según el informe elegido
+            const btnPdf = document.getElementById('btn-outrep-pdf');
+            if (btnPdf) btnPdf.innerHTML = scopeVal === 'all'
+                ? '<i class="fa-solid fa-file-pdf"></i> Descargar PDF General'
+                : `<i class="fa-solid fa-file-pdf"></i> Descargar PDF · ${escapeHtmlSafe(shortName)}`;
+
+            // KPIs
+            const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+            setTxt('outrep-kpi-total', stats.total);
+            setTxt('outrep-kpi-camp-sub', `${stats.campCount} marcados por campaña`);
+            setTxt('outrep-kpi-hot', stats.hotCount);
+            const hotPct = stats.total > 0 ? Math.round((stats.hotCount / stats.total) * 100) : 0;
+            setTxt('outrep-kpi-hot-pct', `${hotPct}% de alta prioridad`);
+            setTxt('outrep-kpi-named', stats.namedCount);
+            setTxt('outrep-kpi-online-sub', `${stats.onlineIntCount} evaluando asesoría online`);
+
+            const concreteDates = stats.expressedSorted.filter(([k]) => k !== 'Cualquier fecha (Flexible)' && k !== 'Prefiere Asesoría Online');
+            const topDateEntry = concreteDates[0] || stats.expressedSorted[0];
+            if (topDateEntry) {
+                setTxt('outrep-kpi-topdate', topDateEntry[0]);
+                const flexEntry = stats.expressedSorted.find(([k]) => k === 'Cualquier fecha (Flexible)');
+                setTxt('outrep-kpi-topdate-sub', `${topDateEntry[1]} persona${topDateEntry[1] === 1 ? '' : 's'}${flexEntry && topDateEntry[0] !== flexEntry[0] ? ` · +${flexEntry[1]} flexibles` : ''}`);
+            } else {
+                setTxt('outrep-kpi-topdate', 'Por definir');
+                setTxt('outrep-kpi-topdate-sub', `${stats.pendingDateCount} esperando aviso de fecha`);
+            }
+
+            // Executive insight text
+            setTxt('outrep-insight-title', scopeVal === 'all' ? 'Resumen General · Fuera de Maracay' : `Resumen · ${scopeLabel}`);
+            const insightEl = document.getElementById('outrep-insight-text');
+            if (insightEl) {
+                if (stats.total === 0) {
+                    insightEl.innerHTML = `No hay interesados registrados en <strong>${escapeHtmlSafe(scopeLabel)}</strong> con los filtros seleccionados.`;
+                } else {
+                    const topSt = stats.statesSorted[0];
+                    const dateSummary = concreteDates.length > 0
+                        ? `La preferencia de fecha más repetida es <strong>${escapeHtmlSafe(concreteDates[0][0])}</strong> (${concreteDates[0][1]} ${concreteDates[0][1] === 1 ? 'persona' : 'personas'})${concreteDates[1] ? ` seguida de <strong>${escapeHtmlSafe(concreteDates[1][0])}</strong> (${concreteDates[1][1]})` : ''}.`
+                        : (stats.expressedSorted[0] ? `La tendencia principal es <strong>${escapeHtmlSafe(stats.expressedSorted[0][0])}</strong> (${stats.expressedSorted[0][1]}).` : `La mayoría aún espera que el consultorio anuncie la próxima fecha confirmada.`);
+                    const stateSentence = scopeVal === 'all' && topSt
+                        ? ` El mayor volumen de demanda viene de <strong>${escapeHtmlSafe(topSt.state)}</strong> (${topSt.total} contactos).`
+                        : '';
+                    insightEl.innerHTML = `En <strong>${escapeHtmlSafe(scopeLabel)}</strong> hay <strong>${stats.total} interesados</strong> (${stats.hotCount} calientes y ${stats.namedCount} con nombre listo para avisar). ${dateSummary}${stateSentence}`;
+                }
+            }
+
+            // Chart 1: Fechas más solicitadas (Chart.js horizontal bar)
+            setTxt('outrep-dates-sub', `${stats.expressedTotal} con preferencia · ${stats.pendingDateCount} esperando fecha`);
+            const datesCanvas = document.getElementById('chart-outrep-dates');
+            if (datesCanvas && typeof Chart !== 'undefined') {
+                if (outrepDatesChart) { outrepDatesChart.destroy(); outrepDatesChart = null; }
+                const topBuckets = stats.expressedSorted.slice(0, 9);
+                const labels = topBuckets.length ? topBuckets.map(([k]) => k) : ['Sin fechas definidas aún'];
+                const vals = topBuckets.length ? topBuckets.map(([, v]) => v) : [0];
+                const colors = topBuckets.length ? topBuckets.map(([k]) =>
+                    k === 'Cualquier fecha (Flexible)' ? '#10B981'
+                    : (k === 'Prefiere Asesoría Online' ? '#0EA5E9'
+                    : (k.includes('Lo antes posible') ? '#F59E0B' : '#6D28D9'))
+                ) : ['#CBD5E1'];
+
+                outrepDatesChart = new Chart(datesCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Interesados',
+                            data: vals,
+                            backgroundColor: colors,
+                            borderRadius: 6,
+                            maxBarThickness: 26
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { beginAtZero: true, ticks: { precision: 0 } },
+                            y: { ticks: { font: { size: 11, weight: '600' } } }
+                        }
+                    }
+                });
+            }
+
+            // Card 2: Demanda por Estado (o ciudades locales si estás dentro de un estado)
+            const statesTitleEl = document.getElementById('outrep-states-title');
+            const statesSubEl = document.getElementById('outrep-states-sub');
+            const statesListEl = document.getElementById('outrep-states-list');
+            if (statesListEl) {
+                if (scopeVal === 'all' || scopeVal === 'otra_fuera') {
+                    if (statesTitleEl) statesTitleEl.innerHTML = '<i class="fa-solid fa-map-location-dot" style="color:#0284C7;"></i> Demanda por Estado de Venezuela';
+                    if (statesSubEl) statesSubEl.innerText = `${stats.statesSorted.length} estados · Clic para abrir informe individual`;
+                    const maxVal = stats.statesSorted[0]?.total || 1;
+                    statesListEl.innerHTML = stats.statesSorted.length === 0
+                        ? '<div style="text-align:center; color:var(--text-muted); padding:24px;">Sin datos en este período.</div>'
+                        : stats.statesSorted.map(s => {
+                            const pct = Math.max(4, Math.round((s.total / maxVal) * 100));
+                            const stEsc = escapeHtmlSafe(s.state);
+                            return `
+                                <div class="outrep-state-row" onclick="drillIntoOutsideStateReport('${s.state.replace(/'/g, "\\'")}', '${s.region}')">
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                                            <span style="font-weight:700; font-size:0.86rem; color:var(--primary);">${stEsc}</span>
+                                            <span style="font-size:0.75rem; color:var(--text-muted);">${s.hot} calientes · ${escapeHtmlSafe(s.topDate)}</span>
+                                        </div>
+                                        <div class="outrep-bar-track"><div class="outrep-bar-fill" style="width:${pct}%"></div></div>
+                                    </div>
+                                    <div style="font-weight:800; font-size:0.95rem; color:#1E293B; min-width:34px; text-align:right;">${s.total}</div>
+                                </div>
+                            `;
+                        }).join('');
+                } else {
+                    if (statesTitleEl) statesTitleEl.innerHTML = `<i class="fa-solid fa-city" style="color:#0284C7;"></i> Zonas / Ciudades en ${escapeHtmlSafe(shortName)}`;
+                    if (statesSubEl) statesSubEl.innerHTML = '<a href="javascript:void(0)" onclick="document.getElementById(\'outrep-scope\').value=\'all\'; renderOutsideReport();" style="color:#2563EB; font-weight:600; text-decoration:none;"><i class="fa-solid fa-arrow-left"></i> Volver al Informe General</a>';
+                    const maxC = stats.localCitiesSorted[0]?.[1] || 1;
+                    statesListEl.innerHTML = stats.localCitiesSorted.length === 0
+                        ? '<div style="text-align:center; color:var(--text-muted); padding:24px;">Sin datos en este período.</div>'
+                        : stats.localCitiesSorted.slice(0, 15).map(([city, cnt]) => {
+                            const pct = Math.max(5, Math.round((cnt / maxC) * 100));
+                            return `
+                                <div class="outrep-state-row" style="cursor:default;">
+                                    <div style="flex:1;">
+                                        <div style="font-weight:600; font-size:0.85rem; color:var(--primary);">${escapeHtmlSafe(city)}</div>
+                                        <div class="outrep-bar-track"><div class="outrep-bar-fill" style="width:${pct}%; background:linear-gradient(90deg,#14B8A6,#0F766E);"></div></div>
+                                    </div>
+                                    <div style="font-weight:800; font-size:0.92rem; color:#1E293B;">${cnt}</div>
+                                </div>
+                            `;
+                        }).join('');
+                }
+            }
+
+            // Chart 3: Evolución Diaria (14 días)
+            const dailyCanvas = document.getElementById('chart-outrep-daily');
+            if (dailyCanvas && typeof Chart !== 'undefined') {
+                if (outrepDailyChart) { outrepDailyChart.destroy(); outrepDailyChart = null; }
+                const datasets = [];
+                if (scopeVal === 'all' || scopeVal === 'valencia') {
+                    datasets.push({ label: 'Valencia', data: stats.daily.val, backgroundColor: '#7C3AED', borderRadius: 4 });
+                }
+                if (scopeVal === 'all' || scopeVal === 'caracas') {
+                    datasets.push({ label: 'Caracas', data: stats.daily.ccs, backgroundColor: '#0F766E', borderRadius: 4 });
+                }
+                if (scopeVal === 'all' || scopeVal === 'otra_fuera' || scopeVal.startsWith('state:')) {
+                    datasets.push({ label: scopeVal.startsWith('state:') ? shortName : 'Otros Estados', data: stats.daily.other, backgroundColor: '#D97706', borderRadius: 4 });
+                }
+                outrepDailyChart = new Chart(dailyCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: stats.daily.labels, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+                        scales: {
+                            x: { stacked: true, ticks: { font: { size: 10 } } },
+                            y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+                        }
+                    }
+                });
+            }
+
+            // Card 4: Motivos y Dudas Frecuentes
+            const topicsEl = document.getElementById('outrep-topics-list');
+            if (topicsEl) {
+                if (stats.topicsSorted.length === 0) {
+                    topicsEl.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:24px;">Sin motivos detectados en este filtro.</div>';
+                } else {
+                    const maxT = stats.topicsSorted[0].count || 1;
+                    topicsEl.innerHTML = stats.topicsSorted.map(t => {
+                        const pct = Math.max(6, Math.round((t.count / maxT) * 100));
+                        const share = stats.total > 0 ? Math.round((t.count / stats.total) * 100) : 0;
+                        return `
+                            <div class="outrep-topic-row">
+                                <div class="outrep-topic-meta">
+                                    <span>${escapeHtmlSafe(t.label)}</span>
+                                    <span style="color:var(--text-muted); font-weight:700;">${t.count} <span style="font-weight:400;">(${share}%)</span></span>
+                                </div>
+                                <div class="outrep-bar-track"><div class="outrep-bar-fill" style="width:${pct}%; background:${t.color};"></div></div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // Card 5: Tabla de Pacientes Prioritarios
+            const prioBody = document.getElementById('outrep-priority-tbody');
+            const prioSub = document.getElementById('outrep-priority-sub');
+            if (prioBody) {
+                const topPrio = stats.priorityLeads.slice(0, 25);
+                if (prioSub) prioSub.innerText = `Top ${topPrio.length} de ${stats.total} (ordenados por prioridad, nombre y fecha definida)`;
+                prioBody.innerHTML = topPrio.length === 0
+                    ? '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No hay contactos en este alcance.</td></tr>'
+                    : topPrio.map(item => {
+                        const r = item.row;
+                        const bucket = item._dateBucket || 'Pendiente por definir fecha';
+                        const pillCls = bucket === 'Cualquier fecha (Flexible)' ? 'flex' : (bucket === 'Pendiente por definir fecha' ? 'pending' : '');
+                        const waDigits = getCleanWaDigits(r.phone_number);
+                        const waHtml = waDigits ? `<a class="btn-wa-mini" href="https://wa.me/${waDigits}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Chat</a>` : '';
+                        const resTxt = (r.Resumen || r.Motivo_Consulta || 'Sin resumen').trim();
+                        const resShort = resTxt.length > 90 ? resTxt.slice(0, 90) + '...' : resTxt;
+                        return `
+                            <tr>
+                                <td>
+                                    <div style="font-weight:600; cursor:pointer;" onclick="openModal('${r.id}')">${escapeHtmlSafe(r.Nombre || 'Sin Nombre')}</div>
+                                    <div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtmlSafe(item.fPhone)} · ${formatShortCaracasDate(r.Ultima_Interaccion || r.created_at)}</div>
+                                </td>
+                                <td>
+                                    <div style="font-weight:600; font-size:0.84rem;">${escapeHtmlSafe(r.Ciudad || item.veState)}</div>
+                                    <div style="font-size:0.72rem; color:var(--text-muted);">${escapeHtmlSafe(item.veState)}</div>
+                                </td>
+                                <td><span class="outrep-date-pill ${pillCls}">${escapeHtmlSafe(bucket)}</span></td>
+                                <td style="max-width:290px; font-size:0.82rem; color:var(--text-muted);" title="${escapeHtmlSafe(resTxt)}">${escapeHtmlSafe(resShort)}</td>
+                                <td>
+                                    <div style="display:flex; gap:6px; align-items:center;">
+                                        ${waHtml}
+                                        <button class="btn btn-outline" style="padding:5px 9px; font-size:0.78rem;" onclick="openModal('${r.id}')">Ver</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+            }
+        }
+
+        function buildPdfSectionHtml(sectionTitle, itemsList, includeStatesTable) {
+            const st = computeOutsideReportStats(itemsList);
+            const topDate = st.expressedSorted.find(([k]) => k !== 'Cualquier fecha (Flexible)' && k !== 'Prefiere Asesoría Online') || st.expressedSorted[0];
+            const maxDateCount = st.expressedSorted[0]?.[1] || 1;
+
+            const datesHtml = st.expressedSorted.length === 0
+                ? '<p class="muted">Sin preferencias de fecha definidas todavía (contactos en lista de espera).</p>'
+                : st.expressedSorted.slice(0, 8).map(([lbl, cnt]) => {
+                    const pct = Math.max(6, Math.round((cnt / maxDateCount) * 100));
+                    return `
+                        <div class="bar-row">
+                            <div class="bar-meta"><span>${escapeHtmlSafe(lbl)}</span><strong>${cnt}</strong></div>
+                            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div>
+                        </div>
+                    `;
+                }).join('');
+
+            const statesHtml = includeStatesTable ? `
+                <div class="block">
+                    <h3>Demanda por Estado de Venezuela</h3>
+                    <table>
+                        <thead><tr><th>Estado</th><th class="num">Total</th><th class="num">Prioridad Alta</th><th class="num">Con Nombre</th><th>Fecha Más Pedida</th></tr></thead>
+                        <tbody>
+                            ${st.statesSorted.map(s => `
+                                <tr>
+                                    <td><strong>${escapeHtmlSafe(s.state)}</strong></td>
+                                    <td class="num">${s.total}</td>
+                                    <td class="num">${s.hot}</td>
+                                    <td class="num">${s.named}</td>
+                                    <td>${escapeHtmlSafe(s.topDate)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            ` : '';
+
+            const topicsHtml = st.topicsSorted.length === 0
+                ? '<p class="muted">Sin motivos registrados en este filtro.</p>'
+                : st.topicsSorted.map(t => `<span class="chip">${escapeHtmlSafe(t.label)}: <strong>${t.count}</strong></span>`).join('');
+
+            const topContacts = st.priorityLeads.slice(0, includeStatesTable ? 20 : 35);
+            const contactsHtml = topContacts.length === 0
+                ? '<p class="muted">Sin contactos registrados en esta sección.</p>'
+                : `
+                    <table>
+                        <thead><tr><th>Paciente</th><th>Teléfono</th><th>Ciudad</th><th>Fecha Preferida</th><th>Observaciones</th></tr></thead>
+                        <tbody>
+                            ${topContacts.map(it => {
+                                const r = it.row;
+                                return `
+                                    <tr>
+                                        <td><strong>${escapeHtmlSafe(r.Nombre || 'Sin Nombre')}</strong></td>
+                                        <td style="white-space:nowrap;">${escapeHtmlSafe(it.fPhone)}</td>
+                                        <td>${escapeHtmlSafe(r.Ciudad || it.veState)}</td>
+                                        <td>${escapeHtmlSafe(it._dateBucket || 'Por definir')}</td>
+                                        <td>${escapeHtmlSafe((r.Resumen || r.Motivo_Consulta || '').slice(0, 120))}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+            return `
+                <div class="sec-head">
+                    <h2>${escapeHtmlSafe(sectionTitle)}</h2>
+                    <span class="sec-count">${st.total} ${st.total === 1 ? 'contacto' : 'contactos'}</span>
+                </div>
+                <div class="kpis">
+                    <div class="kpi"><div class="lbl">Total Interesados</div><div class="val">${st.total}</div></div>
+                    <div class="kpi"><div class="lbl">Alta Prioridad</div><div class="val accent-red">${st.hotCount}</div></div>
+                    <div class="kpi"><div class="lbl">Con Nombre</div><div class="val accent-green">${st.namedCount}</div></div>
+                    <div class="kpi"><div class="lbl">Fecha Más Pedida</div><div class="val small">${topDate ? escapeHtmlSafe(topDate[0]) + ' (' + topDate[1] + ')' : 'Por definir'}</div></div>
+                </div>
+                <div class="two-col">
+                    <div class="block">
+                        <h3>Fechas Más Solicitadas <span class="sub">(${st.expressedTotal} definidas · ${st.pendingDateCount} por definir)</span></h3>
+                        ${datesHtml}
+                    </div>
+                    <div class="block">
+                        <h3>Motivos y Consultas Frecuentes</h3>
+                        <div class="chips">${topicsHtml}</div>
+                    </div>
+                </div>
+                ${statesHtml}
+                ${!includeStatesTable ? `<div class="block"><h3>Listado Prioritario (${topContacts.length} de ${st.total})</h3>${contactsHtml}</div>` : ''}
+            `;
+        }
+
+        function printOutsideReportPDF() {
+            const { items, scopeVal, originVal, periodVal } = getFilteredOutsideReportItems();
+            if (items.length === 0) {
+                alert('No hay contactos para generar el informe PDF con los filtros actuales.');
+                return;
+            }
+            const scopeLabel = getOutrepScopeLabel(scopeVal);
+            const nowCaracas = new Intl.DateTimeFormat('es-VE', { timeZone: 'America/Caracas', dateStyle: 'long', timeStyle: 'short' }).format(new Date());
+            const originLabel = originVal === 'campana' ? 'Solo Campañas Jornada' : 'Campañas e Histórico';
+            const periodLabel = periodVal === 'today' ? 'Hoy' : (periodVal === '7d' ? 'Últimos 7 días' : (periodVal === '30d' ? 'Últimos 30 días' : 'Todo el historial'));
+
+            let bodyPagesHtml = '';
+            if (scopeVal === 'all') {
+                // Informe General + hojas dedicadas: Valencia, Caracas y Demás Estados
+                const valItems = items.filter(i => i.region === 'valencia');
+                const ccsItems = items.filter(i => i.region === 'caracas');
+                const otherItems = items.filter(i => i.region === 'otra_fuera');
+
+                bodyPagesHtml += `<section class="report-page">${buildPdfSectionHtml('Informe General — Fuera de Maracay', items, true)}</section>`;
+                if (valItems.length > 0) {
+                    bodyPagesHtml += `<section class="report-page page-break">${buildPdfSectionHtml('Valencia (Carabobo)', valItems, false)}</section>`;
+                }
+                if (ccsItems.length > 0) {
+                    bodyPagesHtml += `<section class="report-page page-break">${buildPdfSectionHtml('Caracas (Capital / Miranda / La Guaira)', ccsItems, false)}</section>`;
+                }
+                if (otherItems.length > 0) {
+                    bodyPagesHtml += `<section class="report-page page-break">${buildPdfSectionHtml('Demás Estados de Venezuela', otherItems, true)}</section>`;
+                }
+            } else {
+                // Informe individual del estado o ciudad solicitada
+                bodyPagesHtml = `<section class="report-page">${buildPdfSectionHtml(scopeLabel, items, scopeVal === 'otra_fuera')}</section>`;
+            }
+
+            const win = window.open('', '_blank', 'width=980,height=820');
+            if (!win) {
+                alert('El navegador bloqueó la ventana del PDF. Permite ventanas emergentes para este sitio e inténtalo de nuevo.');
+                return;
+            }
+            win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Dr. Ángel Trejo — ${escapeHtmlSafe(scopeLabel)}</title>
+                <style>
+                    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+                    body { margin: 0; padding: 28px 34px; color: #0F172A; background: #FFFFFF; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .letterhead {
+                        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+                        padding-bottom: 14px; margin-bottom: 18px; border-bottom: 2px solid #0F172A;
+                    }
+                    .brand { display: flex; align-items: center; gap: 12px; }
+                    .brand-mark {
+                        width: 44px; height: 44px; border-radius: 10px; background: #0F172A; color: #FFFFFF;
+                        display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; letter-spacing: 0.5px;
+                    }
+                    .brand h1 { margin: 0; font-size: 19px; color: #0F172A; }
+                    .brand p { margin: 2px 0 0; font-size: 11.5px; color: #475569; }
+                    .meta { text-align: right; font-size: 11px; color: #475569; line-height: 1.45; }
+                    .sec-head { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 0 12px; border-bottom: 1px solid #CBD5E1; padding-bottom: 6px; }
+                    .sec-head h2 { margin: 0; font-size: 16px; color: #0F172A; }
+                    .sec-count { font-size: 12px; font-weight: 700; color: #2563EB; }
+                    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+                    .kpi { border: 1px solid #E2E8F0; border-radius: 10px; padding: 11px 13px; background: #F8FAFC; }
+                    .kpi .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #64748B; font-weight: 700; }
+                    .kpi .val { font-size: 20px; font-weight: 800; margin-top: 4px; color: #0F172A; }
+                    .kpi .val.small { font-size: 13.5px; line-height: 1.25; color: #1E40AF; }
+                    .accent-red { color: #DC2626 !important; }
+                    .accent-green { color: #059669 !important; }
+                    .two-col { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 16px; margin-bottom: 16px; }
+                    .block { margin-bottom: 16px; }
+                    .block h3 { margin: 0 0 8px; font-size: 13px; color: #0F172A; font-weight: 700; }
+                    .block h3 .sub { font-weight: 400; color: #64748B; font-size: 11px; }
+                    .bar-row { margin-bottom: 7px; }
+                    .bar-meta { display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 3px; color: #1E293B; }
+                    .bar-track { height: 7px; background: #E2E8F0; border-radius: 99px; overflow: hidden; }
+                    .bar-fill { height: 100%; background: #2563EB; border-radius: 99px; }
+                    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+                    .chip { background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 5px 9px; font-size: 11px; color: #334155; }
+                    .muted { color: #64748B; font-size: 12px; margin: 4px 0; }
+                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                    th { background: #0F172A; color: #FFFFFF; padding: 7px 8px; text-align: left; font-weight: 600; }
+                    td { padding: 6px 8px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+                    tr:nth-child(even) td { background: #F8FAFC; }
+                    th.num, td.num { text-align: center; }
+                    .page-break { page-break-before: always; padding-top: 8px; }
+                    .toolbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 14px; }
+                    .toolbar button { background: #0F172A; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+                    .footer-note { margin-top: 18px; padding-top: 8px; border-top: 1px solid #E2E8F0; font-size: 10px; color: #64748B; display: flex; justify-content: space-between; }
+                    @media print {
+                        .toolbar { display: none; }
+                        body { padding: 10px 14px; }
+                        .block { page-break-inside: avoid; }
+                    }
+                </style></head><body>
+                <div class="toolbar"><button onclick="window.print()">Guardar como PDF / Imprimir</button></div>
+                <div class="letterhead">
+                    <div class="brand">
+                        <div class="brand-mark">AT</div>
+                        <div>
+                            <h1>Dr. Ángel Trejo</h1>
+                            <p>Cirugía General y Flebología · Centro Empresarial Uniaragua, Maracay</p>
+                        </div>
+                    </div>
+                    <div class="meta">
+                        <div><strong>${escapeHtmlSafe(scopeLabel)}</strong></div>
+                        <div>${escapeHtmlSafe(nowCaracas)}</div>
+                        <div>${escapeHtmlSafe(originLabel)} · ${escapeHtmlSafe(periodLabel)}</div>
+                    </div>
+                </div>
+                ${bodyPagesHtml}
+                <div class="footer-note">
+                    <span>Dr. Ángel Trejo — Reporte de Consultas y Jornadas</span>
+                    <span>${escapeHtmlSafe(nowCaracas)}</span>
+                </div>
+                <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 350); };<\/script>
+            </body></html>`);
+            win.document.close();
         }
 
         // Acumula HTML del calendario en un objeto, luego se inyecta todo de golpe en renderUI
